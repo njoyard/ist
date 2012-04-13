@@ -1,7 +1,7 @@
 define([
-	'ist!spec/nodetypes/empty',
-	'ist!spec/nodetypes/textnode',
-	'ist!spec/nodetypes/elements'
+	'ist!nodetypes/empty',
+	'ist!nodetypes/textnode',
+	'ist!nodetypes/elements'
 ], function(tEmpty, tTextNode, tElements) {
 	describe('nodetypes', function() {
 		var fragment = tEmpty.render(),

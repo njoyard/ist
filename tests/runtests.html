@@ -10,17 +10,19 @@
     <script src="lib/requirejs/require.js"></script>
     <script>
         require({
+            baseUrl: 'spec',
             paths : {
-            	'text': 'lib/requirejs/text',
-            	'ist': '../ist'
+            	'text': '../lib/requirejs/text',
+            	'ist': '../../ist'
             }
         });
 
         require(
             [
-            	'spec/nodetypes',
-            	'spec/qualifiers',
-            	'spec/syntax'
+            	'nodetypes',
+            	'qualifiers',
+            	'syntax',
+            	'interpolation'
             ],
             function(){
                 jasmine.getEnv().addReporter(new jasmine.TrivialReporter());

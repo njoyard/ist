@@ -1,0 +1,3 @@
+div[.aProperty=a value]
+div[.className=a_class][.id=an_id][.prop=val]
+div[.aProperty="{./;}\/:!*%<>]

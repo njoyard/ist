@@ -1,14 +1,21 @@
 define([
 	'ist',
-	'ist!spec/syntax/emptylines',
-	'ist!spec/syntax/children',
-	'ist!spec/syntax/siblings',
-	'text!spec/syntax/notextchildren.ist',
-	'text!spec/syntax/nomatchingindent.ist'
-], function(ist, tEmptyLines, tChildren, tSiblings, textNoTextChildren, textNoMatchingIndent) {
+	'ist!syntax/emptylines',
+	'ist!syntax/children',
+	'ist!syntax/siblings',
+	'text!syntax/notextchildren.ist',
+	'text!syntax/nomatchingindent.ist',
+	'ist!syntax/indentedroot'
+], function(
+	ist,
+	tEmptyLines, tChildren, tSiblings,
+	textNoTextChildren, textNoMatchingIndent,
+	tIndentedRoot) {
+	
 	var elNodes = tEmptyLines.render().childNodes,
 		childrenNodes = tChildren.render().childNodes,
-		siblingsNodes = tSiblings.render().childNodes;
+		siblingsNodes = tSiblings.render().childNodes,
+		irootNodes = tIndentedRoot.render().childNodes;
 	
 	describe('syntax', function() {
 		it("should ignore empty and whitespace-only lines", function() {
@@ -66,10 +73,14 @@ define([
 			}).toThrow("Cannot add children to TextNode");
 		});
 		
-		it("should fail to parse indented nodes without any matching sibling", function() {
+		it("should fail to parse deindented nodes without any matching sibling", function() {
 			expect( function() {
 				ist(textNoMatchingIndent, 'templateName');
 			}).toThrow("Unexpected indent in templateName on line 3");
+		});
+		
+		it("should support indented root nodes", function() {
+			expect( irootNodes.length ).toBe( 2 );
 		});
 	});
 });
