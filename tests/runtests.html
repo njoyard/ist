@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>ist test runner</title>
+    <link rel="stylesheet" href="lib/jasmine/jasmine.css">
+</head>
+<body>
+    <script src="lib/jasmine/jasmine.js"></script>
+    <script src="lib/jasmine/jasmine-html.js"></script>
+    <script src="lib/requirejs/require.js"></script>
+    <script>
+        require({
+            paths : {
+            	'text': 'lib/requirejs/text',
+            	'ist': '../ist'
+            }
+        });
+
+        require(
+            [
+            	'spec/nodetypes',
+            	'spec/qualifiers',
+            	'spec/syntax'
+            ],
+            function(){
+                jasmine.getEnv().addReporter(new jasmine.TrivialReporter());
+                jasmine.getEnv().execute();
+            }
+        );
+    </script>
+</body>
+</html>
