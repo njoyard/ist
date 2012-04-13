@@ -25,7 +25,7 @@ Here is a brief overview of an IST template file:
 	                "Name :"
 	            input.commentInput#name[type=text]
 	            label[for=comment]
-	            textarea[cols=55]#comment
+	            textarea[cols=55]#commentArea
 	                "Enter your comment here"
 
 ## Usage
