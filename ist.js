@@ -248,15 +248,14 @@ define('ist', [], function () {
 	 * Returns ContainerNode with render(context[, document]) method
 	 */
 	function ist(text, name) {
-		var lines = text.split('\n'),
-			rx = {
+		var rx = {
 				indent: /^(\s*)(.*)$/,
 				element: /^([a-z0-9]+)(.*)$/,
 					elemProps: /^([.#][a-zA-Z0-9_-]+|\[[^\]=]+=[^\]]+\])(.*)$/,
 					elemClass: /^\.([a-zA-Z0-9_-]+)$/,
 					elemId: /^#([a-zA-Z0-9_-]+)$/,
 					elemAttr: /^\[([^\]=]+)=([^\]]+)\]$/,
-				text: /^"([^"]*?)"?$/,
+				text: /^"(.*?)"?$/,
 				directive: /^@(if|unless|with|each)\s+(.*)$/
 			},
 			dirCtors = {
@@ -292,7 +291,7 @@ define('ist', [], function () {
 			return node;
 		};
 	
-		lines.forEach(function(line, lineNumber) {
+		text.split('\n').forEach(function(line, lineNumber) {
 			var m, node, prop, rest, lastIndent, indentIdx;
 		
 			m = line.match(rx.indent);
@@ -351,7 +350,7 @@ define('ist', [], function () {
 								node.setAttribute(m[1], m[2]);
 							}
 						} else {
-							throw new Error("Invalid syntax (character " + (line.length - rest.length) + ")");
+							throw new Error("Invalid syntax (col " + (line.length - rest.length + 1) + ")");
 						}
 					}
 			
@@ -361,7 +360,7 @@ define('ist', [], function () {
 				} else if (m = rest.match(rx.directive)) {
 					pushNode(new dirCtors[m[1]](m[2]));
 				} else {
-					throw new Error("Invalid syntax (character 0)");
+					throw new Error("Invalid syntax (col 1)");
 				}
 			} catch(e) {
 				throw new Error(e.message + ' in ' + name + ' on line ' + (lineNumber+1));
