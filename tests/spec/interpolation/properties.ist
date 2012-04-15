@@ -1,0 +1,2 @@
+"{{ sub.property }}"
+"{{ access.to.deeply.nested.property }}"

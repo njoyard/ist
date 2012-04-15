@@ -3,3 +3,4 @@ div[attribute=before {{ variable }} after]
 div[.property=before {{ variable }} after]
 "{{variable}}"
 "{{                 			variable			}}"
+div[attribute={{ object }}]
