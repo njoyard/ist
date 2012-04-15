@@ -203,7 +203,7 @@ define('ist', [], function () {
 					elemId: /^#([a-zA-Z0-9_-]+)$/,
 					elemAttr: /^\[([^\]=]+)=([^\]]+)\]$/,
 				text: /^"(.*?)"?$/,
-				block: /^@([a-zA-Z0-9_-]+)\s+(.*)$/
+				block: /^@([a-zA-Z0-9_-]+)(\s+(.*))?$/
 			},
 			stack = [new ContainerNode()],
 			indentStack;
@@ -303,7 +303,7 @@ define('ist', [], function () {
 						throw new Error("Unknown block type '" + m[1] + "'");
 					}
 					
-					pushNode(new BlockNode(ist.helpers[m[1]], m[2]));
+					pushNode(new BlockNode(ist.helpers[m[1]], m[3]));
 				} else {
 					throw new Error("Invalid syntax (col 1)");
 				}
@@ -327,11 +327,6 @@ define('ist', [], function () {
 	 */
 	ist.registerHelper = function(name, helper) {
 		ist.helpers = ist.helpers || {};
-		
-		if (name in ist.helpers) {
-			throw new Error("Cannot redefine helper for '" + name + "' blocks");
-		}
-		
 		ist.helpers[name] = helper;
 	};
 	
