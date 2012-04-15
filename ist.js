@@ -206,8 +206,8 @@ define('ist', [], function () {
 	/**
 	 * If node
 	 */
-	function IfNode(condPath) {
-		this.condPath = condPath;
+	function IfNode(ctxPath) {
+		this.ctxPath = ctxPath;
 	};
 
 	IfNode.prototype = new ContainerNode({
@@ -226,8 +226,8 @@ define('ist', [], function () {
 	/**
 	 * Unless node
 	 */
-	function UnlessNode(condPath) {
-		this.condPath = condPath;
+	function UnlessNode(ctxPath) {
+		this.ctxPath = ctxPath;
 	};
 
 	UnlessNode.prototype = new ContainerNode({
