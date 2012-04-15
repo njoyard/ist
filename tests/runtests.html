@@ -13,6 +13,7 @@
             baseUrl: 'spec',
             paths : {
             	'text': '../lib/requirejs/text',
+            	'order': '../lib/requirejs/order',
             	'ist': '../../ist'
             }
         });
@@ -23,7 +24,8 @@
             	'qualifiers',
             	'syntax',
             	'interpolation',
-            	'blocks'
+            	'blocks',
+            	'blockhandlers'
             ],
             function(){
                 jasmine.getEnv().addReporter(new jasmine.TrivialReporter());

@@ -1,0 +1,4 @@
+div.parent
+	@testBlock context
+		div.child
+			"interpolated {{ value }}"
