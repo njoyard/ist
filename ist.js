@@ -18,7 +18,7 @@
 define('ist', [], function () {
 	"use strict";
 
-	var fs, 
+	var ist, fs, 
 		progIds = ['Msxml2.XMLHTTP', 'Microsoft.XMLHTTP', 'Msxml2.XMLHTTP.4.0'],
 		buildMap = [];
 		
@@ -167,87 +167,34 @@ define('ist', [], function () {
 	
 	
 	/**
-	 * Each node
+	 * Block node
 	 */
-	function EachNode(loopPath) {
-		this.loopPath = loopPath;
+	function BlockNode(helper, ctxPath) {
+		this.helper = helper;
+		this.ctxPath = ctxPath;
 	};
 	
-	EachNode.prototype = new ContainerNode({
+	BlockNode.prototype = new ContainerNode({
 		render: function(context, doc) {
-			var self = this, 
-				loopOver = findPath(this.loopPath, context),
-				fragment = (doc||document).createDocumentFragment();
+			var self = this,
+				subContext = this.ctxPath ? findPath(this.ctxPath, context) : undefined;
 			
-			loopOver.forEach(function(subcontext) {
-				fragment.appendChild(ContainerNode.prototype.render.call(self, subcontext, doc));
+			return this.helper.call(context, subContext, {
+				document: (doc || document),
+				
+				render: function(ctx) {
+					return ContainerNode.prototype.render.call(self, ctx, doc);
+				}
 			});
-			
-			return fragment;
 		}
-	});
-	
-	
-	/**
-	 * With node
-	 */
-	function WithNode(ctxPath) {
-		this.ctxPath = ctxPath
-	};
-	
-	WithNode.prototype = new ContainerNode({
-		render: function(context, doc) {
-			var subcontext = findPath(this.ctxPath, context);
-			return ContainerNode.prototype.render.call(this, subcontext, doc);
-		}
-	});
-	
-	
-	/**
-	 * If node
-	 */
-	function IfNode(ctxPath) {
-		this.ctxPath = ctxPath;
-	};
-
-	IfNode.prototype = new ContainerNode({
-		render: function(context, doc) {
-			var condition = findPath(this.ctxPath, context);
-			
-			if (condition) {
-				return ContainerNode.prototype.render.call(this, context, doc);
-			} else {
-				return (doc||document).createDocumentFragment();
-			}
-		}
-	});
-	
-	
-	/**
-	 * Unless node
-	 */
-	function UnlessNode(ctxPath) {
-		this.ctxPath = ctxPath;
-	};
-
-	UnlessNode.prototype = new ContainerNode({
-		render: function(context, doc) {
-			var condition = findPath(this.ctxPath, context);
-			
-			if (!condition) {
-				return ContainerNode.prototype.render.call(this, context, doc);
-			} else {
-				return (doc||document).createDocumentFragment();
-			}
-		}
-	});
+	});	
 	
 	
 	/**
 	 * Template compiler
 	 * Returns ContainerNode with render(context[, document]) method
 	 */
-	function ist(text, name) {
+	ist = function(text, name) {
 		var rx = {
 				indent: /^(\s*)(.*)$/,
 				element: /^([a-z0-9]+)(.*)$/,
@@ -256,13 +203,7 @@ define('ist', [], function () {
 					elemId: /^#([a-zA-Z0-9_-]+)$/,
 					elemAttr: /^\[([^\]=]+)=([^\]]+)\]$/,
 				text: /^"(.*?)"?$/,
-				directive: /^@(if|unless|with|each)\s+(.*)$/
-			},
-			dirCtors = {
-				'if': IfNode,
-				'unless': UnlessNode,
-				'with': WithNode,
-				'each': EachNode
+				block: /^@([a-zA-Z0-9_-]+)\s+(.*)$/
 			},
 			stack = [new ContainerNode()],
 			indentStack;
@@ -357,8 +298,12 @@ define('ist', [], function () {
 					pushNode(node);
 				} else if (m = rest.match(rx.text)) {
 					pushNode(new TextNode(m[1]));
-				} else if (m = rest.match(rx.directive)) {
-					pushNode(new dirCtors[m[1]](m[2]));
+				} else if (m = rest.match(rx.block)) {
+					if (!(m[1] in ist.helpers)) {
+						throw new Error("Unknown block type '" + m[1] + "'");
+					}
+					
+					pushNode(new BlockNode(ist.helpers[m[1]], m[2]));
 				} else {
 					throw new Error("Invalid syntax (col 1)");
 				}
@@ -374,6 +319,69 @@ define('ist', [], function () {
 		
 		return peekNode();
 	};
+	
+	
+	/**
+	 * IST helper block registration; allows custom iterators/helpers that will
+	 * be called with a new context.
+	 */
+	ist.registerHelper = function(name, helper) {
+		ist.helpers = ist.helpers || {};
+		
+		if (name in ist.helpers) {
+			throw new Error("Cannot redefine helper for '" + name + "' blocks");
+		}
+		
+		ist.helpers[name] = helper;
+	};
+	
+	
+	/**
+	 * Base 'if' helper
+	 */
+	ist.registerHelper('if', function(subcontext, subtemplate) {
+		if (subcontext) {
+			return subtemplate.render(this);
+		} else {
+			// Return empty fragment
+			return subtemplate.document.createDocumentFragment();
+		}
+	});
+	
+	
+	/**
+	 * Base 'unless' helper
+	 */
+	ist.registerHelper('unless', function(subcontext, subtemplate) {
+		if (!subcontext) {
+			return subtemplate.render(this);
+		} else {
+			// Return empty fragment
+			return subtemplate.document.createDocumentFragment();
+		}
+	});
+	
+	
+	/**
+	 * Base 'with' helper
+	 */
+	ist.registerHelper('with', function(subcontext, subtemplate) {
+		return subtemplate.render(subcontext);
+	});
+	
+	
+	/**
+	 * Base 'each' helper
+	 */
+	ist.registerHelper('each', function(subcontext, subtemplate) {
+		var fragment = subtemplate.document.createDocumentFragment();
+		
+		subcontext.forEach(function(item) {	
+			fragment.appendChild(subtemplate.render(item));
+		});
+		
+		return fragment;
+	});
 
 
 	/******************************************

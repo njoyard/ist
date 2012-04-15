@@ -1,11 +1,11 @@
-# [IST](http://github.com/k-o-x/ist) - Indented Selector Templating
+# [IST][1] - Indented Selector Templating
 
 ## Introduction
 
 IST is a DOM templating engine using a CSS selector-like syntax.  Templates are
 text files, which are first parsed and compiled into a template object, and then
 rendered into a DOM document using a context object.  This file documents usage
-of version 0.2.
+of version 0.3.
 
 Here is a brief overview of an IST template file:
 
@@ -154,13 +154,67 @@ text nodes or in property/attribute values:
 Using string interpolation is not possible with ID or class qualifiers, but you
 can use `[.className={{ variable }}]` and `[.id={{ variable }}]`
 
-### Directives
+### Block directives
 
-Directives are used to control node generation with the help of context
-properties.  The syntax of both directives is the same:
+Block directives are used to control node generation with the help of context
+properties.  They allow to define custom iterators and handlers to operate on a
+narrowed down rendering context.  If you're used to [handlebars blocks][2],
+you'll find out that IST block directives work in the exact same way.
 
-	@directive path.to.context.property
+#### Defining block helpers
+
+The syntax of block directives is as follows:
+
+	@directiveName path.to.context.property
+		div.subtree
+			...
+
+Block helpers are called when the corresponding block is present in a template
+file.  Defining a helper is done using the following syntax:
+
+	ist.registerHelper('directiveName', function(subctx, subTemplate) {
+		// Helper code
+	});
 	
+Helpers are called with the current rendering context as `this`, and with the
+narrowed down context as the first argument (`path.to.context.property` in the
+example above). The second argument is an object with the following properties:
+
+- `document`: a reference to the rendering DOM document object
+- `render`: renders the subtemplate, taking a rendering context as first
+  argument, and returning the resulting node (or document fragment).
+  
+Block directives can also be used without a subcontext specification (using just
+`@directiveName`); in this case the first argument to the helper will be
+`undefined`.
+
+Block helpers must return their result as either a DOM node or a (possibly
+empty) DOM document fragment.
+
+#### Basic example
+
+You can define a simple 'noop' block that simply renders the inner template
+without any context switching as follows:
+
+	ist.registerHelper('noop', function(subctx, subTemplate) {
+		return subTemplate.render(this);
+	});
+	
+Having defined this helper, the following template:
+
+	@noop
+		div.example
+			"using a {{ context.property }}"
+			
+will render the same as:
+
+	div.example
+		"using a {{ context.property }}"
+
+#### Predefined block helpers
+
+##### Conditionals
+
 Conditional directives enable conditional rendering of a subtree:
 
 	@if some.property.is.truthy
@@ -168,6 +222,48 @@ Conditional directives enable conditional rendering of a subtree:
 		
 	@unless some.property.is.truthy
 		div.willNotBeRendered
+
+They are defined as follows:
+
+	ist.registerHelper('if', function(subcontext, subtemplate) {
+		if (subcontext) {
+			return subtemplate.render(this);
+		} else {
+			// Return empty fragment
+			return subtemplate.document.createDocumentFragment();
+		}
+	});
+	
+	ist.registerHelper('unless', function(subcontext, subtemplate) {
+		if (!subcontext) {
+			return subtemplate.render(this);
+		} else {
+			// Return empty fragment
+			return subtemplate.document.createDocumentFragment();
+		}
+	});
+	
+
+##### The 'with' block directive
+
+The `@with` directive enables context narrowing:
+
+	span
+		"{{ deeply.nested.object.property1 }}"
+		"{{ deeply.nested.object.property2 }}"
+		
+	div.clearer
+		@with deeply.nested.object
+			"{{ property1 }}"
+			"{{ property2 }}"
+
+It is defined as follows:
+
+	ist.registerHelper('with', function(subcontext, subtemplate) {
+		return subtemplate.render(subcontext);
+	});
+	
+##### Basic iterator
 
 The `@each` loop directive iterates over an array.  Context for the subtree is
 switched to each of the array elements in turn:
@@ -178,16 +274,17 @@ switched to each of the array elements in turn:
 		div
 			"{{ content }}"
 
-Finally, the `@with` directive enables context narrowing:
+The 'each' helper is defined as follows:
 
-	span
-		"{{ deeply.nested.object.property1 }}"
-		"{{ deeply.nested.object.property2 }}"
+	ist.registerHelper('each', function(subcontext, subtemplate) {
+		var fragment = subtemplate.document.createDocumentFragment();
 		
-	div.clearer
-		@with deeply.nested.object
-			"{{ property1 }}"
-			"{{ property2 }}"
+		subcontext.forEach(function(item) {	
+			fragment.appendChild(subtemplate.render(item));
+		});
+		
+		return fragment;
+	});
 
 ## Planned (thus missing) features
 
@@ -199,7 +296,13 @@ The following features will be included in future versions:
 
 ## License
 
-IST is distributed under the MIT license. See the file
-[`LICENSE`](http://github.com/k-o-x/ist) for more information.
+IST is distributed under the MIT license. See the file [`LICENSE`][3] for more
+information.
 
 Copyright (c) 2012 Nicolas Joyard
+
+
+[1] http://github.com/k-o-x/ist
+[2] http://handlebarsjs.com/block_helpers.html
+[3] https://github.com/k-o-x/ist/blob/master/LICENSE
+

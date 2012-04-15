@@ -1,10 +1,10 @@
 define([
-	'ist!directives/if',
-	'ist!directives/unless',
-	'ist!directives/with',
-	'ist!directives/each'
+	'ist!blocks/if',
+	'ist!blocks/unless',
+	'ist!blocks/with',
+	'ist!blocks/each'
 ], function(tIf, tUnless, tWith, tEach) {
-	describe('directives', function() {
+	describe('blocks', function() {
 		var tfObj = {
 				zero: 0,
 				null: null,
