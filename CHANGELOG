@@ -1,0 +1,7 @@
+v0.2 - 2012-04-15
+- Fixed not supporting double quotes inside text nodes
+- Fixed a typo in @if/@unless directives
+- Complete test coverage
+
+v0.1 - 2012-04-10
+- Initial release
