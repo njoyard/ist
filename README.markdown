@@ -302,7 +302,7 @@ information.
 Copyright (c) 2012 Nicolas Joyard
 
 
-[1] http://github.com/k-o-x/ist
-[2] http://handlebarsjs.com/block_helpers.html
-[3] https://github.com/k-o-x/ist/blob/master/LICENSE
+[1]: http://github.com/k-o-x/ist
+[2]: http://handlebarsjs.com/block_helpers.html
+[3]: https://github.com/k-o-x/ist/blob/master/LICENSE
 
