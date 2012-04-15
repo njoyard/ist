@@ -1,0 +1,11 @@
+div.array
+	@each array
+		"{{ this }}"
+
+div.subarray
+	@each sub.array
+		"{{ property }}"
+
+div.empty
+	@each empty
+		"will not appear"

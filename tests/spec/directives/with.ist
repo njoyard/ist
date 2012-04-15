@@ -1,0 +1,9 @@
+@with subcontext
+	"{{ value }}"
+	"{{ sub.property }}"
+	"{{ rootproperty }}"
+
+@with sub.subcontext
+	"{{ value }}"
+	"{{ sub.property }}"
+	"{{ rootproperty }}"
