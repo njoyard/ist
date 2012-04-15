@@ -1,3 +1,7 @@
+v0.3 - 2012-04-15
+- Added generic block helper support
+- Reimplemented directives (if/unless/with/each) using block helpers
+
 v0.2 - 2012-04-15
 - Fixed not supporting double quotes inside text nodes
 - Fixed a typo in @if/@unless directives

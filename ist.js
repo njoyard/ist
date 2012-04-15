@@ -1,6 +1,6 @@
 /** @license
  * IST: Indented Selector Templating
- * version 0.1 - require plugin
+ * version 0.3 - require plugin
  *
  * Copyright (c) 2012 Nicolas Joyard
  * Released under the MIT license.
@@ -447,7 +447,7 @@ define('ist', [], function () {
 		}
 	};
 
-	ist.version = '0.1';
+	ist.version = '0.3';
 
 	ist.load = function (name, parentRequire, load, config) {
 		var path = parentRequire.toUrl(name + '.ist');
