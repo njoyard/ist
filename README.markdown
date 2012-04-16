@@ -169,8 +169,8 @@ The syntax of block directives is as follows:
 		div.subtree
 			...
 
-Block helpers are called when the corresponding block is present in a template
-file.  Defining a helper is done using the following syntax:
+Block helpers are used to render @directiveName blocks. Defining a helper is
+done using the following call:
 
 	ist.registerHelper('directiveName', function(subctx, subTemplate) {
 		// Helper code
@@ -190,6 +190,9 @@ Block directives can also be used without a subcontext specification (using just
 
 Block helpers must return their result as either a DOM node or a (possibly
 empty) DOM document fragment.
+
+Note that helpers must only be defined at the time a template is rendered.
+Template files can be parsed before the necessary block helpers are defined.
 
 #### Basic example
 

@@ -18,7 +18,9 @@
 define('ist', [], function () {
 	"use strict";
 
-	var ist, fs, 
+	var ist,
+		helpers = {},
+		fs, 
 		progIds = ['Msxml2.XMLHTTP', 'Microsoft.XMLHTTP', 'Msxml2.XMLHTTP.4.0'],
 		buildMap = [];
 		
@@ -169,8 +171,8 @@ define('ist', [], function () {
 	/**
 	 * Block node
 	 */
-	function BlockNode(helper, ctxPath) {
-		this.helper = helper;
+	function BlockNode(name, ctxPath) {
+		this.name = name;
 		this.ctxPath = ctxPath;
 	};
 	
@@ -179,7 +181,11 @@ define('ist', [], function () {
 			var self = this,
 				subContext = this.ctxPath ? findPath(this.ctxPath, context) : undefined;
 			
-			return this.helper.call(context, subContext, {
+			if (typeof helpers[this.name] !== 'function') {
+				throw new Error('No block helper for @' + this.name + ' has been registered');
+			}
+			
+			return helpers[this.name].call(context, subContext, {
 				document: (doc || document),
 				
 				render: function(ctx) {
@@ -299,11 +305,7 @@ define('ist', [], function () {
 				} else if (m = rest.match(rx.text)) {
 					pushNode(new TextNode(m[1]));
 				} else if (m = rest.match(rx.block)) {
-					if (!(m[1] in ist.helpers)) {
-						throw new Error("Unknown block type '" + m[1] + "'");
-					}
-					
-					pushNode(new BlockNode(ist.helpers[m[1]], m[3]));
+					pushNode(new BlockNode(m[1], m[3]));
 				} else {
 					throw new Error("Invalid syntax (col 1)");
 				}
@@ -326,8 +328,7 @@ define('ist', [], function () {
 	 * be called with a new context.
 	 */
 	ist.registerHelper = function(name, helper) {
-		ist.helpers = ist.helpers || {};
-		ist.helpers[name] = helper;
+		helpers[name] = helper;
 	};
 	
 	

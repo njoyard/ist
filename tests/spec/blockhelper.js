@@ -1,10 +1,32 @@
 define([
 	'ist',
-	'text!blockhandler/blockhandler.ist',
-	'text!blockhandler/nocontext.ist'
-], function(ist, textBlockhandler, textNocontext) {
-	describe('blockhandlers', function() {
-		it("should call helpers when the corresponding block is parsed", function() {
+	'text!blockhelper/blockhelper.ist',
+	'text!blockhelper/nocontext.ist'
+], function(ist, textBlockhelper, textNocontext) {
+	describe('blockhelpers', function() {
+		it("should allow parsing templates with unknown @blocks", function() {
+			var thrown = false;
+			
+			ist.registerHelper('testBlock', undefined);
+			
+			try {
+				ist(textBlockhelper);
+			} catch(e) {
+				thrown = true;
+			}
+			
+			expect( thrown ).toBe( false );
+		});
+		
+		it("should fail to render templates with unknown @blocks", function() {
+			var context = { context: { value: 'context' } };
+			
+			ist.registerHelper('testBlock', undefined);
+			
+			expect( function() { ist(textBlockhelper).render(context); } ).toThrow('No block helper for @testBlock has been registered');
+		});
+	
+		it("should call helpers when the corresponding @block is rendered", function() {
 			var called = false,
 				context = { context: { value: 'context' } };
 				
@@ -13,7 +35,7 @@ define([
 				called = true;
 				return document.createDocumentFragment();
 			});
-			ist(textBlockhandler).render(context);
+			ist(textBlockhelper).render(context);
 			
 			expect( called ).toBe( true );
 		});
@@ -27,7 +49,7 @@ define([
 				hthis = this;
 				return document.createDocumentFragment();
 			});
-			ist(textBlockhandler).render(context);
+			ist(textBlockhelper).render(context);
 			
 			expect( hthis ).toBe( context );
 		});
@@ -41,7 +63,7 @@ define([
 				arg = subcontext;
 				return document.createDocumentFragment();
 			});
-			ist(textBlockhandler).render(context);
+			ist(textBlockhelper).render(context);
 			
 			expect( arg ).toBe( context.context );
 		});
@@ -68,7 +90,7 @@ define([
 				arg = subtemplate.document;
 				return document.createDocumentFragment();
 			});
-			ist(textBlockhandler).render(context);
+			ist(textBlockhelper).render(context);
 			
 			expect( arg ).toBe( document );
 		});
@@ -81,7 +103,7 @@ define([
 				result = subtemplate.render({ value: 'my value' });
 				return document.createDocumentFragment();
 			});
-			ist(textBlockhandler).render(context);
+			ist(textBlockhelper).render(context);
 			
 			expect( result.querySelector('.child') ).toNotBe( null );
 			expect( result.querySelector('.child').firstChild ).toNotBe( null );
@@ -96,7 +118,7 @@ define([
 				node.className = 'generated';
 				return node;
 			});
-			fragment = ist(textBlockhandler).render({ context: undefined });
+			fragment = ist(textBlockhelper).render({ context: undefined });
 			
 			expect( fragment.querySelector("div.parent div.generated") ).toNotBe( null );
 			expect( fragment.querySelector("div.parent div.generated") ).toBe( node );
