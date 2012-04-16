@@ -1,5 +1,7 @@
 @if zero
 	div.zero
+@if emptystring
+	div.emptystring
 @if null
 	div.null
 @if undefined

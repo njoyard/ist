@@ -7,6 +7,7 @@ define([
 	describe('blocks', function() {
 		var tfObj = {
 				zero: 0,
+				emptystring: '',
 				null: null,
 				undefined: undefined,
 				false: false,
@@ -20,7 +21,7 @@ define([
 					property2: false
 				}
 			},
-			falsy = ['zero', 'null', 'undefined', 'false'],
+			falsy = ['zero', 'emptystring', 'null', 'undefined', 'false'],
 			truthy = ['number', 'string', 'object', 'array', 'true'],
 			ifFragment = tIf.render(tfObj),
 			unlessFragment = tUnless.render(tfObj),
