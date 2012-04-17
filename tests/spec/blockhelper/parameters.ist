@@ -1,0 +1,4 @@
+@testBlock context first="value" second="va lu=e" third="other\\" fourth="\n\\test\""
+	div.child
+
+@otherBlock context first="value" "text without name" second="other" "second text without name"

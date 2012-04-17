@@ -24,6 +24,38 @@ define('ist', [], function () {
 		progIds = ['Msxml2.XMLHTTP', 'Microsoft.XMLHTTP', 'Msxml2.XMLHTTP.4.0'],
 		buildMap = [];
 		
+
+	function jsEscape (content) {
+		return content.replace(/(['\\])/g, '\\$1')
+			.replace(/[\f]/g, "\\f")
+			.replace(/[\b]/g, "\\b")
+			.replace(/[\t]/g, "\\t")
+			.replace(/[\n]/g, "\\n")
+			.replace(/[\r]/g, "\\r");
+	};
+	
+	function jsUnescape (content) {
+		var chars = {
+			'\\\\': '\\',
+			'\\f': '\f',
+			'\\b': '\b',
+			'\\t': '\t',
+			'\\n': '\n',
+			'\\r': '\r',
+			'\\"': '\"',
+			'\\\'': '\''
+		};
+		
+		return content
+			.match(/(?:(?=(\\?))\1.)/g)
+			.map(function(char) {
+				if (typeof chars[char] !== 'undefined') {
+					return chars[char];
+				} else {
+					return char;
+				}
+			}).join('');
+	};
 		
 	/******************************************
 	 *            Actual IST code             *
@@ -171,9 +203,10 @@ define('ist', [], function () {
 	/**
 	 * Block node
 	 */
-	function BlockNode(name, ctxPath) {
+	function BlockNode(name, ctxPath, options) {
 		this.name = name;
 		this.ctxPath = ctxPath;
+		this.options = options;
 	};
 	
 	BlockNode.prototype = new ContainerNode({
@@ -190,7 +223,9 @@ define('ist', [], function () {
 				
 				render: function(ctx) {
 					return ContainerNode.prototype.render.call(self, ctx, doc);
-				}
+				},
+				
+				options: self.options
 			});
 		}
 	});	
@@ -203,13 +238,16 @@ define('ist', [], function () {
 	ist = function(text, name) {
 		var rx = {
 				indent: /^(\s*)(.*)$/,
-				element: /^([a-z0-9]+)(.*)$/,
-					elemProps: /^([.#][a-zA-Z0-9_-]+|\[[^\]=]+=[^\]]+\])(.*)$/,
-					elemClass: /^\.([a-zA-Z0-9_-]+)$/,
-					elemId: /^#([a-zA-Z0-9_-]+)$/,
+				element: /^(\w+)(.*)$/,
+					elemProps: /^([.#][\w-]+|\[[^\]=]+=[^\]]+\])(.*)$/,
+					elemClass: /^\.([\w-]+)$/,
+					elemId: /^#([\w-]+)$/,
 					elemAttr: /^\[([^\]=]+)=([^\]]+)\]$/,
 				text: /^"(.*?)"?$/,
-				block: /^@([a-zA-Z0-9_-]+)(\s+(.*))?$/
+				block: /^@(\w+)(\s+.*?)?\s*$/,
+					blockCtx: /^\s+([\w\.]+)/,
+					blockParam: /^\s+(\w+)=(['"])((?:(?=(\\?))\4.)*?)\2/,
+					blockText: /^\s+(['"])((?:(?=(\\?))\3.)*?)\1/
 			},
 			stack = [new ContainerNode()],
 			indentStack;
@@ -239,7 +277,9 @@ define('ist', [], function () {
 		};
 	
 		text.split('\n').forEach(function(line, lineNumber) {
-			var m, node, prop, rest, lastIndent, indentIdx;
+			var i, m, node, prop, rest,
+				bName, bCtx, bOptions, bRest,
+				lastIndent, indentIdx;
 		
 			m = line.match(rx.indent);
 		
@@ -305,12 +345,35 @@ define('ist', [], function () {
 				} else if (m = rest.match(rx.text)) {
 					pushNode(new TextNode(m[1]));
 				} else if (m = rest.match(rx.block)) {
-					pushNode(new BlockNode(m[1], m[3]));
+					bName = m[1];
+					bRest = m[2];
+					bCtx = null;
+					bOptions = {};
+					i = 0;
+					
+					while (bRest) {
+						if (m = bRest.match(rx.blockParam)) {
+							bOptions[m[1]] = jsUnescape(m[3]);
+						} else if (i == 0 && (m = bRest.match(rx.blockCtx))) {
+							bCtx = m[1];
+						} else if (m = bRest.match(rx.blockText)) {
+							bOptions.text = jsUnescape(m[2]);
+						} else {
+							throw new Error("Invalid syntax (col " + (line.length - bRest.length + 1) + ")");
+						}
+					
+						bRest = bRest.substr(m[0].length);
+						++i;
+					}
+					
+					pushNode(new BlockNode(bName, bCtx, bOptions));
 				} else {
 					throw new Error("Invalid syntax (col 1)");
 				}
 			} catch(e) {
-				throw new Error(e.message + ' in ' + name + ' on line ' + (lineNumber+1));
+				var err = new Error(e.message + ' in ' + name + ' on line ' + (lineNumber+1));
+				err.stack = e.stack;
+				throw err;
 			}
 		});
 		
@@ -420,16 +483,6 @@ define('ist', [], function () {
 			}
 		};
 		xhr.send(null);
-	};
-
-
-	function jsEscape (content) {
-		return content.replace(/(['\\])/g, '\\$1')
-			.replace(/[\f]/g, "\\f")
-			.replace(/[\b]/g, "\\b")
-			.replace(/[\t]/g, "\\t")
-			.replace(/[\n]/g, "\\n' +\n\t\t'")
-			.replace(/[\r]/g, "\\r");
 	};
 	
 

@@ -165,7 +165,7 @@ you'll find out that IST block directives work in the exact same way.
 
 The syntax of block directives is as follows:
 
-	@directiveName path.to.context.property
+	@directiveName path.to.context.property param="value" param2="value"
 		div.subtree
 			...
 
@@ -181,6 +181,9 @@ narrowed down context as the first argument (`path.to.context.property` in the
 example above). The second argument is an object with the following properties:
 
 - `document`: a reference to the rendering DOM document object
+- `options`: an object containing block parameters ("param" and "param2" in the
+  example above). A parameter specified without name will be mapped to 'text'
+  (in this case, only the last nameless value will be kept).
 - `render`: renders the subtemplate, taking a rendering context as first
   argument, and returning the resulting node (or document fragment).
   
@@ -214,7 +217,7 @@ will render the same as:
 	div.example
 		"using a {{ context.property }}"
 
-#### Predefined block helpers
+#### Built-in block helpers
 
 ##### Conditionals
 
