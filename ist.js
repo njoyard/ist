@@ -528,6 +528,10 @@ define('ist', [], function () {
 			//Do not explicitly handle errors, those should be
 			//visible via console output in the browser.
 			if (xhr.readyState === 4) {
+				if (xhr.status !== 200) {
+					throw new Error("HTTP status "  + xhr.status + " when loading " + url);
+				}
+			
 				callback(xhr.responseText);
 			}
 		};
