@@ -159,13 +159,13 @@ can use `[.className={{ variable }}]` and `[.id={{ variable }}]`
 Block directives are used to control node generation with the help of context
 properties.  They allow to define custom iterators and handlers to operate on a
 narrowed down rendering context.  If you're used to [handlebars blocks][2],
-you'll find out that IST block directives work in the exact same way.
+you'll find out that IST block directives work in the same way.
 
 #### Defining block helpers
 
 The syntax of block directives is as follows:
 
-	@directiveName path.to.context.property param="value" param2="value"
+	@directiveName path.to.context.property param1="value" param2="value"
 		div.subtree
 			...
 
@@ -181,25 +181,26 @@ narrowed down context as the first argument (`path.to.context.property` in the
 example above). The second argument is an object with the following properties:
 
 - `document`: a reference to the rendering DOM document object
-- `options`: an object containing block parameters ("param" and "param2" in the
+- `options`: an object containing block parameters ("param1" and "param2" in the
   example above). A parameter specified without name will be mapped to 'text'
   (in this case, only the last nameless value will be kept).
 - `render`: renders the subtemplate, taking a rendering context as first
   argument, and returning the resulting node (or document fragment).
   
-Block directives can also be used without a subcontext specification (using just
-`@directiveName`); in this case the first argument to the helper will be
-`undefined`.
+Block directives can also be used without a subcontext specification; in this
+case the first argument to the helper will be `undefined`.
 
 Block helpers must return their result as either a DOM node or a (possibly
 empty) DOM document fragment.
 
 Note that helpers must only be defined at the time a template is rendered.
-Template files can be parsed before the necessary block helpers are defined.
+Template files can be parsed before the necessary block helpers are defined; 
+this enables loading templates with the requirejs plugin syntax and defining
+helpers later.
 
-#### Basic example
+#### Basic examples
 
-You can define a simple 'noop' block that simply renders the inner template
+You can define a simple '@noop' block that simply renders the inner template
 without any context switching as follows:
 
 	ist.registerHelper('noop', function(subctx, subTemplate) {
@@ -217,7 +218,25 @@ will render the same as:
 	div.example
 		"using a {{ context.property }}"
 
+An other simple example would be a '@disabled' block that prevents rendering
+part of a template tree:
+
+	div.rendered
+		@disabled
+			div.notRendered
+	@disabled
+		div.alsoNotRendered
+
+The associated helper simply always returns an empty fragment:
+
+	ist.registerHelper('noop', function(subctx, subTemplate) {
+		return subTemplate.document.createDocumentFragment();
+	});
+
 #### Built-in block helpers
+
+IST built-in block helpers are documented below, along with their helper
+definition to help better understand how helpers work and what they can achieve.
 
 ##### Conditionals
 
@@ -292,12 +311,68 @@ The 'each' helper is defined as follows:
 		return fragment;
 	});
 
-## Planned (thus missing) features
+##### External template inclusion
+
+A template file can be included in an other one using the `@include` directive:
+
+	@include "path/to/template"
+	@include "path/to/template.ist"
+	
+The `@include`d template will be rendered in the current context.  When loading
+templates with the `ist!` plugin, included template paths must be relative (ie.
+path/to/a must refer to path/to/b as `@include "b"` or `@include "b.ist"`), and
+are loaded automatically.
+
+However, when a template string is compiled directly, dependencies must have
+been loaded prior to rendering.  In the first example above, the helper will
+look for AMD modules named either `path/to/template`, `path/to/template.ist`,
+`ist!path/to/template` or `text!path/to/template.ist`.  One of these modules
+must resolve to either a template string or a compiled IST template.
+
+The code for the corresponding helper is shown below.  Please note that this
+helper alone is not sufficient: the requirejs plugin code also parses templates
+to add `@include`d templates to dependencies.
+
+	ist.registerHelper('include', function(ctx, tmpl) {
+		var what = tmpl.options.text.replace(/\.ist$/, ''),
+			found, tryReq;
+			
+		// Try to find a previously require()-d template or string
+		tryReq = [
+			what,
+			what + '.ist',
+			'ist!' + what,
+			'text!' + what + '.ist'
+		];
+		
+		while (!found && tryReq.length) {
+			try {
+				found = require(tryReq.shift());
+			} catch(e) {
+				if (tryReq.length === 0) {
+					throw new Error("Cannot find included template '" + what + "'");
+				}
+			}
+		}
+		
+		if (typeof found === 'string') {
+			// Compile template
+			found = ist(found, what);
+		}
+		
+		if (typeof found.render === 'function') {
+			// Render included template
+			return found.render(this, tmpl.document);
+		} else {
+			throw new Error("Invalid included template '" + what + "'");
+		}
+	});
+
+## Planned features
 
 The following features will be included in future versions:
 
 - comments
-- external template inclusion
 - better text node handling (esp. for escaped chars such as \n & \t)
 
 ## License

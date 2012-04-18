@@ -2,8 +2,9 @@ define([
 	'ist!blocks/if',
 	'ist!blocks/unless',
 	'ist!blocks/with',
-	'ist!blocks/each'
-], function(tIf, tUnless, tWith, tEach) {
+	'ist!blocks/each',
+	'ist!blocks/include'
+], function(tIf, tUnless, tWith, tEach, tInclude) {
 	describe('blocks', function() {
 		var tfObj = {
 				zero: 0,
@@ -159,6 +160,16 @@ define([
 			
 			eachObj.sub = undefined;
 			expect( function() { tEach.render(eachObj); } ).toThrow( 'Cannot find path sub.array in context' );
+		});
+		
+		
+		/** @include **/
+		
+		it("should allow including relative template paths when loaded with the ist! plugin", function() {
+			var inclFragment = tInclude.render({});
+			
+			expect( inclFragment.querySelector('.parent .included') ).toNotBe( null );
+			expect( inclFragment.querySelector('.parent .included .includedchild') ).toNotBe( null );
 		});
 	});
 });

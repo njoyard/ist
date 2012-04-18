@@ -1,15 +1,12 @@
 /** @license
  * IST: Indented Selector Templating
- * version 0.3 - require plugin
+ * version 0.3
  *
  * Copyright (c) 2012 Nicolas Joyard
  * Released under the MIT license.
  *
  * Author: Nicolas Joyard <joyard.nicolas@gmail.com>
  * http://github.com/k-o-x/ist
- *
- * Code shamelessly inspired from Alex Sexton's hbs plugin
- * Only works in a browser environment for now
  */
 
 /*jslint white: true, browser: true, plusplus: true */
@@ -387,6 +384,15 @@ define('ist', [], function () {
 	
 	
 	/**
+	 * Single node creation helper; usage:
+	 * var myDiv = ist.create("div.myClass#id[prop=val]")
+	 */
+	ist.create = function(template, doc) {
+		return ist(template).render({}, doc||document);
+	};
+	
+	
+	/**
 	 * IST helper block registration; allows custom iterators/helpers that will
 	 * be called with a new context.
 	 */
@@ -396,50 +402,93 @@ define('ist', [], function () {
 	
 	
 	/**
-	 * Base 'if' helper
+	 * Built-in 'if' helper
 	 */
-	ist.registerHelper('if', function(subcontext, subtemplate) {
-		if (subcontext) {
-			return subtemplate.render(this);
+	ist.registerHelper('if', function(ctx, tmpl) {
+		if (ctx) {
+			return tmpl.render(this);
 		} else {
 			// Return empty fragment
-			return subtemplate.document.createDocumentFragment();
+			return tmpl.document.createDocumentFragment();
 		}
 	});
 	
 	
 	/**
-	 * Base 'unless' helper
+	 * Built-in 'unless' helper
 	 */
-	ist.registerHelper('unless', function(subcontext, subtemplate) {
-		if (!subcontext) {
-			return subtemplate.render(this);
+	ist.registerHelper('unless', function(ctx, tmpl) {
+		if (!ctx) {
+			return tmpl.render(this);
 		} else {
 			// Return empty fragment
-			return subtemplate.document.createDocumentFragment();
+			return tmpl.document.createDocumentFragment();
 		}
 	});
 	
 	
 	/**
-	 * Base 'with' helper
+	 * Built-in 'with' helper
 	 */
-	ist.registerHelper('with', function(subcontext, subtemplate) {
-		return subtemplate.render(subcontext);
+	ist.registerHelper('with', function(ctx, tmpl) {
+		return tmpl.render(ctx);
 	});
 	
 	
 	/**
-	 * Base 'each' helper
+	 * Built-in 'each' helper
 	 */
-	ist.registerHelper('each', function(subcontext, subtemplate) {
-		var fragment = subtemplate.document.createDocumentFragment();
+	ist.registerHelper('each', function(ctx, tmpl) {
+		var fragment = tmpl.document.createDocumentFragment();
 		
-		subcontext.forEach(function(item) {	
-			fragment.appendChild(subtemplate.render(item));
+		ctx.forEach(function(item) {	
+			fragment.appendChild(tmpl.render(item));
 		});
 		
 		return fragment;
+	});
+	
+	
+	/**
+	 * Built-in 'include' helper.
+	 *
+	 * Usage:
+	 * @include "path/to/template"
+	 * @include "path/to/template.ist"
+	 */
+	ist.registerHelper('include', function(ctx, tmpl) {
+		var what = tmpl.options.text.replace(/\.ist$/, ''),
+			found, tryReq;
+			
+		// Try to find a previously require()-d template or string
+		tryReq = [
+			what,
+			what + '.ist',
+			'ist!' + what,
+			'text!' + what + '.ist'
+		];
+		
+		while (!found && tryReq.length) {
+			try {
+				found = require(tryReq.shift());
+			} catch(e) {
+				if (tryReq.length === 0) {
+					throw new Error("Cannot find included template '" + what + "'");
+				}
+			}
+		}
+		
+		if (typeof found === 'string') {
+			// Compile template
+			found = ist(found, what);
+		}
+		
+		if (typeof found.render === 'function') {
+			// Render included template
+			return found.render(this, tmpl.document);
+		} else {
+			throw new Error("Invalid included template '" + what + "'");
+		}
 	});
 
 
@@ -490,10 +539,6 @@ define('ist', [], function () {
 	 *        Require plugin interface        *
 	 ******************************************/
 	
-	ist.get = function () {
-		return domton;
-	};
-
 	ist.write = function (pluginName, name, write) {
 		if (buildMap.hasOwnProperty(name)) {
 			var text = buildMap[name];
@@ -504,20 +549,40 @@ define('ist', [], function () {
 	ist.version = '0.3';
 
 	ist.load = function (name, parentRequire, load, config) {
-		var path = parentRequire.toUrl(name + '.ist');
+		var path = parentRequire.toUrl(name + '.ist'),
+			dirname = name.indexOf('/') === -1 ? '.' : name.replace(/\/[^\/]*$/, '');
 		
 		fetchText(path, function (text) {
-			var i;
+			var i, m, deps = ['ist'];
 			
-			text = "/* START_TEMPLATE */\n" + 
-				   "define('ist!" + name + "',['ist'], function(ist){ \n" +
-				   "\tvar template = '" + jsEscape(text) + "';\n" +
+			/* Find @include calls and replace them with 'absolute' paths
+			   (ie @include 'inc/include' in 'path/to/template'
+				 becomes @include 'path/to/inc/include')
+			   while recording all distinct include paths
+			 */
+				 
+			text = text.replace(/^(\s*)@include\s+(?:text=)?(['"])((?:(?=(\\?))\4.)*?)\2/gm,
+				function(m, p1, p2, p3) {
+					var dpath = dirname + '/' + p3.replace(/\.ist$/, '');
+					
+					if (deps.indexOf('ist!' + dpath) === -1) {
+						deps.push('ist!' + dpath);
+					}
+					
+					return p1 + '@include "' + dpath + '"';
+				});
+			
+			/* "Pretty-print" template text */
+			text = jsEscape(text).replace(/\\n/g, "\\n' +\n\t               '");
+			
+			text = "define('" + name + "@ist'," + JSON.stringify(deps) + ", function(ist){ \n" +
+				   "\tvar template = '" + text + "';\n" +
 				   "\treturn ist(template, '" + name + "');\n" +
 				   "});\n";
 				   
 			//Hold on to the transformed text if a build.
 			if (config.isBuild) {
-				buildMap[name] = text;
+				buildMap[name + '@ist'] = text;
 			}
 
 			//IE with conditional comments on cannot handle the
@@ -528,12 +593,10 @@ define('ist', [], function () {
 			}
 			/*@end@*/
 			
-			load.fromText(name, text);
+			load.fromText(name + '@ist', text);
 
-			//Give result to load. Need to wait until the module
-			//is fully parse, which will happen after this
-			//execution.
-			parentRequire([name], function (value) {
+			// Finish loading and give result to load()
+			parentRequire([name + '@ist'], function (value) {
 				load(value);
 			});
 		});

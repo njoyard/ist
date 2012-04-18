@@ -11,11 +11,12 @@
     <script>
         require({
             baseUrl: 'spec',
-            paths : {
+            paths: {
             	'text': '../lib/requirejs/text',
             	'order': '../lib/requirejs/order',
             	'ist': '../../ist'
-            }
+            },
+            waitSeconds: 3600
         });
 
         require(
