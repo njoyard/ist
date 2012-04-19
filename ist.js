@@ -19,7 +19,20 @@ define('ist', [], function () {
 		helpers = {},
 		fs, 
 		progIds = ['Msxml2.XMLHTTP', 'Microsoft.XMLHTTP', 'Msxml2.XMLHTTP.4.0'],
-		buildMap = [];
+		buildMap = [],
+		rx = {
+			indent: /^(\s*)(.*)$/,
+			element: /^(\w+)(.*)$/,
+				elemProps: /^([.#][\w-]+|\[[^\]=]+=[^\]]+\])(.*)$/,
+				elemClass: /^\.([\w-]+)$/,
+				elemId: /^#([\w-]+)$/,
+				elemAttr: /^\[([^\]=]+)=([^\]]+)\]$/,
+			text: /^"(.*?)"?$/,
+			block: /^@(\w+)(\s+.*?)?\s*$/,
+				blockCtx: /^\s+([\w\.]+)/,
+				blockParam: /^\s+(\w+)=(['"])((?:(?=(\\?))\4.)*?)\2/,
+				blockText: /^\s+(['"])((?:(?=(\\?))\3.)*?)\1/
+		};
 		
 
 	function jsEscape (content) {
@@ -225,7 +238,67 @@ define('ist', [], function () {
 				options: self.options
 			});
 		}
-	});	
+	});
+	
+	
+	/**
+	 * Single node creation helper
+	 */
+	function createSingleNode(nodeSpec) {
+		var node, m, prop, name, ctx, options, i,
+			rest = nodeSpec.trim();
+		
+		if (m = rest.match(rx.element)) {
+			node = new ElementNode(m[1]);
+			rest = m[2];
+	
+			while (rest.length) {
+				if (m = rest.match(rx.elemProps)) {
+					prop = m[1];
+					rest = m[2];
+			
+					if (m = prop.match(rx.elemClass)) {
+						node.setClass(m[1]);
+					} else if (m = prop.match(rx.elemId)) {
+						node.setId(m[1]);
+					} else if (m = prop.match(rx.elemAttr)) {
+						node.setAttribute(m[1], m[2]);
+					}
+				} else {
+					throw new Error("Invalid syntax (col " + (line.length - rest.length + 1) + ")");
+				}
+			}
+	
+			return node;
+		} else if (m = rest.match(rx.text)) {
+			return new TextNode(m[1]);
+		} else if (m = rest.match(rx.block)) {
+			name = m[1];
+			rest = m[2];
+			ctx = null;
+			options = {};
+			i = 0;
+			
+			while (rest) {
+				if (m = rest.match(rx.blockParam)) {
+					options[m[1]] = jsUnescape(m[3]);
+				} else if (i == 0 && (m = rest.match(rx.blockCtx))) {
+					ctx = m[1];
+				} else if (m = rest.match(rx.blockText)) {
+					options.text = jsUnescape(m[2]);
+				} else {
+					throw new Error("Invalid syntax (col " + (line.length - rest.length + 1) + ")");
+				}
+			
+				rest = rest.substr(m[0].length);
+				++i;
+			}
+			
+			return new BlockNode(name, ctx, options);
+		} else {
+			throw new Error("Invalid syntax (col 1)");
+		}
+	};
 	
 	
 	/**
@@ -233,22 +306,8 @@ define('ist', [], function () {
 	 * Returns ContainerNode with render(context[, document]) method
 	 */
 	ist = function(text, name) {
-		var rx = {
-				indent: /^(\s*)(.*)$/,
-				element: /^(\w+)(.*)$/,
-					elemProps: /^([.#][\w-]+|\[[^\]=]+=[^\]]+\])(.*)$/,
-					elemClass: /^\.([\w-]+)$/,
-					elemId: /^#([\w-]+)$/,
-					elemAttr: /^\[([^\]=]+)=([^\]]+)\]$/,
-				text: /^"(.*?)"?$/,
-				block: /^@(\w+)(\s+.*?)?\s*$/,
-					blockCtx: /^\s+([\w\.]+)/,
-					blockParam: /^\s+(\w+)=(['"])((?:(?=(\\?))\4.)*?)\2/,
-					blockText: /^\s+(['"])((?:(?=(\\?))\3.)*?)\1/
-			},
-			stack = [new ContainerNode()],
+		var stack = [new ContainerNode()],
 			indentStack;
-		
 		
 		name = name || '<unknown>';
 	
@@ -274,9 +333,7 @@ define('ist', [], function () {
 		};
 	
 		text.split('\n').forEach(function(line, lineNumber) {
-			var i, m, node, prop, rest,
-				bName, bCtx, bOptions, bRest,
-				lastIndent, indentIdx;
+			var m, rest, lastIndent, indentIdx;
 		
 			m = line.match(rx.indent);
 		
@@ -314,59 +371,8 @@ define('ist', [], function () {
 					}
 				}
 				
-				rest = m[2];
-		
-				// Handle actual node
-				if (m = rest.match(rx.element)) {
-					node = new ElementNode(m[1]);
-					rest = m[2];
-			
-					while (rest.length) {
-						if (m = rest.match(rx.elemProps)) {
-							prop = m[1];
-							rest = m[2];
-					
-							if (m = prop.match(rx.elemClass)) {
-								node.setClass(m[1]);
-							} else if (m = prop.match(rx.elemId)) {
-								node.setId(m[1]);
-							} else if (m = prop.match(rx.elemAttr)) {
-								node.setAttribute(m[1], m[2]);
-							}
-						} else {
-							throw new Error("Invalid syntax (col " + (line.length - rest.length + 1) + ")");
-						}
-					}
-			
-					pushNode(node);
-				} else if (m = rest.match(rx.text)) {
-					pushNode(new TextNode(m[1]));
-				} else if (m = rest.match(rx.block)) {
-					bName = m[1];
-					bRest = m[2];
-					bCtx = null;
-					bOptions = {};
-					i = 0;
-					
-					while (bRest) {
-						if (m = bRest.match(rx.blockParam)) {
-							bOptions[m[1]] = jsUnescape(m[3]);
-						} else if (i == 0 && (m = bRest.match(rx.blockCtx))) {
-							bCtx = m[1];
-						} else if (m = bRest.match(rx.blockText)) {
-							bOptions.text = jsUnescape(m[2]);
-						} else {
-							throw new Error("Invalid syntax (col " + (line.length - bRest.length + 1) + ")");
-						}
-					
-						bRest = bRest.substr(m[0].length);
-						++i;
-					}
-					
-					pushNode(new BlockNode(bName, bCtx, bOptions));
-				} else {
-					throw new Error("Invalid syntax (col 1)");
-				}
+				// Create actual node
+				pushNode(createSingleNode(m[2]));
 			} catch(e) {
 				var err = new Error(e.message + ' in ' + name + ' on line ' + (lineNumber+1));
 				err.stack = e.stack;
@@ -380,15 +386,6 @@ define('ist', [], function () {
 		}
 		
 		return peekNode();
-	};
-	
-	
-	/**
-	 * Single node creation helper; usage:
-	 * var myDiv = ist.create("div.myClass#id[prop=val]")
-	 */
-	ist.create = function(template, doc) {
-		return ist(template).render({}, doc||document);
 	};
 	
 	
