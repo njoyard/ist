@@ -1,6 +1,6 @@
 /** @license
  * IST: Indented Selector Templating
- * version 0.3
+ * version 0.4
  *
  * Copyright (c) 2012 Nicolas Joyard
  * Released under the MIT license.
@@ -549,8 +549,6 @@ define('ist', [], function () {
 			write(text);
 		}
 	};
-
-	ist.version = '0.3';
 
 	ist.load = function (name, parentRequire, load, config) {
 		var path = parentRequire.toUrl(name + '.ist'),

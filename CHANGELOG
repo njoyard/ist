@@ -1,3 +1,9 @@
+v0.4 - 2012-04-19
+- Enabled template compilation with undefined block helpers (so they can be
+  defined/registered just before rendering)
+- Added named parameters support to block helpers
+- Implemented @include directive
+
 v0.3 - 2012-04-15
 - Added generic block helper support
 - Reimplemented directives (if/unless/with/each) using block helpers

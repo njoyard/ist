@@ -5,7 +5,7 @@
 IST is a DOM templating engine using a CSS selector-like syntax.  Templates are
 text files, which are first parsed and compiled into a template object, and then
 rendered into a DOM document using a context object.  This file documents usage
-of version 0.3.
+of version 0.4.
 
 Here is a brief overview of an IST template file:
 
@@ -15,11 +15,14 @@ Here is a brief overview of an IST template file:
 	            h1
 	                "{{ title }}"
 	            "{{ text }}"
+	            
 	        @unless comments.length
 	            "No comments for now !"
+	            
 	        @each comments
 	            div.comment
 	                "{{ this }}"
+	                
 	        form.newcomment
 	            label[for=name]
 	                "Name :"
@@ -27,6 +30,8 @@ Here is a brief overview of an IST template file:
 	            label[for=comment]
 	            textarea[cols=55]#commentArea
 	                "Enter your comment here"
+	                
+	@include "common/footer"
 
 ## Usage
 
