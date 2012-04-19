@@ -1,3 +1,7 @@
+v0.4.1 - 2012-04-19
+- Moved node creation outside compiler
+- Added new single-node creation helper; can also create multiple nodes at once.
+
 v0.4 - 2012-04-19
 - Enabled template compilation with undefined block helpers (so they can be
   defined/registered just before rendering)
