@@ -97,7 +97,7 @@ level:
 There is no restriction in the size of indent. The following are all equivalent:
 
 	div.parent
-	 div.parent
+	 div.child
 
 	div.parent
 	             div.child
