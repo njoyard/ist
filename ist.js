@@ -390,6 +390,32 @@ define('ist', [], function () {
 	
 	
 	/**
+	 * Node creation interface
+	 * Creates nodes with IST template syntax
+	 *
+	 * Several nodes can be created at once using angle brackets, eg.:
+	 *   ist.createNode('div.parent > div#child > "text node")
+	 *
+	 * Supports context variables and an optional alternative document.
+	 * Does not support angle brackets anywhere else than between nodes.
+	 * 
+	 * Directives are supported ("div.parent > @each ctxVar > div.child")
+	 */
+	ist.createNode = function(branchSpec, context, doc) {
+		var nodes = branchSpec.split('>').map(function(n) { return n.trim(); }),
+			indent = '',
+			template = '';
+		
+		nodes.forEach(function(nodeSpec) {
+			template += '\n' + indent + nodeSpec;
+			indent += ' ';
+		});
+		
+		return ist(template).render(context, doc);
+	};
+	
+	
+	/**
 	 * IST helper block registration; allows custom iterators/helpers that will
 	 * be called with a new context.
 	 */

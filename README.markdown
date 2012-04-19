@@ -374,6 +374,38 @@ to add `@include`d templates to dependencies.
 		}
 	});
 
+## Single node creation
+
+IST also has a shortcut "single node" creation interface that support the same
+syntax as full template files.  You can call it as follows:
+
+	myDiv = ist.createNode("div.class#id[prop=Value]");
+	
+It also supports rendering with context:
+
+	myDiv = ist.createNode("div[class={{ cls }}]", { cls: 'myclass' });
+	
+`createNode` is actually able to create several nodes at once using a CSS-like
+angle-bracket syntax:
+
+	myParentDiv = ist.createNode(
+		'div.parent > div.child > "{{ text }}"',
+		{ text: "Text node content" }
+	);
+	
+And you can even use directives:
+
+	myParentDiv = ist.createNode(
+		'div.parent > @each children > "{{ name }}"',
+		{ children: [ { name: 'alice' }, { name: 'bob' } ] }
+	);
+
+Please note however that `createNode` does not support angle brackets anywhere
+else than between nodes.  Finally, you can create nodes in an alternate document
+by passing it as a third argument:
+
+	popupDiv = ist.createNode('div.inPopup', null, popup.document);
+
 ## Planned features
 
 The following features will be included in future versions:
