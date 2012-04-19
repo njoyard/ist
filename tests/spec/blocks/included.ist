@@ -1,2 +1,3 @@
 div.included
 	div.includedchild
+		"{{ variable }}"
