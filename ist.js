@@ -404,14 +404,16 @@ define('ist', [], function () {
 	ist.createNode = function(branchSpec, context, doc) {
 		var nodes = branchSpec.split('>').map(function(n) { return n.trim(); }),
 			indent = '',
-			template = '';
+			template = '',
+			rendered;
 		
 		nodes.forEach(function(nodeSpec) {
 			template += '\n' + indent + nodeSpec;
 			indent += ' ';
 		});
 		
-		return ist(template).render(context, doc);
+		rendered = ist(template).render(context, doc);
+		return rendered.childNodes.length === 1 ? rendered.firstChild : rendered;
 	};
 	
 	
