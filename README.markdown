@@ -55,9 +55,9 @@ Note that the plugin automatically adds an `.ist` extension to file names.
 
 ### Rendering
 
-You can render a template using the `render` method of compiled templates.  By
-defaut, it will render using the global object `document` property (eg.
-`window.document`).
+You can render a template using the `render` method of compiled templates and
+passing it a context object as its first argument.  By defaut, it will render
+using the global object `document` property (eg. `window.document`).
 
 	document.body.appendChild(myTemplate.render({ articles: [...] }));
 	
@@ -105,8 +105,9 @@ There is no restriction in the size of indent. The following are all equivalent:
 	div.parent
 		div.child
 
-However, indent is compared strictly: it has to be strictly identical for all
-nodes at the same level.  Therefore it's best to avoid mixing tabs and spaces.
+However, indent is compared strictly: it has to be identical for all sibling
+nodes (ie nodes at the same level with the same parent).  Therefore it's best to
+avoid mixing tabs and spaces.
 
 ### Element nodes - Selectors
 
@@ -152,7 +153,7 @@ text nodes or in property/attribute values:
 
 	"value is {{ value }}, bar is {{ bar }}"
 	div[.className={{ cssClass1 }} {{ cssClass2 }}]
-		"{{ access.to.sub.properties }}"
+		"{{ access.to.context.sub.properties }}"
 		"Spaces inside braces are {{ignored     }}"
 		"The special keyword {{ this }} references the current context itself"
 
