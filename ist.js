@@ -466,9 +466,11 @@ define('ist', [], function () {
 	ist.registerHelper('each', function(ctx, tmpl) {
 		var fragment = tmpl.document.createDocumentFragment();
 		
-		ctx.forEach(function(item) {	
-			fragment.appendChild(tmpl.render(item));
-		});
+		if (ctx) {
+			ctx.forEach(function(item) {	
+				fragment.appendChild(tmpl.render(item));
+			});
+		}
 		
 		return fragment;
 	});
