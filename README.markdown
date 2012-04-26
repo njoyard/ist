@@ -5,7 +5,7 @@
 IST is a DOM templating engine using a CSS selector-like syntax.  Templates are
 text files, which are first parsed and compiled into a template object, and then
 rendered into a DOM document using a context object.  This file documents usage
-of version 0.4.1.
+of version 0.4.2.
 
 Here is a brief overview of an IST template file:
 
@@ -305,14 +305,27 @@ switched to each of the array elements in turn:
 		div
 			"{{ content }}"
 
+Additionnaly, inside an `@each` directive, you can access the current loop index
+using `{{ loop.index }}`.  The outer context is also available as `loop.outer`.
+
 The 'each' helper is defined as follows:
 
-	ist.registerHelper('each', function(subcontext, subtemplate) {
-		var fragment = subtemplate.document.createDocumentFragment();
+	ist.registerHelper('each', function(ctx, tmpl) {
+		var fragment = tmpl.document.createDocumentFragment(),
+			outer = this;
 		
-		subcontext.forEach(function(item) {	
-			fragment.appendChild(subtemplate.render(item));
-		});
+		if (ctx) {
+			ctx.forEach(function(item, index) {
+				item.loop = {
+					index: index,
+					outer: outer
+				};
+				
+				fragment.appendChild(tmpl.render(item));
+				
+				delete item.loop;
+			});
+		}
 		
 		return fragment;
 	});

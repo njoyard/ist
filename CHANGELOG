@@ -1,3 +1,7 @@
+v0.4.2 - 2012-04-26
+- @each on 'undefined' now creates empty fragment
+- Enabled access to loop index and outer context in @each directives
+
 v0.4.1 - 2012-04-19
 - Moved node creation outside compiler
 - Added new single-node creation helper; can also create multiple nodes at once.
