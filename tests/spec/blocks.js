@@ -134,7 +134,8 @@ define([
 						{ property: 'item 5' }
 					]
 				},
-				empty: []
+				empty: [],
+				variable: 'value'
 			},
 			eachFragment = tEach.render(eachObj);
 		
@@ -158,6 +159,17 @@ define([
 			});
 		});
 		
+		it("should allow access to loop index as loop.index", function() {
+			eachObj.array.forEach(function(value, index) {
+				expect( eachFragment.querySelector('.loopindex').childNodes[index].textContent ).toBe( '' + index );
+			});
+		});
+		
+		it("should allow access to outer context as loop.outer", function() {
+			eachObj.array.forEach(function(value, index) {
+				expect( eachFragment.querySelector('.loopouter').childNodes[index].textContent ).toBe( 'value' );
+			});
+		});
 		
 		/** Common to all directives **/
 		

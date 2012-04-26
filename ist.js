@@ -1,6 +1,6 @@
 /** @license
  * IST: Indented Selector Templating
- * version 0.4
+ * version 0.4.2
  *
  * Copyright (c) 2012 Nicolas Joyard
  * Released under the MIT license.
@@ -464,11 +464,34 @@ define('ist', [], function () {
 	 * Built-in 'each' helper
 	 */
 	ist.registerHelper('each', function(ctx, tmpl) {
-		var fragment = tmpl.document.createDocumentFragment();
+		var fragment = tmpl.document.createDocumentFragment(),
+			outer = this;
 		
 		if (ctx) {
-			ctx.forEach(function(item) {	
-				fragment.appendChild(tmpl.render(item));
+			ctx.forEach(function(item, index) {
+				var xitem;
+				
+				if (item !== null && (typeof item === 'object' || typeof item === 'array')) {
+					xitem = item;
+					item.loop = {
+						index: index,
+						outer: outer
+					};
+				} else {
+					xitem = {
+						toString: function() { return item; },
+						loop: {
+							index: index,
+							outer: outer
+						}
+					};
+				}
+				
+				fragment.appendChild(tmpl.render(xitem));
+				
+				if (xitem === item) {
+					delete item.loop;
+				}
 			});
 		}
 		

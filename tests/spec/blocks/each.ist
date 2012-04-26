@@ -9,3 +9,11 @@ div.subarray
 div.empty
 	@each empty
 		"will not appear"
+		
+div.loopindex
+	@each array
+		"{{ loop.index }}"
+		
+div.loopouter
+	@each array
+		"{{ loop.outer.variable }}"
