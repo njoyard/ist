@@ -12,7 +12,7 @@
 /*jslint white: true, browser: true, plusplus: true */
 /*global define, require, ActiveXObject */
 
-define('ist', [], function () {
+define('ist', ['require'], function (require) {
 	"use strict";
 
 	var ist,
