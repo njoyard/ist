@@ -479,7 +479,7 @@ define('ist', ['require'], function (require) {
 					};
 				} else {
 					xitem = {
-						toString: function() { return item; },
+						toString: function() { return item.toString(); },
 						loop: {
 							index: index,
 							outer: outer
