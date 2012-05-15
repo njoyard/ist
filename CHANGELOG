@@ -1,5 +1,8 @@
+- Fixed issue with requirejs contexts, where IST was always using the default
+  context when looking for @include-d templates
+
 v0.4.2 - 2012-04-26
-- @each on 'undefined' now creates empty fragment
+- @each now treats all falsy values as an empty array
 - Enabled access to loop index and outer context in @each directives
 
 v0.4.1 - 2012-04-19
