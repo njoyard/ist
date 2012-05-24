@@ -1,6 +1,6 @@
 /** @license
  * IST: Indented Selector Templating
- * version 0.4.3
+ * version 0.4.4
  *
  * Copyright (c) 2012 Nicolas Joyard
  * Released under the MIT license.
@@ -265,7 +265,7 @@ define('ist', ['require'], function (require) {
 						node.setAttribute(m[1], m[2]);
 					}
 				} else {
-					throw new Error("Invalid syntax (col " + (line.length - rest.length + 1) + ")");
+					throw new Error("Invalid syntax (col " + (nodeSpec.length - rest.length + 1) + ")");
 				}
 			}
 	
@@ -287,7 +287,7 @@ define('ist', ['require'], function (require) {
 				} else if (m = rest.match(rx.blockText)) {
 					options.text = jsUnescape(m[2]);
 				} else {
-					throw new Error("Invalid syntax (col " + (line.length - rest.length + 1) + ")");
+					throw new Error("Invalid syntax (col " + (nodeSpec.length - rest.length + 1) + ")");
 				}
 			
 				rest = rest.substr(m[0].length);

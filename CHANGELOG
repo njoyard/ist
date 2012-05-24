@@ -1,3 +1,6 @@
+v0.4.4 - 2012-05-24
+- Fixed issue when reporting syntax errors
+
 v0.4.3 - 2012-05-20
 - Fixed issue with requirejs contexts, where IST was always using the default
   context when looking for @include-d templates
