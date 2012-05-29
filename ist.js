@@ -12,7 +12,7 @@
 /*jslint white: true, browser: true, plusplus: true */
 /*global define, require, ActiveXObject */
 
-define('ist', ['require'], function (require) {
+define('ist', ['require'], function (requirejs) {
 	"use strict";
 
 	var ist,
@@ -32,10 +32,13 @@ define('ist', ['require'], function (require) {
 				blockCtx: /^\s+([\w\.]+)/,
 				blockParam: /^\s+(\w+)=(['"])((?:(?=(\\?))\4.)*?)\2/,
 				blockText: /^\s+(['"])((?:(?=(\\?))\3.)*?)\1/
-		};
+		},
+		jsEscape, jsUnescape, findPath, interpolate, createSingleNode,
+		TextNode, ContainerNode, ElementNode, BlockNode,
+		getXhr, fetchText;
 		
 
-	function jsEscape (content) {
+	jsEscape = function (content) {
 		return content.replace(/(['\\])/g, '\\$1')
 			.replace(/[\f]/g, "\\f")
 			.replace(/[\b]/g, "\\b")
@@ -44,7 +47,7 @@ define('ist', ['require'], function (require) {
 			.replace(/[\r]/g, "\\r");
 	};
 	
-	function jsUnescape (content) {
+	jsUnescape = function (content) {
 		var chars = {
 			'\\\\': '\\',
 			'\\f': '\f',
@@ -74,13 +77,15 @@ define('ist', ['require'], function (require) {
 	/**
 	 * Find path ("path.to.property") inside context object
 	 */
-	function findPath(path, context) {
+	findPath = function(path, context) {
+		var rec;
+		
 		path = path.trim();
 		if (path === 'this') {
 			return context;
 		}
 	
-		function rec(pathArray, context) {
+		rec = function(pathArray, context) {
 			var subcontext = context[pathArray.shift()];
 			
 			if (pathArray.length > 0) {
@@ -100,7 +105,7 @@ define('ist', ['require'], function (require) {
 	/**
 	 * Interpolate {{variable}}s in 'text'
 	 */
-	function interpolate(text, context) {
+	interpolate = function(text, context) {
 		return text.replace(/{{(.*?)}}/g, function(m, p1) { return findPath(p1, context); });
 	};
 	
@@ -108,7 +113,7 @@ define('ist', ['require'], function (require) {
 	/**
 	 * Text node
 	 */
-	function TextNode(text) {
+	TextNode = function(text) {
 		this.text = text;
 	};
 	
@@ -126,7 +131,7 @@ define('ist', ['require'], function (require) {
 	/**
 	 * Container node
 	 */
-	function ContainerNode(features) {
+	ContainerNode = function(features) {
 		var self = this;
 		
 		if (features) {
@@ -158,7 +163,7 @@ define('ist', ['require'], function (require) {
 	/**
 	 * Element node
 	 */
-	function ElementNode(tagName) {
+	ElementNode = function(tagName) {
 		this.tagName = tagName;
 		this.attributes = {};
 		this.classes = [];
@@ -213,7 +218,7 @@ define('ist', ['require'], function (require) {
 	/**
 	 * Block node
 	 */
-	function BlockNode(name, ctxPath, options) {
+	BlockNode = function(name, ctxPath, options) {
 		this.name = name;
 		this.ctxPath = ctxPath;
 		this.options = options;
@@ -244,7 +249,7 @@ define('ist', ['require'], function (require) {
 	/**
 	 * Single node creation helper
 	 */
-	function createSingleNode(nodeSpec) {
+	createSingleNode = function(nodeSpec) {
 		var node, m, prop, name, ctx, options, i,
 			rest = nodeSpec.trim();
 		
@@ -307,21 +312,21 @@ define('ist', ['require'], function (require) {
 	 */
 	ist = function(text, name) {
 		var stack = [new ContainerNode()],
-			indentStack;
+			indentStack, peekNode, pushNode, popNode;
 		
 		name = name || '<unknown>';
 	
-		function peekNode() {
+		peekNode = function() {
 			return stack[stack.length - 1];
 		};
 	
 		// Push a node on the stack
-		function pushNode(node) {
+		pushNode = function(node) {
 			stack.push(node);
 		};
 	
 		// Pop a node from the stack and add it to previous element children
-		function popNode() {
+		popNode = function() {
 			var node;
 			if (stack.length < 2) {
 				throw new Error("Could not pop node from stack");
@@ -332,7 +337,7 @@ define('ist', ['require'], function (require) {
 			return node;
 		};
 	
-		text.split('\n').forEach(function(line, lineNumber) {
+		text.split(/\r\n|\n|\r/).forEach(function(line, lineNumber) {
 			var m, rest, lastIndent, indentIdx;
 		
 			m = line.match(rx.indent);
@@ -520,7 +525,7 @@ define('ist', ['require'], function (require) {
 		
 		while (!found && tryReq.length) {
 			try {
-				found = require(tryReq.shift());
+				found = requirejs(tryReq.shift());
 			} catch(e) {
 				if (tryReq.length === 0) {
 					throw new Error("Cannot find included template '" + what + "'");
@@ -546,47 +551,60 @@ define('ist', ['require'], function (require) {
 	 *         Require plugin helpers         *
 	 ******************************************/
 
-	function getXhr() {
-		var xhr, i, progId;
-		if (typeof XMLHttpRequest !== "undefined") {
-			return new XMLHttpRequest();
-		} else {
-			for (i = 0; i < 3; i++) {
-				progId = progIds[i];
-				try {
-					xhr = new ActiveXObject(progId);
-				} catch (e) {}
+	 if (typeof window !== "undefined" && window.navigator && window.document) {
+		getXhr = function() {
+			var xhr, i, progId;
+			if (typeof XMLHttpRequest !== "undefined") {
+				return new XMLHttpRequest();
+			} else {
+				for (i = 0; i < 3; i++) {
+					progId = progIds[i];
+					try {
+						xhr = new ActiveXObject(progId);
+					} catch (e) {}
 
-				if (xhr) {
-					progIds = [progId];  // faster next time
-					break;
+					if (xhr) {
+						progIds = [progId];  // faster next time
+						break;
+					}
 				}
 			}
-		}
 
-		if (!xhr) {
-			throw new Error("getXhr(): XMLHttpRequest not available");
-		}
-
-		return xhr;
-	};
-
-	function fetchText(url, callback) {
-		var xhr = getXhr();
-		xhr.open('GET', url, true);
-		xhr.onreadystatechange = function (evt) {
-			//Do not explicitly handle errors, those should be
-			//visible via console output in the browser.
-			if (xhr.readyState === 4) {
-				if (xhr.status !== 200) {
-					throw new Error("HTTP status "  + xhr.status + " when loading " + url);
-				}
-			
-				callback(xhr.responseText);
+			if (!xhr) {
+				throw new Error("getXhr(): XMLHttpRequest not available");
 			}
+
+			return xhr;
 		};
-		xhr.send(null);
-	};
+
+		fetchText = function(url, callback) {
+			var xhr = getXhr();
+			xhr.open('GET', url, true);
+			xhr.onreadystatechange = function (evt) {
+				//Do not explicitly handle errors, those should be
+				//visible via console output in the browser.
+				if (xhr.readyState === 4) {
+					if (xhr.status !== 200) {
+						throw new Error("HTTP status "  + xhr.status + " when loading " + url);
+					}
+			
+					callback(xhr.responseText);
+				}
+			};
+			xhr.send(null);
+		};
+	} else if (typeof process !== "undefined" && process.versions && !!process.versions.node) {
+        fs = require.nodeRequire('fs');
+
+        fetchText = function(url, callback) {
+            var file = fs.readFileSync(url, 'utf8');
+            //Remove BOM (Byte Mark Order) from utf8 files if it is there.
+            if (file.indexOf('\uFEFF') === 0) {
+                file = file.substring(1);
+            }
+            callback(file);
+        };
+    }
 	
 
 	/******************************************
@@ -594,8 +612,10 @@ define('ist', ['require'], function (require) {
 	 ******************************************/
 	
 	ist.write = function (pluginName, name, write) {
-		if (buildMap.hasOwnProperty(name)) {
-			var text = buildMap[name];
+		var bmName = 'ist!' + name;
+	
+		if (buildMap.hasOwnProperty(bmName)) {
+			var text = buildMap[bmName];
 			write(text);
 		}
 	};
@@ -624,17 +644,24 @@ define('ist', ['require'], function (require) {
 					return p1 + '@include "' + dpath + '"';
 				});
 			
-			/* "Pretty-print" template text */
-			text = jsEscape(text).replace(/\\n/g, "\\n' +\n\t               '");
-			
-			text = "define('" + name + "@ist'," + JSON.stringify(deps) + ", function(ist){ \n" +
-				   "\tvar template = '" + text + "';\n" +
-				   "\treturn ist(template, '" + name + "');\n" +
-				   "});\n";
+			if (config.isBuild) {
+				text = jsEscape(text);		
+				text = "define('ist!" + name + "'," + JSON.stringify(deps) + ",function(ist){" +
+					   "var template='" + text + "';" +
+					   	"return ist(template,'" + name + "');" +
+					   "});";
+			} else {
+				/* "Pretty-print" template text */
+				text = jsEscape(text).replace(/\\n/g, "\\n' +\n\t               '");
+				text = "define('ist!" + name + "'," + JSON.stringify(deps) + ", function(ist){ \n" +
+					   "\tvar template = '" + text + "';\n" +
+					   "\treturn ist(template, '" + name + "');\n" +
+					   "});\n";
+			}
 				   
 			//Hold on to the transformed text if a build.
 			if (config.isBuild) {
-				buildMap[name + '@ist'] = text;
+				buildMap['ist!' + name] = text;
 			}
 
 			//IE with conditional comments on cannot handle the
@@ -645,10 +672,10 @@ define('ist', ['require'], function (require) {
 			}
 			/*@end@*/
 			
-			load.fromText(name + '@ist', text);
+			load.fromText('ist!' + name, text);
 
 			// Finish loading and give result to load()
-			parentRequire([name + '@ist'], function (value) {
+			parentRequire(['ist!' + name], function (value) {
 				load(value);
 			});
 		});
