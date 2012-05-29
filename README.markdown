@@ -421,10 +421,17 @@ by passing it as a third argument:
 
 ## Planned features
 
-The following features will be included in future versions:
+The following features may be included in future versions:
 
 - comments
-- better text node handling (esp. for escaped chars such as \n & \t)
+- expression evaluation
+- i18n handling
+
+
+## Feedback
+
+Feedback is always welcome. Feel free to fork IST and send me pull requests, to
+report bugs using the [issue tracker][4] or to contact me on [twitter][5] !
 
 ## License
 
@@ -434,7 +441,8 @@ information.
 Copyright (c) 2012 Nicolas Joyard
 
 
-[1]: http://github.com/k-o-x/ist
+[1]: http://github.com/njoyard/ist
 [2]: http://handlebarsjs.com/block_helpers.html
-[3]: https://github.com/k-o-x/ist/blob/master/LICENSE
-
+[3]: https://github.com/njoyard/ist/blob/master/LICENSE
+[4]: https://github.com/njoyard/ist/issues
+[5]: http://twitter.com/meringueman
