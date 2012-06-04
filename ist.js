@@ -21,6 +21,8 @@ define('ist', ['require'], function (requirejs) {
 		progIds = ['Msxml2.XMLHTTP', 'Microsoft.XMLHTTP', 'Msxml2.XMLHTTP.4.0'],
 		buildMap = [],
 		rx = {
+			newline: /\r\n|\n|\r/,
+			blockcomment: /\/\*((?:\/(?!<\*)|[^\/])*?)\*\//g,
 			indent: /^(\s*)(.*)$/,
 			element: /^(\w+)(.*)$/,
 				elemProps: /^([.#][\w-]+|\[[^\]=]+=[^\]]+\])(.*)$/,
@@ -31,7 +33,8 @@ define('ist', ['require'], function (requirejs) {
 			block: /^@(\w+)(\s+.*?)?\s*$/,
 				blockCtx: /^\s+([\w\.]+)/,
 				blockParam: /^\s+(\w+)=(['"])((?:(?=(\\?))\4.)*?)\2/,
-				blockText: /^\s+(['"])((?:(?=(\\?))\3.)*?)\1/
+				blockText: /^\s+(['"])((?:(?=(\\?))\3.)*?)\1/,
+			interpvar: /{{(.*?)}}/g
 		},
 		jsEscape, jsUnescape, findPath, interpolate, createSingleNode,
 		TextNode, ContainerNode, ElementNode, BlockNode,
@@ -73,6 +76,7 @@ define('ist', ['require'], function (requirejs) {
 	/******************************************
 	 *            Actual IST code             *
 	 ******************************************/
+	 
 		
 	/**
 	 * Find path ("path.to.property") inside context object
@@ -102,11 +106,12 @@ define('ist', ['require'], function (requirejs) {
 		}
 	};
 	
+	
 	/**
 	 * Interpolate {{variable}}s in 'text'
 	 */
 	interpolate = function(text, context) {
-		return text.replace(/{{(.*?)}}/g, function(m, p1) { return findPath(p1, context); });
+		return text.replace(rx.interpvar, function(m, p1) { return findPath(p1, context); });
 	};
 	
 	
@@ -336,8 +341,13 @@ define('ist', ['require'], function (requirejs) {
 			peekNode().appendChild(node);
 			return node;
 		};
+		
+		// Remove block comments, keeping line count
+		text = text.replace(rx.blockcomment, function(m, p1) {
+			return p1.split(rx.newline).map(function(l) { return ''; }).join('\n');
+		}); 
 	
-		text.split(/\r\n|\n|\r/).forEach(function(line, lineNumber) {
+		text.split(rx.newline).forEach(function(line, lineNumber) {
 			var m, rest, lastIndent, indentIdx;
 		
 			m = line.match(rx.indent);
@@ -345,7 +355,10 @@ define('ist', ['require'], function (requirejs) {
 			// Skip empty lines
 			if (m[2].length === 0) {
 				return;
-			} 
+			}
+			
+			// Trim trailing spaces
+			m[2] = m[2].trim();
 		
 			try {
 				// Handle indent

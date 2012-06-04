@@ -5,17 +5,19 @@ define([
 	'ist!syntax/siblings',
 	'text!syntax/notextchildren.ist',
 	'text!syntax/nomatchingindent.ist',
-	'ist!syntax/indentedroot'
+	'ist!syntax/indentedroot',
+	'ist!syntax/comments'
 ], function(
 	ist,
 	tEmptyLines, tChildren, tSiblings,
 	textNoTextChildren, textNoMatchingIndent,
-	tIndentedRoot) {
+	tIndentedRoot, tComments) {
 	
 	var elNodes = tEmptyLines.render().childNodes,
 		childrenNodes = tChildren.render().childNodes,
 		siblingsNodes = tSiblings.render().childNodes,
-		irootNodes = tIndentedRoot.render().childNodes;
+		irootNodes = tIndentedRoot.render().childNodes,
+		cmtNodes = tComments.render().childNodes;
 	
 	describe('syntax', function() {
 		it("should ignore empty and whitespace-only lines", function() {
@@ -81,6 +83,10 @@ define([
 		
 		it("should support indented root nodes", function() {
 			expect( irootNodes.length ).toBe( 2 );
+		});
+		
+		it("should support /* block comments */", function() {
+			
 		});
 	});
 });

@@ -1,0 +1,9 @@
+div/* ignore this */.class1
+/* Comments on a single line */
+div.class2
+/* Comments on
+multiple
+lines */
+	div.class3/* Comments between parents
+and children */
+		div.class4
