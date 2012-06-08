@@ -12,7 +12,6 @@ pegjs --export-var parser --track-line-and-column parser.pegjs
 echo "Creating IST module..."
 LINE=$(grep -n "//PARSER//" ist_template.js | cut -d':' -f 1)
 COUNT=$(cat ist_template.js | wc -l)
-
 head -n $(($LINE-1)) ist_template.js >../dist/ist.js
 cat parser.js >>../dist/ist.js
 tail -n $(($COUNT-$LINE)) ist_template.js >>../dist/ist.js

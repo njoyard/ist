@@ -2,185 +2,9 @@
 {
 	var INDENT = 'INDENT', DEDENT = 'DEDENT', UNDEF,
 		depths = [0],
-		findPath, interpolate, TextNode, ContainerNode, ElementNode, BlockNode,
 		generateNodeTree, parseIndent, createElement, createDirective;
-		
-		
-	/**
-	 * Find path ("path.to.property") inside context object
-	 */
-	findPath = function(path, context) {
-		var rec;
-		
-		path = path.trim();
-		if (path === 'this') {
-			return context;
-		}
+
 	
-		rec = function(pathArray, context) {
-			var subcontext = context[pathArray.shift()];
-			
-			if (pathArray.length > 0) {
-				return rec(pathArray, subcontext);
-			} else {
-				return subcontext;
-			}
-		}
-		
-		try {
-			return rec(path.split('.'), context);
-		} catch(e) {
-			throw new Error("Cannot find path " + path + " in context");
-		}
-	};
-	
-	
-	/**
-	 * Interpolate {{variable}}s in 'text'
-	 */
-	interpolate = function(text, context) {
-		return text.replace(rx.interpvar, function(m, p1) { return findPath(p1, context); });
-	};
-	
-	
-	/**
-	 * Text node
-	 */
-	TextNode = function(text) {
-		this.text = text;
-	};
-	
-	TextNode.prototype = {
-		render: function(context, doc) {
-			return (doc||document).createTextNode(interpolate(this.text, context));
-		},
-		
-		appendChild: function(node) {
-			throw new Error("Cannot add children to TextNode");
-		}
-	};
-	
-	
-	/**
-	 * Container node
-	 */
-	ContainerNode = function(features) {
-		var self = this;
-		
-		if (features) {
-			Object.keys(features).forEach(function(key) {
-				self[key] = features[key];
-			});
-		}
-	};
-	
-	ContainerNode.prototype = {
-		appendChild: function(node) {
-			this.children = this.children || [];
-			this.children.push(node);
-		},
-		
-		render: function(context, doc) {
-			var fragment = (doc||document).createDocumentFragment();
-			
-			this.children = this.children || [];
-			this.children.forEach(function(c) {
-				fragment.appendChild(c.render(context, doc));
-			});
-			
-			return fragment;
-		}
-	};
-	
-	
-	/**
-	 * Element node
-	 */
-	ElementNode = function(tagName) {
-		this.tagName = tagName;
-		this.attributes = {};
-		this.properties = {};
-		this.classes = [];
-		this.id = undefined;
-	};
-	
-	ElementNode.prototype = new ContainerNode({
-		setAttribute: function(attr, value) {
-			this.attributes[attr] = value;
-		},
-		
-		setProperty: function(prop, value) {
-			this.properties[prop] = value;
-		},
-		
-		setClass: function(cls) {
-			this.classes.push(cls);
-		},
-		
-		setId: function(id) {
-			this.id = id;
-		},
-		
-		render: function(context, doc) {
-			var self = this,
-				node = (doc||document).createElement(this.tagName);
-			
-			node.appendChild(ContainerNode.prototype.render.call(this, context, doc));
-			
-			Object.keys(this.attributes).forEach(function(attr) {
-				var value = interpolate(self.attributes[attr],  context);
-				node.setAttribute(attr, value);
-			});
-			
-			Object.keys(this.properties).forEach(function(prop) {
-				var value = interpolate(self.attributes[prop],  context);
-				node[prop] = value;
-			});
-			
-			this.classes.forEach(function(cls) {
-				node.classList.add(cls);
-			});
-			
-			if (typeof this.id !== 'undefined') {
-				node.id = this.id;
-			}
-			
-			return node;
-		}
-	});
-	
-	
-	/**
-	 * Block node
-	 */
-	BlockNode = function(name, ctxPath, options) {
-		this.name = name;
-		this.ctxPath = ctxPath;
-		this.options = options;
-	};
-	
-	BlockNode.prototype = new ContainerNode({
-		render: function(context, doc) {
-			var self = this,
-				subContext = this.ctxPath ? findPath(this.ctxPath, context) : undefined;
-			
-			if (typeof helpers[this.name] !== 'function') {
-				throw new Error('No block helper for @' + this.name + ' has been registered');
-			}
-			
-			return helpers[this.name].call(context, subContext, {
-				document: (doc || document),
-				
-				render: function(ctx) {
-					return ContainerNode.prototype.render.call(self, ctx, doc);
-				},
-				
-				options: self.options
-			});
-		}
-	});
-	
-		
 	// Generate node tree
 	generateNodeTree = function(first, tail) {
 		var stack = [new ContainerNode()],
@@ -211,12 +35,14 @@
 		tail.forEach(function(t, index) {
 			var item = t[1];
 				
-			if (item === DEDENT) {
+			if (item instanceof Error) {
+				throw item;
+			} else if (item === DEDENT) {
 				indent = DEDENT;
 				popNode();
 			} else if (item === INDENT) {
 				indent = INDENT;
-			} else {
+			} else if (typeof item !== 'undefined') {
 				if (index > 0) {
 					popNode();
 				}
@@ -238,7 +64,8 @@
 	// Keep track of indent, inserting "INDENT" and "DEDENT" tokens
 	parseIndent = function(s, line) {
 		var depth = s.length,
-			dents = [];
+			dents = [],
+			err;
 
 		if (depth.length === 0) {
 			// First line, this is the reference indentation
@@ -265,7 +92,10 @@
 
 		if (depth != depths[0]) {
 			// No matching previous indent
-			throw new Error("Unexpected indent on line " + line);
+			err = new Error("Unexpected indent");
+			err.line = line;
+			err.column = 1;
+			return [err];
 		}
 
 		return dents;
@@ -311,7 +141,14 @@ templateFile
 { return generateNodeTree(first, tail); }
 
 line
-= depth:indent s:(element / textNode / directive)
+= nonEmptyLine / emptyLine
+
+emptyLine "empty line"
+= [ \t]*
+{ return; }
+
+nonEmptyLine
+= depth:indent s:(element / textNode / directive) [ \t]*
 { return s; }
 
 indent "indent"
@@ -321,12 +158,8 @@ indent "indent"
 newline "new line"
 = "\n"
 
-text
-= c:[^\n]*
-{ return c.join(''); }
-
 identifier "identifier"
-= h:[a-zA-Z_] t:[a-zA-Z0-9_-]*
+= h:[a-z_]i t:[a-z0-9_-]i*
 { return h + t.join(''); }
 
 elemId
@@ -360,7 +193,7 @@ explicitElement
 { return createElement(tagName, qualifiers); }
 
 textNode "text node"
-= "\"" text:[^\n\"]* "\""
+= "\"" text:[^\n]* "\""?
 { return new TextNode(text.join('')); }
 
 contextPath "context property path"
