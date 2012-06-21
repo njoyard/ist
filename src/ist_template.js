@@ -12,13 +12,19 @@ define(function() {
 	"use strict";
 	
 	var ist, parser, fs,
-		extend, jsEscape, getXhr, fetchText,
-		Context, ContainerNode, BlockNode, TextNode, ElementNode,
+		extend, jsEscape, preprocess, getXhr, fetchText,
+		Context, Node, ContainerNode, BlockNode, TextNode, ElementNode,
 		helpers = {},
 		progIds = ['Msxml2.XMLHTTP', 'Microsoft.XMLHTTP', 'Msxml2.XMLHTTP.4.0'],
 		buildMap = [];
 		
-		
+	
+	if (!Array.isArray) {
+		Array.isArray = function(a) {
+			return Object.prototype.toString.call(a) === '[object Array]';
+		};
+	}
+	
 	jsEscape = function (content) {
 		return content.replace(/(['\\])/g, '\\$1')
 			.replace(/[\f]/g, "\\f")
@@ -27,6 +33,7 @@ define(function() {
 			.replace(/[\n]/g, "\\n")
 			.replace(/[\r]/g, "\\r");
 	};
+	
 	
 	/* Extend helper (child.prototype = new Parent() + set prototype properties) */
 	extend = function(Parent, Child, prototype) {
@@ -41,7 +48,7 @@ define(function() {
 	 * Context object
 	 */
 	Context = function(object, doc) {
-		this.obj = object;
+		this.value = object;
 		this.doc = doc || document;
 	};
 	
@@ -68,7 +75,7 @@ define(function() {
 		
 			path = path.trim();
 			if (path === 'this') {
-				return this.obj;
+				return this.value;
 			}
 	
 			rec = function(pathArray, ctx) {
@@ -82,7 +89,7 @@ define(function() {
 			}
 		
 			try {
-				return rec(path.split('.'), this.obj);
+				return rec(path.split('.'), this.value);
 			} catch(e) {
 				throw new Error("Cannot find path " + path + " in context");
 			}
@@ -127,7 +134,7 @@ define(function() {
 	extend(Node, TextNode, {
 		_render: function(context) {
 			return context.createTextNode(this.text);
-		}
+		},
 		
 		appendChild: function(node) {
 			throw new Error("Cannot add children to TextNode");
@@ -170,7 +177,7 @@ define(function() {
 		this.id = undefined;
 	};
 	
-	extend(ContainerNode, ElementNode, ({
+	extend(ContainerNode, ElementNode, {
 		setAttribute: function(attr, value) {
 			this.attributes[attr] = value;
 		},
@@ -199,7 +206,7 @@ define(function() {
 			});
 			
 			Object.keys(this.properties).forEach(function(prop) {
-				var value = context.interpolate(self.attributes[prop]);
+				var value = context.interpolate(self.properties[prop]);
 				node[prop] = value;
 			});
 			
@@ -228,15 +235,13 @@ define(function() {
 	extend(ContainerNode, BlockNode, {
 		_render: function(context) {
 			var self = this,
-				subContext = this.ctxPath ? ctx.getSubcontext(this.ctxPath) : undefined;
+				subContext = this.ctxPath ? context.getSubcontext(this.ctxPath) : undefined;
 			
 			if (typeof helpers[this.name] !== 'function') {
 				throw new Error('No block helper for @' + this.name + ' has been registered');
 			}
 			
-			return helpers[this.name].call(ctx, subContext, {
-				document: (doc || document),
-				
+			return helpers[this.name].call(context, subContext, {
 				render: function(ctx) {
 					return ContainerNode.prototype.render.call(self, ctx, doc);
 				},
@@ -249,6 +254,33 @@ define(function() {
 	
 //PARSER//
 	
+	/**
+	 * Template preprocessor; handle what the parser cannot handle
+	 * - Make whitespace-only lines empty
+	 * - Remove block-comments (keeping line count)
+	 */
+	preprocess = function(text) {
+		var newlines = /\r\n|\r|\n/,
+			whitespace = /^[ \t]*$/,
+			comment = /\/\*((?:\/(?!<\*)|[^\/])*?)\*\//g,
+			lines = text.split(newlines);
+		
+		// Remove everthing from whitespace-only lines
+		lines.forEach(function(l, i) {
+			if (l.match(whitespace)) {
+				lines[i] = "";
+			}
+		});
+		text = lines.join('\n');
+		
+		// Remove block comments
+		text = text.replace(comment, function(m, p1) {
+			return p1.split(newlines).map(function(l) { return ''; }).join('\n');
+		}); 
+		
+		return text;
+	};
+	
 	
 	/**
 	 * Template parser
@@ -259,9 +291,13 @@ define(function() {
 		name = name || '<unknown>';
 		
 		try {
-			parsed = parser.parse(template);
+			parsed = parser.parse(preprocess(template));
 		} catch(e) {
-			throw new Error("In " + name + " on line " + e.line + ", character " + e.column + ": " + e.message);
+			throw new Error(
+				"In " + name + " on line " + e.line +
+				(typeof e.column !== 'undefined' ?  ", character " + e.column : '') +
+				": " + e.message
+			);
 		}
 		
 		return parsed;
@@ -309,11 +345,11 @@ define(function() {
 	 * Built-in 'if' helper
 	 */
 	ist.registerHelper('if', function(ctx, tmpl) {
-		if (ctx) {
+		if (ctx.value) {
 			return tmpl.render(this);
 		} else {
 			// Return empty fragment
-			return tmpl.document.createDocumentFragment();
+			return ctx.createFragment();
 		}
 	});
 	
@@ -322,11 +358,11 @@ define(function() {
 	 * Built-in 'unless' helper
 	 */
 	ist.registerHelper('unless', function(ctx, tmpl) {
-		if (!ctx) {
+		if (!ctx.value) {
 			return tmpl.render(this);
 		} else {
 			// Return empty fragment
-			return tmpl.document.createDocumentFragment();
+			return ctx.createFragment();
 		}
 	});
 	
@@ -346,8 +382,8 @@ define(function() {
 		var fragment = tmpl.document.createDocumentFragment(),
 			outer = this;
 		
-		if (ctx) {
-			ctx.forEach(function(item, index) {
+		if (ctx.value && Array.isArray(ctx)) {
+			ctx.value.forEach(function(item, index) {
 				var xitem;
 				
 				if (item !== null && (typeof item === 'object' || typeof item === 'array')) {

@@ -37,11 +37,10 @@ parser = (function(){
      */
     parse: function(input, startRule) {
       var parseFunctions = {
-        "templateFile": parse_templateFile,
+        "templateLines": parse_templateLines,
         "line": parse_line,
         "indent": parse_indent,
-        "newline": parse_newline,
-        "text": parse_text,
+        "newlines": parse_newlines,
         "identifier": parse_identifier,
         "elemId": parse_elemId,
         "elemClass": parse_elemClass,
@@ -63,7 +62,7 @@ parser = (function(){
           throw new Error("Invalid rule name: " + quote(startRule) + ".");
         }
       } else {
-        startRule = "templateFile";
+        startRule = "templateLines";
       }
       
       var pos = { offset: 0, line: 1, column: 1, seenCR: false };
@@ -141,49 +140,116 @@ parser = (function(){
         rightmostFailuresExpected.push(failure);
       }
       
-      function parse_templateFile() {
-        var result0, result1, result2, result3;
+      function parse_templateLines() {
+        var result0, result1, result2, result3, result4;
         var pos0, pos1, pos2;
         
         pos0 = clone(pos);
         pos1 = clone(pos);
-        result0 = parse_line();
+        result0 = parse_newlines();
         if (result0 !== null) {
-          result1 = [];
-          pos2 = clone(pos);
-          result2 = parse_newline();
-          if (result2 !== null) {
-            result3 = parse_line();
-            if (result3 !== null) {
-              result2 = [result2, result3];
-            } else {
-              result2 = null;
-              pos = clone(pos2);
-            }
-          } else {
-            result2 = null;
-            pos = clone(pos2);
-          }
-          while (result2 !== null) {
-            result1.push(result2);
+          result1 = parse_line();
+          result1 = result1 !== null ? result1 : "";
+          if (result1 !== null) {
+            result2 = [];
             pos2 = clone(pos);
-            result2 = parse_newline();
-            if (result2 !== null) {
-              result3 = parse_line();
-              if (result3 !== null) {
-                result2 = [result2, result3];
+            result3 = parse_newlines();
+            if (result3 !== null) {
+              result4 = parse_line();
+              if (result4 !== null) {
+                result3 = [result3, result4];
               } else {
-                result2 = null;
+                result3 = null;
                 pos = clone(pos2);
               }
             } else {
-              result2 = null;
+              result3 = null;
               pos = clone(pos2);
+            }
+            while (result3 !== null) {
+              result2.push(result3);
+              pos2 = clone(pos);
+              result3 = parse_newlines();
+              if (result3 !== null) {
+                result4 = parse_line();
+                if (result4 !== null) {
+                  result3 = [result3, result4];
+                } else {
+                  result3 = null;
+                  pos = clone(pos2);
+                }
+              } else {
+                result3 = null;
+                pos = clone(pos2);
+              }
+            }
+            if (result2 !== null) {
+              result3 = parse_newlines();
+              if (result3 !== null) {
+                result0 = [result0, result1, result2, result3];
+              } else {
+                result0 = null;
+                pos = clone(pos1);
+              }
+            } else {
+              result0 = null;
+              pos = clone(pos1);
+            }
+          } else {
+            result0 = null;
+            pos = clone(pos1);
+          }
+        } else {
+          result0 = null;
+          pos = clone(pos1);
+        }
+        if (result0 !== null) {
+          result0 = (function(offset, line, column, first, tail) { return generateNodeTree(first, tail); })(pos0.offset, pos0.line, pos0.column, result0[1], result0[2]);
+        }
+        if (result0 === null) {
+          pos = clone(pos0);
+        }
+        return result0;
+      }
+      
+      function parse_line() {
+        var result0, result1, result2, result3;
+        var pos0, pos1;
+        
+        pos0 = clone(pos);
+        pos1 = clone(pos);
+        result0 = parse_indent();
+        if (result0 !== null) {
+          result1 = parse_element();
+          if (result1 === null) {
+            result1 = parse_textNode();
+            if (result1 === null) {
+              result1 = parse_directive();
             }
           }
           if (result1 !== null) {
-            result2 = parse_newline();
-            result2 = result2 !== null ? result2 : "";
+            result2 = [];
+            if (/^[ \t]/.test(input.charAt(pos.offset))) {
+              result3 = input.charAt(pos.offset);
+              advance(pos, 1);
+            } else {
+              result3 = null;
+              if (reportFailures === 0) {
+                matchFailed("[ \\t]");
+              }
+            }
+            while (result3 !== null) {
+              result2.push(result3);
+              if (/^[ \t]/.test(input.charAt(pos.offset))) {
+                result3 = input.charAt(pos.offset);
+                advance(pos, 1);
+              } else {
+                result3 = null;
+                if (reportFailures === 0) {
+                  matchFailed("[ \\t]");
+                }
+              }
+            }
             if (result2 !== null) {
               result0 = [result0, result1, result2];
             } else {
@@ -199,41 +265,7 @@ parser = (function(){
           pos = clone(pos1);
         }
         if (result0 !== null) {
-          result0 = (function(offset, line, column, first, tail) { return generateNodeTree(first, tail); })(pos0.offset, pos0.line, pos0.column, result0[0], result0[1]);
-        }
-        if (result0 === null) {
-          pos = clone(pos0);
-        }
-        return result0;
-      }
-      
-      function parse_line() {
-        var result0, result1;
-        var pos0, pos1;
-        
-        pos0 = clone(pos);
-        pos1 = clone(pos);
-        result0 = parse_indent();
-        if (result0 !== null) {
-          result1 = parse_element();
-          if (result1 === null) {
-            result1 = parse_textNode();
-            if (result1 === null) {
-              result1 = parse_directive();
-            }
-          }
-          if (result1 !== null) {
-            result0 = [result0, result1];
-          } else {
-            result0 = null;
-            pos = clone(pos1);
-          }
-        } else {
-          result0 = null;
-          pos = clone(pos1);
-        }
-        if (result0 !== null) {
-          result0 = (function(offset, line, column, depth, s) { return s; })(pos0.offset, pos0.line, pos0.column, result0[0], result0[1]);
+          result0 = (function(offset, line, column, depth, s) { return { indent: depth, item: s, num: line }; })(pos0.offset, pos0.line, pos0.column, result0[0], result0[1]);
         }
         if (result0 === null) {
           pos = clone(pos0);
@@ -282,58 +314,35 @@ parser = (function(){
         return result0;
       }
       
-      function parse_newline() {
-        var result0;
+      function parse_newlines() {
+        var result0, result1;
         
         reportFailures++;
-        if (input.charCodeAt(pos.offset) === 10) {
-          result0 = "\n";
-          advance(pos, 1);
-        } else {
-          result0 = null;
-          if (reportFailures === 0) {
-            matchFailed("\"\\n\"");
-          }
-        }
-        reportFailures--;
-        if (reportFailures === 0 && result0 === null) {
-          matchFailed("new line");
-        }
-        return result0;
-      }
-      
-      function parse_text() {
-        var result0, result1;
-        var pos0;
-        
-        pos0 = clone(pos);
         result0 = [];
-        if (/^[^\n]/.test(input.charAt(pos.offset))) {
-          result1 = input.charAt(pos.offset);
+        if (input.charCodeAt(pos.offset) === 10) {
+          result1 = "\n";
           advance(pos, 1);
         } else {
           result1 = null;
           if (reportFailures === 0) {
-            matchFailed("[^\\n]");
+            matchFailed("\"\\n\"");
           }
         }
         while (result1 !== null) {
           result0.push(result1);
-          if (/^[^\n]/.test(input.charAt(pos.offset))) {
-            result1 = input.charAt(pos.offset);
+          if (input.charCodeAt(pos.offset) === 10) {
+            result1 = "\n";
             advance(pos, 1);
           } else {
             result1 = null;
             if (reportFailures === 0) {
-              matchFailed("[^\\n]");
+              matchFailed("\"\\n\"");
             }
           }
         }
-        if (result0 !== null) {
-          result0 = (function(offset, line, column, c) { return c.join(''); })(pos0.offset, pos0.line, pos0.column, result0);
-        }
-        if (result0 === null) {
-          pos = clone(pos0);
+        reportFailures--;
+        if (reportFailures === 0 && result0 === null) {
+          matchFailed("new lines");
         }
         return result0;
       }
@@ -345,35 +354,35 @@ parser = (function(){
         reportFailures++;
         pos0 = clone(pos);
         pos1 = clone(pos);
-        if (/^[a-zA-Z_]/.test(input.charAt(pos.offset))) {
+        if (/^[a-z_]/i.test(input.charAt(pos.offset))) {
           result0 = input.charAt(pos.offset);
           advance(pos, 1);
         } else {
           result0 = null;
           if (reportFailures === 0) {
-            matchFailed("[a-zA-Z_]");
+            matchFailed("[a-z_]i");
           }
         }
         if (result0 !== null) {
           result1 = [];
-          if (/^[a-zA-Z0-9_\-]/.test(input.charAt(pos.offset))) {
+          if (/^[a-z0-9_\-]/i.test(input.charAt(pos.offset))) {
             result2 = input.charAt(pos.offset);
             advance(pos, 1);
           } else {
             result2 = null;
             if (reportFailures === 0) {
-              matchFailed("[a-zA-Z0-9_\\-]");
+              matchFailed("[a-z0-9_\\-]i");
             }
           }
           while (result2 !== null) {
             result1.push(result2);
-            if (/^[a-zA-Z0-9_\-]/.test(input.charAt(pos.offset))) {
+            if (/^[a-z0-9_\-]/i.test(input.charAt(pos.offset))) {
               result2 = input.charAt(pos.offset);
               advance(pos, 1);
             } else {
               result2 = null;
               if (reportFailures === 0) {
-                matchFailed("[a-zA-Z0-9_\\-]");
+                matchFailed("[a-z0-9_\\-]i");
               }
             }
           }
@@ -779,43 +788,29 @@ parser = (function(){
         }
         if (result0 !== null) {
           result1 = [];
-          if (/^[^\n"]/.test(input.charAt(pos.offset))) {
+          if (/^[^\n]/.test(input.charAt(pos.offset))) {
             result2 = input.charAt(pos.offset);
             advance(pos, 1);
           } else {
             result2 = null;
             if (reportFailures === 0) {
-              matchFailed("[^\\n\"]");
+              matchFailed("[^\\n]");
             }
           }
           while (result2 !== null) {
             result1.push(result2);
-            if (/^[^\n"]/.test(input.charAt(pos.offset))) {
+            if (/^[^\n]/.test(input.charAt(pos.offset))) {
               result2 = input.charAt(pos.offset);
               advance(pos, 1);
             } else {
               result2 = null;
               if (reportFailures === 0) {
-                matchFailed("[^\\n\"]");
+                matchFailed("[^\\n]");
               }
             }
           }
           if (result1 !== null) {
-            if (input.charCodeAt(pos.offset) === 34) {
-              result2 = "\"";
-              advance(pos, 1);
-            } else {
-              result2 = null;
-              if (reportFailures === 0) {
-                matchFailed("\"\\\"\"");
-              }
-            }
-            if (result2 !== null) {
-              result0 = [result0, result1, result2];
-            } else {
-              result0 = null;
-              pos = clone(pos1);
-            }
+            result0 = [result0, result1];
           } else {
             result0 = null;
             pos = clone(pos1);
@@ -825,7 +820,7 @@ parser = (function(){
           pos = clone(pos1);
         }
         if (result0 !== null) {
-          result0 = (function(offset, line, column, text) { return new TextNode(text.join('')); })(pos0.offset, pos0.line, pos0.column, result0[1]);
+          result0 = (function(offset, line, column, text) { return createTextNode(text.join('')); })(pos0.offset, pos0.line, pos0.column, result0[1]);
         }
         if (result0 === null) {
           pos = clone(pos0);
@@ -910,7 +905,7 @@ parser = (function(){
         	tail.forEach(function(i) {
         		ret.push(i[1]);
         	});
-        	return ret;
+        	return ret.join('.');
         })(pos0.offset, pos0.line, pos0.column, result0[0], result0[1]);
         }
         if (result0 === null) {
@@ -1028,6 +1023,7 @@ parser = (function(){
           result0 = null;
           pos = clone(pos2);
         }
+        result0 = result0 !== null ? result0 : "";
         if (result0 !== null) {
           result1 = parse_quotedText();
           if (result1 !== null) {
@@ -1192,191 +1188,21 @@ parser = (function(){
       
       
       
-      	var INDENT = 'INDENT', DEDENT = 'DEDENT', UNDEF,
+      	var UNCHANGED = 'U', INDENT = 'I', DEDENT = 'D', UNDEF,
       		depths = [0],
-      		findPath, interpolate, TextNode, ContainerNode, ElementNode, BlockNode,
-      		generateNodeTree, parseIndent, createElement, createDirective;
-      		
-      		
-      	/**
-      	 * Find path ("path.to.property") inside context object
-      	 */
-      	findPath = function(path, context) {
-      		var rec;
-      		
-      		path = path.trim();
-      		if (path === 'this') {
-      			return context;
-      		}
+      		generateNodeTree, parseIndent,
+      		createTextNode, createElement, createDirective;
+      
       	
-      		rec = function(pathArray, context) {
-      			var subcontext = context[pathArray.shift()];
-      			
-      			if (pathArray.length > 0) {
-      				return rec(pathArray, subcontext);
-      			} else {
-      				return subcontext;
-      			}
-      		}
-      		
-      		try {
-      			return rec(path.split('.'), context);
-      		} catch(e) {
-      			throw new Error("Cannot find path " + path + " in context");
-      		}
-      	};
-      	
-      	
-      	/**
-      	 * Interpolate {{variable}}s in 'text'
-      	 */
-      	interpolate = function(text, context) {
-      		return text.replace(rx.interpvar, function(m, p1) { return findPath(p1, context); });
-      	};
-      	
-      	
-      	/**
-      	 * Text node
-      	 */
-      	TextNode = function(text) {
-      		this.text = text;
-      	};
-      	
-      	TextNode.prototype = {
-      		render: function(context, doc) {
-      			return (doc||document).createTextNode(interpolate(this.text, context));
-      		},
-      		
-      		appendChild: function(node) {
-      			throw new Error("Cannot add children to TextNode");
-      		}
-      	};
-      	
-      	
-      	/**
-      	 * Container node
-      	 */
-      	ContainerNode = function(features) {
-      		var self = this;
-      		
-      		if (features) {
-      			Object.keys(features).forEach(function(key) {
-      				self[key] = features[key];
-      			});
-      		}
-      	};
-      	
-      	ContainerNode.prototype = {
-      		appendChild: function(node) {
-      			this.children = this.children || [];
-      			this.children.push(node);
-      		},
-      		
-      		render: function(context, doc) {
-      			var fragment = (doc||document).createDocumentFragment();
-      			
-      			this.children = this.children || [];
-      			this.children.forEach(function(c) {
-      				fragment.appendChild(c.render(context, doc));
-      			});
-      			
-      			return fragment;
-      		}
-      	};
-      	
-      	
-      	/**
-      	 * Element node
-      	 */
-      	ElementNode = function(tagName) {
-      		this.tagName = tagName;
-      		this.attributes = {};
-      		this.properties = {};
-      		this.classes = [];
-      		this.id = undefined;
-      	};
-      	
-      	ElementNode.prototype = new ContainerNode({
-      		setAttribute: function(attr, value) {
-      			this.attributes[attr] = value;
-      		},
-      		
-      		setProperty: function(prop, value) {
-      			this.properties[prop] = value;
-      		},
-      		
-      		setClass: function(cls) {
-      			this.classes.push(cls);
-      		},
-      		
-      		setId: function(id) {
-      			this.id = id;
-      		},
-      		
-      		render: function(context, doc) {
-      			var self = this,
-      				node = (doc||document).createElement(this.tagName);
-      			
-      			node.appendChild(ContainerNode.prototype.render.call(this, context, doc));
-      			
-      			Object.keys(this.attributes).forEach(function(attr) {
-      				var value = interpolate(self.attributes[attr],  context);
-      				node.setAttribute(attr, value);
-      			});
-      			
-      			Object.keys(this.properties).forEach(function(prop) {
-      				var value = interpolate(self.attributes[prop],  context);
-      				node[prop] = value;
-      			});
-      			
-      			this.classes.forEach(function(cls) {
-      				node.classList.add(cls);
-      			});
-      			
-      			if (typeof this.id !== 'undefined') {
-      				node.id = this.id;
-      			}
-      			
-      			return node;
-      		}
-      	});
-      	
-      	
-      	/**
-      	 * Block node
-      	 */
-      	BlockNode = function(name, ctxPath, options) {
-      		this.name = name;
-      		this.ctxPath = ctxPath;
-      		this.options = options;
-      	};
-      	
-      	BlockNode.prototype = new ContainerNode({
-      		render: function(context, doc) {
-      			var self = this,
-      				subContext = this.ctxPath ? findPath(this.ctxPath, context) : undefined;
-      			
-      			if (typeof helpers[this.name] !== 'function') {
-      				throw new Error('No block helper for @' + this.name + ' has been registered');
-      			}
-      			
-      			return helpers[this.name].call(context, subContext, {
-      				document: (doc || document),
-      				
-      				render: function(ctx) {
-      					return ContainerNode.prototype.render.call(self, ctx, doc);
-      				},
-      				
-      				options: self.options
-      			});
-      		}
-      	});
-      	
-      		
       	// Generate node tree
       	generateNodeTree = function(first, tail) {
       		var stack = [new ContainerNode()],
-      			indent, peekNode, pushNode, popNode;
+      			nodeCount = 0,
+      			lines, peekNode, pushNode, popNode;
+      			
+      		if (!first) {
+      			return stack[0];
+      		}
       			
       		/* Node stack helpers */
       		
@@ -1385,10 +1211,11 @@ parser = (function(){
       		};
       	
       		pushNode = function(node) {
+      			nodeCount++;
       			stack.push(node);
       		};
       	
-      		popNode = function() {
+      		popNode = function(lineNumber) {
       			var node;
       			if (stack.length < 2) {
       				throw new Error("Could not pop node from stack");
@@ -1396,26 +1223,44 @@ parser = (function(){
       		
       			node = stack.pop();
       			peekNode().appendChild(node);
+      			
       			return node;
       		};
+      		
+      		// Remove newlines
+      		lines = tail.map(function(item) { return item.pop(); });
+      		lines.unshift(first);
       	
-      		tail.unshift([null, first]);
-      		tail.forEach(function(t, index) {
-      			var item = t[1];
+      		lines.forEach(function(line, index) {
+      			var indent = line.indent,
+      				item = line.item,
+      				lineNumber = line.num,
+      				err;
       				
-      			if (item === DEDENT) {
-      				indent = DEDENT;
-      				popNode();
-      			} else if (item === INDENT) {
-      				indent = INDENT;
-      			} else {
-      				if (index > 0) {
-      					popNode();
-      				}
-      				
-      				pushNode(item);
-      				indent = UNDEF;
+      			if (indent[0] instanceof Error) {
+      				throw indent;
       			}
+      			
+      			if (nodeCount > 0) {
+      				if (indent[0] === UNCHANGED) {
+      					// Same indent: previous node won't have any children
+      					popNode();
+      				} else if (indent[0] === DEDENT) {
+      					// Pop nodes in their parent
+      					popNode();
+      				
+      					while (indent.length > 0) {
+      						indent.pop();
+      						popNode();
+      					}
+      				} else if (indent[0] === INDENT && peekNode() instanceof TextNode) {
+      					err = new Error("Cannot add children to text node");
+      					err.line = lineNumber;
+      					throw err;
+      				}
+      			}
+      			
+      			pushNode(item);
       		});
       		
       		// Collapse remaining stack
@@ -1427,20 +1272,20 @@ parser = (function(){
       	};
       	
       
-      	// Keep track of indent, inserting "INDENT" and "DEDENT" tokens
+      	// Keep track of indent
       	parseIndent = function(s, line) {
       		var depth = s.length,
-      			dents = [];
+      			dents = [],
+      			err;
       
       		if (depth.length === 0) {
-      			// First line, this is the reference indentation
+      			// First line, this is the reference indent
       			depths.push(depth);
-      			return [];
       		}
       
       		if (depth == depths[0]) {
       			// Same indent as previous line
-      			return [];
+      			return [UNCHANGED];
       		}
       
       		if (depth > depths[0]) {
@@ -1457,10 +1302,23 @@ parser = (function(){
       
       		if (depth != depths[0]) {
       			// No matching previous indent
-      			throw new Error("Unexpected indent on line " + line);
+      			err = new Error("Unexpected indent");
+      			err.line = line;
+      			err.column = 1;
+      			return [err];
       		}
       
       		return dents;
+      	};
+      	
+      	
+      	// Text node helper
+      	createTextNode = function(text) {
+      		if (text.charAt(text.length - 1) === '"') {
+      			text = text.substr(0, text.length - 1);
+      		}
+      		
+      		return new TextNode(text);
       	};
       	
       

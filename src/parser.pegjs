@@ -1,14 +1,20 @@
 /* Initialization */
 {
-	var INDENT = 'INDENT', DEDENT = 'DEDENT', UNDEF,
+	var UNCHANGED = 'U', INDENT = 'I', DEDENT = 'D', UNDEF,
 		depths = [0],
-		generateNodeTree, parseIndent, createElement, createDirective;
+		generateNodeTree, parseIndent,
+		createTextNode, createElement, createDirective;
 
 	
 	// Generate node tree
 	generateNodeTree = function(first, tail) {
 		var stack = [new ContainerNode()],
-			indent, peekNode, pushNode, popNode;
+			nodeCount = 0,
+			lines, peekNode, pushNode, popNode;
+			
+		if (!first) {
+			return stack[0];
+		}
 			
 		/* Node stack helpers */
 		
@@ -17,10 +23,11 @@
 		};
 	
 		pushNode = function(node) {
+			nodeCount++;
 			stack.push(node);
 		};
 	
-		popNode = function() {
+		popNode = function(lineNumber) {
 			var node;
 			if (stack.length < 2) {
 				throw new Error("Could not pop node from stack");
@@ -28,28 +35,44 @@
 		
 			node = stack.pop();
 			peekNode().appendChild(node);
+			
 			return node;
 		};
+		
+		// Remove newlines
+		lines = tail.map(function(item) { return item.pop(); });
+		lines.unshift(first);
 	
-		tail.unshift([null, first]);
-		tail.forEach(function(t, index) {
-			var item = t[1];
+		lines.forEach(function(line, index) {
+			var indent = line.indent,
+				item = line.item,
+				lineNumber = line.num,
+				err;
 				
-			if (item instanceof Error) {
-				throw item;
-			} else if (item === DEDENT) {
-				indent = DEDENT;
-				popNode();
-			} else if (item === INDENT) {
-				indent = INDENT;
-			} else if (typeof item !== 'undefined') {
-				if (index > 0) {
-					popNode();
-				}
-				
-				pushNode(item);
-				indent = UNDEF;
+			if (indent[0] instanceof Error) {
+				throw indent;
 			}
+			
+			if (nodeCount > 0) {
+				if (indent[0] === UNCHANGED) {
+					// Same indent: previous node won't have any children
+					popNode();
+				} else if (indent[0] === DEDENT) {
+					// Pop nodes in their parent
+					popNode();
+				
+					while (indent.length > 0) {
+						indent.pop();
+						popNode();
+					}
+				} else if (indent[0] === INDENT && peekNode() instanceof TextNode) {
+					err = new Error("Cannot add children to text node");
+					err.line = lineNumber;
+					throw err;
+				}
+			}
+			
+			pushNode(item);
 		});
 		
 		// Collapse remaining stack
@@ -61,21 +84,20 @@
 	};
 	
 
-	// Keep track of indent, inserting "INDENT" and "DEDENT" tokens
+	// Keep track of indent
 	parseIndent = function(s, line) {
 		var depth = s.length,
 			dents = [],
 			err;
 
 		if (depth.length === 0) {
-			// First line, this is the reference indentation
+			// First line, this is the reference indent
 			depths.push(depth);
-			return [];
 		}
 
 		if (depth == depths[0]) {
 			// Same indent as previous line
-			return [];
+			return [UNCHANGED];
 		}
 
 		if (depth > depths[0]) {
@@ -99,6 +121,16 @@
 		}
 
 		return dents;
+	};
+	
+	
+	// Text node helper
+	createTextNode = function(text) {
+		if (text.charAt(text.length - 1) === '"') {
+			text = text.substr(0, text.length - 1);
+		}
+		
+		return new TextNode(text);
 	};
 	
 
@@ -136,27 +168,20 @@
 
 /* PEGjs rules */
 
-templateFile
-= first:line tail:(newline line)* newline?
+templateLines
+= newlines first:line? tail:(newlines line)* newlines
 { return generateNodeTree(first, tail); }
 
 line
-= nonEmptyLine / emptyLine
-
-emptyLine "empty line"
-= [ \t]*
-{ return; }
-
-nonEmptyLine
 = depth:indent s:(element / textNode / directive) [ \t]*
-{ return s; }
+{ return { indent: depth, item: s, num: line }; }
 
 indent "indent"
 = s:[ \t]*
 { return parseIndent(s, line); }
 
-newline "new line"
-= "\n"
+newlines "new lines"
+= "\n"*
 
 identifier "identifier"
 = h:[a-z_]i t:[a-z0-9_-]i*
@@ -193,8 +218,8 @@ explicitElement
 { return createElement(tagName, qualifiers); }
 
 textNode "text node"
-= "\"" text:[^\n]* "\""?
-{ return new TextNode(text.join('')); }
+= "\"" text:[^\n]*
+{ return createTextNode(text.join('')); }
 
 contextPath "context property path"
 = first:identifier tail:("." identifier)*
@@ -203,15 +228,15 @@ contextPath "context property path"
 	tail.forEach(function(i) {
 		ret.push(i[1]);
 	});
-	return ret;
+	return ret.join('.');
 }
 
 quotedText "quoted text"
-= "\"" chars:[^\"]* "\""
+= ("\"" chars:[^\"]* "\"")
 { return chars.join(''); }
 
 directiveParameter "directive parameter"
-= name:(identifier "=") value:quotedText
+= name:(identifier "=")? value:quotedText
 { return { name: name ? name[0] : 'text', value: value }; }
 
 directive "directive"

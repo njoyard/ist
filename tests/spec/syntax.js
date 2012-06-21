@@ -72,7 +72,7 @@ define([
 		it("should fail to add children to text nodes", function() {
 			expect( function() {
 				ist(textNoTextChildren);
-			}).toThrow("Cannot add children to TextNode");
+			}).toThrow("In <unknown> on line 2: Cannot add children to text node");
 		});
 		
 		it("should fail to parse deindented nodes without any matching sibling", function() {
