@@ -54,7 +54,7 @@ define(function() {
 	
 	
 	Context.prototype = {
-		createFragment: function() {
+		createDocumentFragment: function() {
 			return this.doc.createDocumentFragment();
 		},
 		
@@ -158,7 +158,7 @@ define(function() {
 		},
 		
 		_render: function(context) {
-			var fragment = context.createFragment();
+			var fragment = context.createDocumentFragment();
 			
 			this.children = this.children || [];
 			this.children.forEach(function(c) {
@@ -351,7 +351,7 @@ define(function() {
 			return tmpl.render(this);
 		} else {
 			// Return empty fragment
-			return this.createFragment();
+			return this.createDocumentFragment();
 		}
 	});
 	
@@ -364,7 +364,7 @@ define(function() {
 			return tmpl.render(this);
 		} else {
 			// Return empty fragment
-			return this.createFragment();
+			return this.createDocumentFragment();
 		}
 	});
 	
@@ -381,11 +381,12 @@ define(function() {
 	 * Built-in 'each' helper
 	 */
 	ist.registerHelper('each', function(ctx, tmpl) {
-		var fragment = this.createFragment(),
-			outer = this;
+		var fragment = this.createDocumentFragment(),
+			outer = this.value,
+			value = ctx.value;
 		
-		if (ctx.value && Array.isArray(ctx)) {
-			ctx.value.forEach(function(item, index) {
+		if (value && Array.isArray(value)) {
+			value.forEach(function(item, index) {
 				var xitem;
 				
 				if (item !== null && (typeof item === 'object' || typeof item === 'array')) {

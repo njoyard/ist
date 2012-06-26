@@ -69,18 +69,45 @@ define([
 			expect( arg.value ).toBe( context.context );
 		});
 		
-		it("FAIL-REWRITE should pass the rendering document to helper as a property of the 2nd argument", function() {
-			var arg,
-				context = { context: { value: 'context' } };
-				
-				
+		it("should allow helpers to create document fragments in the rendering document with this.createDocumentFragment", function() {
+			var frag, context = { context: { value: 'context' } };
+			
 			ist.registerHelper('testBlock', function(subcontext, subtemplate) {
-				arg = subtemplate.document;
-				return document.createDocumentFragment();
+				frag = this.createDocumentFragment();
+				return frag;
 			});
 			ist(textBlockhelper).render(context);
 			
-			expect( arg ).toBe( document );
+			expect( frag.nodeType ).toBe( document.DOCUMENT_FRAGMENT_NODE );
+			expect( frag.ownerDocument ).toBe( document );
+		});
+		
+		it("should allow helpers to create elements in the rendering document with this.createElement", function() {
+			var elem, context = { context: { value: 'context' } };
+			
+			ist.registerHelper('testBlock', function(subcontext, subtemplate) {
+				elem = this.createElement('div');
+				return this.createDocumentFragment();
+			});
+			ist(textBlockhelper).render(context);
+			
+			expect( elem.nodeType ).toBe( document.ELEMENT_NODE );
+			expect( elem.ownerDocument ).toBe( document );
+			expect( elem.nodeName.toLowerCase() ).toBe( 'div' );
+		});
+		
+		it("should allow helpers to create text nodes in the rendering document with this.createTextNode", function() {
+			var text, context = { context: { value: 'context' } };
+			
+			ist.registerHelper('testBlock', function(subcontext, subtemplate) {
+				text = this.createTextNode('text value');
+				return this.createDocumentFragment();
+			});
+			ist(textBlockhelper).render(context);
+			
+			expect( text.nodeType ).toBe( document.TEXT_NODE );
+			expect( text.ownerDocument ).toBe( document );
+			expect( text.textContent ).toBe( 'text value' );
 		});
 		
 		it("should enable helpers rendering the subtemplate with a custom context", function() {
@@ -89,7 +116,7 @@ define([
 				
 			ist.registerHelper('testBlock', function(subcontext, subtemplate) {
 				result = subtemplate.render({ value: 'my value' });
-				return document.createDocumentFragment();
+				return this.createDocumentFragment();
 			});
 			ist(textBlockhelper).render(context);
 			
@@ -128,10 +155,10 @@ define([
 			
 			ist.registerHelper('testBlock', function(subcontext, subtemplate, opt) {
 				options = opt;
-				return subtemplate.document.createDocumentFragment();
+				return this.createDocumentFragment();
 			});
 			ist.registerHelper('otherBlock', function(subcontext, subtemplate, opt) {
-				return subtemplate.document.createDocumentFragment();
+				return this.createDocumentFragment();
 			});
 			fragment = ist(textParameters).render({ context: undefined });
 			
@@ -143,12 +170,12 @@ define([
 		it("should allow escaped characters in block parameter values", function() {
 			var options;
 			
-			ist.registerHelper('testBlock', function(subcontext, subtemplate) {
-				options = subtemplate.options;
-				return subtemplate.document.createDocumentFragment();
+			ist.registerHelper('testBlock', function(subcontext, subtemplate, opt) {
+				options = opt;
+				return this.createDocumentFragment();
 			});
 			ist.registerHelper('otherBlock', function(subcontext, subtemplate) {
-				return subtemplate.document.createDocumentFragment();
+				return this.createDocumentFragment();
 			});
 			fragment = ist(textParameters).render({ context: undefined });
 			
@@ -160,11 +187,11 @@ define([
 			var options;
 			
 			ist.registerHelper('testBlock', function(subcontext, subtemplate) {
-				return subtemplate.document.createDocumentFragment();
+				return this.createDocumentFragment();
 			});
-			ist.registerHelper('otherBlock', function(subcontext, subtemplate) {
-				options = subtemplate.options;
-				return subtemplate.document.createDocumentFragment();
+			ist.registerHelper('otherBlock', function(subcontext, subtemplate, opt) {
+				options = opt;
+				return this.createDocumentFragment();
 			});
 			fragment = ist(textParameters).render({ context: undefined });
 			
@@ -177,12 +204,12 @@ define([
 				
 			ist.registerHelper('noContext', function(subcontext) {
 				arg = subcontext;
-				return document.createDocumentFragment();
+				return this.createDocumentFragment();
 			});
-			ist.registerHelper('noContextParam', function(subcontext, subtemplate) {
+			ist.registerHelper('noContextParam', function(subcontext, subtemplate, opt) {
 				arg2 = subcontext;
-				options = subtemplate.options;
-				return document.createDocumentFragment();
+				options = opt;
+				return this.createDocumentFragment();
 			});
 			ist(textNocontext).render(context);
 			

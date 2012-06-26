@@ -138,8 +138,8 @@ define([
 				},
 				empty: [],
 				variable: 'value'
-			},
-			eachFragment = tEach.render(eachObj);
+			};
+		var	eachFragment = tEach.render(eachObj);
 		
 		it("should render nodes for each array element in @each directives", function() {
 			expect( eachFragment.querySelector('.array').childNodes.length ).toBe( eachObj.array.length );

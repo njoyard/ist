@@ -2,7 +2,7 @@
 {
 	var UNCHANGED = 'U', INDENT = 'I', DEDENT = 'D', UNDEF,
 		depths = [0],
-		generateNodeTree, parseIndent,
+		generateNodeTree, parseIndent, escapedCharacter,
 		createTextNode, createElement, createDirective;
 
 	
@@ -164,6 +164,11 @@
 		
 		return new BlockNode(name, path ? path[1] : undefined, options);
 	};
+	
+	
+	escapedCharacter = function(char) {
+		return { 'f': '\f', 'b': '\b', 't': '\t', 'n': '\n', 'r': '\r' }[char] || char;
+	};
 }
 
 /* PEGjs rules */
@@ -237,13 +242,16 @@ contextPath "context property path"
 	return ret.join('.');
 }
 
-quotedText "quoted text"
-= "\"" chars:[^\"]* "\""
+escapedCharacter
+= "\\" c:character
+{ return escapedCharacter(c); }
+
+doubleQuotedText
+= "\"" chars:(escapedCharacter / [^\\\n\"])* "\""
 { return chars.join(''); }
 
-quotedText2
-= start:[\"\'] chars:(("\\" c:character { return c; }) / character)* end:[\"\'] &{ return start === end; }
-{ return chars.join(''); }
+quotedText "quoted text"
+= doubleQuotedText
 
 directiveParameter "directive parameter"
 = name:(identifier "=")? value:quotedText

@@ -42,6 +42,7 @@ parser = (function(){
         "indent": parse_indent,
         "newline": parse_newline,
         "newlines": parse_newlines,
+        "character": parse_character,
         "identifier": parse_identifier,
         "elemId": parse_elemId,
         "elemClass": parse_elemClass,
@@ -53,7 +54,8 @@ parser = (function(){
         "explicitElement": parse_explicitElement,
         "textNode": parse_textNode,
         "contextPath": parse_contextPath,
-        "quotedText": parse_quotedText,
+        "escapedCharacter": parse_escapedCharacter,
+        "doubleQuotedText": parse_doubleQuotedText,
         "directiveParameter": parse_directiveParameter,
         "directive": parse_directive
       };
@@ -362,6 +364,26 @@ parser = (function(){
         reportFailures--;
         if (reportFailures === 0 && result0 === null) {
           matchFailed("new lines");
+        }
+        return result0;
+      }
+      
+      function parse_character() {
+        var result0;
+        
+        reportFailures++;
+        if (/^[^\n]/.test(input.charAt(pos.offset))) {
+          result0 = input.charAt(pos.offset);
+          advance(pos, 1);
+        } else {
+          result0 = null;
+          if (reportFailures === 0) {
+            matchFailed("[^\\n]");
+          }
+        }
+        reportFailures--;
+        if (reportFailures === 0 && result0 === null) {
+          matchFailed("character");
         }
         return result0;
       }
@@ -937,11 +959,46 @@ parser = (function(){
         return result0;
       }
       
-      function parse_quotedText() {
+      function parse_escapedCharacter() {
+        var result0, result1;
+        var pos0, pos1;
+        
+        pos0 = clone(pos);
+        pos1 = clone(pos);
+        if (input.charCodeAt(pos.offset) === 92) {
+          result0 = "\\";
+          advance(pos, 1);
+        } else {
+          result0 = null;
+          if (reportFailures === 0) {
+            matchFailed("\"\\\\\"");
+          }
+        }
+        if (result0 !== null) {
+          result1 = parse_character();
+          if (result1 !== null) {
+            result0 = [result0, result1];
+          } else {
+            result0 = null;
+            pos = clone(pos1);
+          }
+        } else {
+          result0 = null;
+          pos = clone(pos1);
+        }
+        if (result0 !== null) {
+          result0 = (function(offset, line, column, c) { return escapedCharacter(c); })(pos0.offset, pos0.line, pos0.column, result0[1]);
+        }
+        if (result0 === null) {
+          pos = clone(pos0);
+        }
+        return result0;
+      }
+      
+      function parse_doubleQuotedText() {
         var result0, result1, result2;
         var pos0, pos1;
         
-        reportFailures++;
         pos0 = clone(pos);
         pos1 = clone(pos);
         if (input.charCodeAt(pos.offset) === 34) {
@@ -955,24 +1012,30 @@ parser = (function(){
         }
         if (result0 !== null) {
           result1 = [];
-          if (/^[^"]/.test(input.charAt(pos.offset))) {
-            result2 = input.charAt(pos.offset);
-            advance(pos, 1);
-          } else {
-            result2 = null;
-            if (reportFailures === 0) {
-              matchFailed("[^\"]");
-            }
-          }
-          while (result2 !== null) {
-            result1.push(result2);
-            if (/^[^"]/.test(input.charAt(pos.offset))) {
+          result2 = parse_escapedCharacter();
+          if (result2 === null) {
+            if (/^[^\\\n"]/.test(input.charAt(pos.offset))) {
               result2 = input.charAt(pos.offset);
               advance(pos, 1);
             } else {
               result2 = null;
               if (reportFailures === 0) {
-                matchFailed("[^\"]");
+                matchFailed("[^\\\\\\n\"]");
+              }
+            }
+          }
+          while (result2 !== null) {
+            result1.push(result2);
+            result2 = parse_escapedCharacter();
+            if (result2 === null) {
+              if (/^[^\\\n"]/.test(input.charAt(pos.offset))) {
+                result2 = input.charAt(pos.offset);
+                advance(pos, 1);
+              } else {
+                result2 = null;
+                if (reportFailures === 0) {
+                  matchFailed("[^\\\\\\n\"]");
+                }
               }
             }
           }
@@ -1005,10 +1068,6 @@ parser = (function(){
         }
         if (result0 === null) {
           pos = clone(pos0);
-        }
-        reportFailures--;
-        if (reportFailures === 0 && result0 === null) {
-          matchFailed("quoted text");
         }
         return result0;
       }
@@ -1044,7 +1103,7 @@ parser = (function(){
         }
         result0 = result0 !== null ? result0 : "";
         if (result0 !== null) {
-          result1 = parse_quotedText();
+          result1 = parse_doubleQuotedText();
           if (result1 !== null) {
             result0 = [result0, result1];
           } else {
@@ -1209,7 +1268,7 @@ parser = (function(){
       
       	var UNCHANGED = 'U', INDENT = 'I', DEDENT = 'D', UNDEF,
       		depths = [0],
-      		generateNodeTree, parseIndent,
+      		generateNodeTree, parseIndent, escapedCharacter,
       		createTextNode, createElement, createDirective;
       
       	
@@ -1370,6 +1429,11 @@ parser = (function(){
       		});
       		
       		return new BlockNode(name, path ? path[1] : undefined, options);
+      	};
+      	
+      	
+      	escapedCharacter = function(char) {
+      		return { 'f': '\f', 'b': '\b', 't': '\t', 'n': '\n', 'r': '\r' }[char] || char;
       	};
       
       
