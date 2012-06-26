@@ -52,7 +52,7 @@ define([
 			});
 			ist(textBlockhelper).render(context);
 			
-			expect( hthis ).toBe( context );
+			expect( hthis.value ).toBe( context );
 		});
 		
 		it("should pass the narrowed down context to helpers as 1st argument", function() {
@@ -66,10 +66,10 @@ define([
 			});
 			ist(textBlockhelper).render(context);
 			
-			expect( arg ).toBe( context.context );
+			expect( arg.value ).toBe( context.context );
 		});
 		
-		it("should pass the rendering document to helper as a property of the 2nd argument", function() {
+		it("FAIL-REWRITE should pass the rendering document to helper as a property of the 2nd argument", function() {
 			var arg,
 				context = { context: { value: 'context' } };
 				
@@ -102,7 +102,7 @@ define([
 			var node, fragment;
 				
 			ist.registerHelper('testBlock', function(subcontext, subtemplate) {
-				node = subtemplate.document.createElement('div');
+				node = this.createElement('div');
 				node.className = 'generated';
 				return node;
 			});
@@ -123,14 +123,14 @@ define([
 			expect( typeof exception ).toBe( 'undefined' );
 		});
 		
-		it("should pass named parameters to helpers as 'options' in the second parameter", function() {
+		it("should pass named parameters to helpers as third parameter", function() {
 			var options;
 			
-			ist.registerHelper('testBlock', function(subcontext, subtemplate) {
-				options = subtemplate.options;
+			ist.registerHelper('testBlock', function(subcontext, subtemplate, opt) {
+				options = opt;
 				return subtemplate.document.createDocumentFragment();
 			});
-			ist.registerHelper('otherBlock', function(subcontext, subtemplate) {
+			ist.registerHelper('otherBlock', function(subcontext, subtemplate, opt) {
 				return subtemplate.document.createDocumentFragment();
 			});
 			fragment = ist(textParameters).render({ context: undefined });

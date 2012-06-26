@@ -99,8 +99,12 @@ define(function() {
 			return text.replace(/{{(.*?)}}/g, (function(m, p1) { return this.getPath(p1); }).bind(this));
 		},
 		
+		createContext: function(newValue) {
+			return new Context(newValue, this.doc);
+		},
+		
 		getSubcontext: function(path) {
-			return new Context(this.getPath(path), this.doc);
+			return this.createContext(this.getPath(path));
 		}
 	};
 	
@@ -235,19 +239,17 @@ define(function() {
 	extend(ContainerNode, BlockNode, {
 		_render: function(context) {
 			var self = this,
-				subContext = this.ctxPath ? context.getSubcontext(this.ctxPath) : undefined;
+				subContext = this.ctxPath ? context.getSubcontext(this.ctxPath) : undefined,
+				container = {};
 			
 			if (typeof helpers[this.name] !== 'function') {
 				throw new Error('No block helper for @' + this.name + ' has been registered');
 			}
 			
-			return helpers[this.name].call(context, subContext, {
-				render: function(ctx) {
-					return ContainerNode.prototype.render.call(self, ctx, doc);
-				},
-				
-				options: self.options
-			});
+			container.render = ContainerNode.prototype.render.bind(container);
+			container._render = ContainerNode.prototype._render.bind(self);
+			
+			return helpers[this.name].call(context, subContext, container, this.options);
 		}
 	});
 	
@@ -349,7 +351,7 @@ define(function() {
 			return tmpl.render(this);
 		} else {
 			// Return empty fragment
-			return ctx.createFragment();
+			return this.createFragment();
 		}
 	});
 	
@@ -362,7 +364,7 @@ define(function() {
 			return tmpl.render(this);
 		} else {
 			// Return empty fragment
-			return ctx.createFragment();
+			return this.createFragment();
 		}
 	});
 	
@@ -379,7 +381,7 @@ define(function() {
 	 * Built-in 'each' helper
 	 */
 	ist.registerHelper('each', function(ctx, tmpl) {
-		var fragment = tmpl.document.createDocumentFragment(),
+		var fragment = this.createFragment(),
 			outer = this;
 		
 		if (ctx.value && Array.isArray(ctx)) {
@@ -402,7 +404,7 @@ define(function() {
 					};
 				}
 				
-				fragment.appendChild(tmpl.render(xitem));
+				fragment.appendChild(tmpl.render(ctx.createContext(xitem)));
 				
 				if (xitem === item) {
 					delete item.loop;
@@ -421,8 +423,8 @@ define(function() {
 	 * @include "path/to/template"
 	 * @include "path/to/template.ist"
 	 */
-	ist.registerHelper('include', function(ctx, tmpl) {
-		var what = tmpl.options.text.replace(/\.ist$/, ''),
+	ist.registerHelper('include', function(ctx, tmpl, options) {
+		var what = options.text.replace(/\.ist$/, ''),
 			found, tryReq;
 			
 		// Try to find a previously require()-d template or string

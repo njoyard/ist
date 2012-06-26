@@ -35,8 +35,10 @@ define([
 			},
 			falsy = ['zero', 'emptystring', 'null', 'undefined', 'false'],
 			truthy = ['number', 'string', 'object', 'array', 'true'],
-			ifFragment = tIf.render(tfObj),
-			unlessFragment = tUnless.render(tfObj);
+			ifFragment, unlessFragment;
+			
+		ifFragment = tIf.render(tfObj)
+		unlessFragment = tUnless.render(tfObj);
 			
 			
 		/** @if **/

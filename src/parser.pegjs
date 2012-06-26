@@ -50,7 +50,7 @@
 				err;
 				
 			if (indent[0] instanceof Error) {
-				throw indent;
+				throw indent[0];
 			}
 			
 			if (nodeCount > 0) {
@@ -169,7 +169,7 @@
 /* PEGjs rules */
 
 templateLines
-= newlines first:line? tail:(newlines line)* newlines
+= newlines first:line? tail:(newline newlines? line)* newlines
 { return generateNodeTree(first, tail); }
 
 line
@@ -180,8 +180,14 @@ indent "indent"
 = s:[ \t]*
 { return parseIndent(s, line); }
 
+newline "new line"
+= "\n"
+
 newlines "new lines"
-= "\n"*
+= newline*
+
+character "character"
+= [^\n]
 
 identifier "identifier"
 = h:[a-z_]i t:[a-z0-9_-]i*
@@ -232,7 +238,11 @@ contextPath "context property path"
 }
 
 quotedText "quoted text"
-= ("\"" chars:[^\"]* "\"")
+= "\"" chars:[^\"]* "\""
+{ return chars.join(''); }
+
+quotedText2
+= start:[\"\'] chars:(("\\" c:character { return c; }) / character)* end:[\"\'] &{ return start === end; }
 { return chars.join(''); }
 
 directiveParameter "directive parameter"

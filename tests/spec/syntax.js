@@ -78,7 +78,7 @@ define([
 		it("should fail to parse deindented nodes without any matching sibling", function() {
 			expect( function() {
 				ist(textNoMatchingIndent, 'templateName');
-			}).toThrow("Unexpected indent in templateName on line 3");
+			}).toThrow("In templateName on line 3, character 1: Unexpected indent");
 		});
 		
 		it("should support indented root nodes", function() {
