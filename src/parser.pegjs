@@ -159,10 +159,10 @@
 		var options = {};
 
 		parameters.forEach(function(p) {
-			options[p[1].name] = p[1].value;
+			options[p.name] = p.value;
 		});
 		
-		return new BlockNode(name, path ? path[1] : undefined, options);
+		return new BlockNode(name, path, options);
 	};
 	
 	
@@ -230,25 +230,22 @@ explicitElement
 
 textNode "text node"
 = "\"" text:[^\n]*
-{ return createTextNode(text.join('')); }
+{ return createTextNode(text.join('')); /* TODO use properly quoted text */ }
 
 contextPath "context property path"
-= first:identifier tail:("." identifier)*
+= first:identifier tail:("." i:identifier { return i; })*
 {
-	var ret = [first];
-	tail.forEach(function(i) {
-		ret.push(i[1]);
-	});
-	return ret.join('.');
+	tail.unshift(first);
+	return tail.join('.');
 }
 
-escapedCharacter
+escapedCharacter 
 = "\\" c:character
-{ return escapedCharacter(c); }
+{ return escapedCharacter(c); /* TODO support \u0000 and \x00 */ }
 
 doubleQuotedText
 = "\"" chars:(escapedCharacter / [^\\\n\"])* "\""
-{ return chars.join(''); }
+{ return chars.join(''); /* TODO support single quoted text */ }
 
 quotedText "quoted text"
 = doubleQuotedText
@@ -258,6 +255,14 @@ directiveParameter "directive parameter"
 { return { name: name ? name[0] : 'text', value: value }; }
 
 directive "directive"
-= "@" name:identifier path:(" " contextPath)? parameters:(" " directiveParameter)*
-{ return createDirective(name, path, parameters); }
+= pathDirective / noPathDirective
+
+pathDirective
+= "@" name:identifier " " path:contextPath &[ \n] params:(" " p:directiveParameter { return p; })*
+{ return createDirective(name, path, params); }
+
+noPathDirective
+= "@" name:identifier params:(" " p:directiveParameter { return p; })*
+{ return createDirective(name, undefined, params); }
+
 
