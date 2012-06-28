@@ -155,14 +155,8 @@
 	
 	
 	// Directive object helper
-	createDirective = function(name, path, parameters) {
-		var options = {};
-
-		parameters.forEach(function(p) {
-			options[p.name] = p.value;
-		});
-		
-		return new BlockNode(name, path, options);
+	createDirective = function(name, value) {
+		return new BlockNode(name, value);
 	};
 	
 	
@@ -181,8 +175,14 @@ line
 = depth:indent s:(element / textNode / directive) [ \t]*
 { return { indent: depth, item: s, num: line }; }
 
+__ "whitespace"
+= [ \t]
+
+_ "optional whitespace"
+= __*
+
 indent "indent"
-= s:[ \t]*
+= s:_
 { return parseIndent(s, line); }
 
 newline "new line"
@@ -250,19 +250,7 @@ doubleQuotedText
 quotedText "quoted text"
 = doubleQuotedText
 
-directiveParameter "directive parameter"
-= name:(identifier "=")? value:quotedText
-{ return { name: name ? name[0] : 'text', value: value }; }
-
 directive "directive"
-= pathDirective / noPathDirective
-
-pathDirective
-= "@" name:identifier " " path:contextPath &[ \n] params:(" " p:directiveParameter { return p; })*
-{ return createDirective(name, path, params); }
-
-noPathDirective
-= "@" name:identifier params:(" " p:directiveParameter { return p; })*
-{ return createDirective(name, undefined, params); }
-
+= "@" name:identifier value:(__ v:(quotedText / contextPath) { return v; })
+{ return createDirective(name, value); }
 

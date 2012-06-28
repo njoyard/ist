@@ -230,17 +230,26 @@ define(function() {
 	/**
 	 * Block node
 	 */
-	BlockNode = function(name, ctxPath, options) {
+	BlockNode = function(name, value) {
 		this.name = name;
-		this.ctxPath = ctxPath;
-		this.options = options;
+		this.value = value;
 	};
 	
 	extend(ContainerNode, BlockNode, {
 		_render: function(context) {
 			var self = this,
-				subContext = this.ctxPath ? context.getSubcontext(this.ctxPath) : undefined,
-				container = {};
+				container = {},
+				subContext;
+			
+			if (typeof this.value !== 'undefined') {
+				if (this.value.charAt(0) == '"') {
+					// Direct string value
+					subContext = context.createContext(this.value.substr(1, this.value.length - 2));
+				} else {
+					// Context path
+					subContext = context.getSubContext(this.value);
+				}
+			}
 			
 			if (typeof helpers[this.name] !== 'function') {
 				throw new Error('No block helper for @' + this.name + ' has been registered');
@@ -249,7 +258,7 @@ define(function() {
 			container.render = ContainerNode.prototype.render.bind(container);
 			container._render = ContainerNode.prototype._render.bind(self);
 			
-			return helpers[this.name].call(context, subContext, container, this.options);
+			return helpers[this.name].call(context, subContext, container);
 		}
 	});
 	
@@ -389,17 +398,23 @@ define(function() {
 			value.forEach(function(item, index) {
 				var xitem;
 				
-				if (item !== null && (typeof item === 'object' || typeof item === 'array')) {
+				if (item !== null && (typeof item === 'object' || Array.isArray(item))) {
 					xitem = item;
 					item.loop = {
+						first: index == 0,
 						index: index,
+						last: index == value.length - 1,
+						length: value.length,
 						outer: outer
 					};
 				} else {
 					xitem = {
 						toString: function() { return item.toString(); },
 						loop: {
+							first: index == 0,
 							index: index,
+							last: index == value.length - 1,
+							length: value.length,
 							outer: outer
 						}
 					};
@@ -424,8 +439,8 @@ define(function() {
 	 * @include "path/to/template"
 	 * @include "path/to/template.ist"
 	 */
-	ist.registerHelper('include', function(ctx, tmpl, options) {
-		var what = options.text.replace(/\.ist$/, ''),
+	ist.registerHelper('include', function(ctx, tmpl) {
+		var what = ctx.value.replace(/\.ist$/, ''),
 			found, tryReq;
 			
 		// Try to find a previously require()-d template or string
