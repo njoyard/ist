@@ -1,0 +1,2 @@
+@otherBlock "direct string value"
+	div.otherChild

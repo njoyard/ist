@@ -1,5 +1,0 @@
-div.parent
-	@noContext
-		div.child
-	@noContextParam param="value"
-		div.otherchild

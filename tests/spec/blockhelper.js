@@ -1,9 +1,9 @@
 define([
 	'ist',
 	'text!blockhelper/blockhelper.ist',
-	'text!blockhelper/parameters.ist',
-	'text!blockhelper/nocontext.ist'
-], function(ist, textBlockhelper, textParameters, textNocontext) {
+	'text!blockhelper/string.ist',
+	'text!blockhelper/none.ist'
+], function(ist, textBlockhelper, textString, textNone) {
 	describe('blockhelpers', function() {
 		it("should allow parsing templates with unknown @blocks", function() {
 			var thrown = false;
@@ -139,84 +139,29 @@ define([
 			expect( fragment.querySelector("div.parent div.generated") ).toBe( node );
 		});
 		
-		it("should allow helper named parameters passed as param=\"value\"", function() {
-			var exception;
+		it("should allow passing a quoted string instead of a context path", function() {
+			var value;
 			
-			try {
-				ist(textParameters);
-			} catch(e) {
-				exception = e;
-			}
-			expect( typeof exception ).toBe( 'undefined' );
-		});
-		
-		it("should pass named parameters to helpers as third parameter", function() {
-			var options;
-			
-			ist.registerHelper('testBlock', function(subcontext, subtemplate, opt) {
-				options = opt;
-				return this.createDocumentFragment();
-			});
-			ist.registerHelper('otherBlock', function(subcontext, subtemplate, opt) {
-				return this.createDocumentFragment();
-			});
-			fragment = ist(textParameters).render({ context: undefined });
-			
-			expect( typeof options ).toBe( 'object' );
-			expect( options.first ).toBe( 'value' );
-			expect( options.second ).toBe( 'va lu=e' );
-		});
-		
-		it("should allow escaped characters in block parameter values", function() {
-			var options;
-			
-			ist.registerHelper('testBlock', function(subcontext, subtemplate, opt) {
-				options = opt;
-				return this.createDocumentFragment();
-			});
 			ist.registerHelper('otherBlock', function(subcontext, subtemplate) {
+				value = subcontext.value;
 				return this.createDocumentFragment();
 			});
-			fragment = ist(textParameters).render({ context: undefined });
 			
-			expect( options.third ).toBe( "other\\" );
-			expect( options.fourth ).toBe( "\n\\test\"" );
-		});
-		
-		it("should allow block parameters without name and store the last one as 'text'", function() {
-			var options;
-			
-			ist.registerHelper('testBlock', function(subcontext, subtemplate) {
-				return this.createDocumentFragment();
-			});
-			ist.registerHelper('otherBlock', function(subcontext, subtemplate, opt) {
-				options = opt;
-				return this.createDocumentFragment();
-			});
-			fragment = ist(textParameters).render({ context: undefined });
-			
-			expect( options.text ).toBe( "second text without name" );
+			ist(textString).render({});
+			expect( value ).toBe( "direct string value" );
 		});
 		
 		it("should pass undefined when no narrowed down context is present", function() {
 			var arg = 'defined', arg2 = 'defined', options,
 				context = { context: { value: 'context' } };
 				
-			ist.registerHelper('noContext', function(subcontext) {
+			ist.registerHelper('noParamBlock', function(subcontext) {
 				arg = subcontext;
 				return this.createDocumentFragment();
 			});
-			ist.registerHelper('noContextParam', function(subcontext, subtemplate, opt) {
-				arg2 = subcontext;
-				options = opt;
-				return this.createDocumentFragment();
-			});
-			ist(textNocontext).render(context);
+			ist(textNone).render(context);
 			
 			expect( typeof arg ).toBe( 'undefined' );
-			expect( typeof arg2 ).toBe( 'undefined' );
-			expect( typeof options ).toBe( 'object' );
-			expect( options.param ).toBe( 'value' );
 		});
 	});
 });

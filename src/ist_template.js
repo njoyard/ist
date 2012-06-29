@@ -230,8 +230,9 @@ define(function() {
 	/**
 	 * Block node
 	 */
-	BlockNode = function(name, value) {
+	BlockNode = function(name, path, value) {
 		this.name = name;
+		this.path = path;
 		this.value = value;
 	};
 	
@@ -241,18 +242,14 @@ define(function() {
 				container = {},
 				subContext;
 			
-			if (typeof this.value !== 'undefined') {
-				if (this.value.charAt(0) == '"') {
-					// Direct string value
-					subContext = context.createContext(this.value.substr(1, this.value.length - 2));
-				} else {
-					// Context path
-					subContext = context.getSubContext(this.value);
-				}
-			}
-			
 			if (typeof helpers[this.name] !== 'function') {
 				throw new Error('No block helper for @' + this.name + ' has been registered');
+			}
+			
+			if (typeof this.path !== 'undefined') {
+				subContext = context.getSubcontext(this.path);
+			} else if (typeof this.value !== 'undefined') {
+				subContext = context.createContext(this.value);
 			}
 			
 			container.render = ContainerNode.prototype.render.bind(container);
@@ -356,6 +353,10 @@ define(function() {
 	 * Built-in 'if' helper
 	 */
 	ist.registerHelper('if', function(ctx, tmpl) {
+		if (typeof ctx === 'undefined') {
+			throw new Error("Missing value for @if");
+		}
+		
 		if (ctx.value) {
 			return tmpl.render(this);
 		} else {

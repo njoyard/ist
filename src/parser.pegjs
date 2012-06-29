@@ -155,8 +155,8 @@
 	
 	
 	// Directive object helper
-	createDirective = function(name, value) {
-		return new BlockNode(name, value);
+	createDirective = function(name, path, value) {
+		return new BlockNode(name, path, value);
 	};
 	
 	
@@ -251,6 +251,16 @@ quotedText "quoted text"
 = doubleQuotedText
 
 directive "directive"
-= "@" name:identifier value:(__ v:(quotedText / contextPath) { return v; })
-{ return createDirective(name, value); }
+= valueDirective / pathDirective / simpleDirective
 
+simpleDirective
+= "@" name:identifier
+{ return createDirective(name); }
+
+pathDirective
+= "@" name:identifier __ path:contextPath
+{ return createDirective(name, path); }
+
+valueDirective
+= "@" name:identifier __ value:quotedText
+{ return createDirective(name, undefined, value); }
