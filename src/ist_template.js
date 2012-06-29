@@ -240,7 +240,7 @@ define(function() {
 		_render: function(context) {
 			var self = this,
 				container = {},
-				subContext;
+				subContext, ret;
 			
 			if (typeof helpers[this.name] !== 'function') {
 				throw new Error('No block helper for @' + this.name + ' has been registered');
@@ -255,7 +255,13 @@ define(function() {
 			container.render = ContainerNode.prototype.render.bind(container);
 			container._render = ContainerNode.prototype._render.bind(self);
 			
-			return helpers[this.name].call(context, subContext, container);
+			ret = helpers[this.name].call(context, subContext, container);
+			
+			if (typeof ret === 'undefined') {
+				return context.createDocumentFragment();
+			}
+			
+			return ret;
 		}
 	});
 	
@@ -353,15 +359,8 @@ define(function() {
 	 * Built-in 'if' helper
 	 */
 	ist.registerHelper('if', function(ctx, tmpl) {
-		if (typeof ctx === 'undefined') {
-			throw new Error("Missing value for @if");
-		}
-		
 		if (ctx.value) {
 			return tmpl.render(this);
-		} else {
-			// Return empty fragment
-			return this.createDocumentFragment();
 		}
 	});
 	
@@ -372,9 +371,6 @@ define(function() {
 	ist.registerHelper('unless', function(ctx, tmpl) {
 		if (!ctx.value) {
 			return tmpl.render(this);
-		} else {
-			// Return empty fragment
-			return this.createDocumentFragment();
 		}
 	});
 	

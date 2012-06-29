@@ -34,7 +34,6 @@ define([
 				
 			ist.registerHelper('testBlock', function() {
 				called = true;
-				return document.createDocumentFragment();
 			});
 			ist(textBlockhelper).render(context);
 			
@@ -48,7 +47,6 @@ define([
 				
 			ist.registerHelper('testBlock', function() {
 				hthis = this;
-				return document.createDocumentFragment();
 			});
 			ist(textBlockhelper).render(context);
 			
@@ -62,7 +60,6 @@ define([
 				
 			ist.registerHelper('testBlock', function(subcontext) {
 				arg = subcontext;
-				return document.createDocumentFragment();
 			});
 			ist(textBlockhelper).render(context);
 			
@@ -101,7 +98,6 @@ define([
 			
 			ist.registerHelper('testBlock', function(subcontext, subtemplate) {
 				text = this.createTextNode('text value');
-				return this.createDocumentFragment();
 			});
 			ist(textBlockhelper).render(context);
 			
@@ -116,7 +112,6 @@ define([
 				
 			ist.registerHelper('testBlock', function(subcontext, subtemplate) {
 				result = subtemplate.render({ value: 'my value' });
-				return this.createDocumentFragment();
 			});
 			ist(textBlockhelper).render(context);
 			
@@ -144,7 +139,6 @@ define([
 			
 			ist.registerHelper('otherBlock', function(subcontext, subtemplate) {
 				value = subcontext.value;
-				return this.createDocumentFragment();
 			});
 			
 			ist(textString).render({});
@@ -157,7 +151,6 @@ define([
 				
 			ist.registerHelper('noParamBlock', function(subcontext) {
 				arg = subcontext;
-				return this.createDocumentFragment();
 			});
 			ist(textNone).render(context);
 			
