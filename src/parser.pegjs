@@ -126,10 +126,6 @@
 	
 	// Text node helper
 	createTextNode = function(text) {
-		if (text.charAt(text.length - 1) === '"') {
-			text = text.substr(0, text.length - 1);
-		}
-		
 		return new TextNode(text);
 	};
 	
