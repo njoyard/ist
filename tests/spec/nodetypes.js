@@ -3,34 +3,45 @@ define([
 	'ist!nodetypes/textnode',
 	'ist!nodetypes/elements'
 ], function(tEmpty, tTextNode, tElements) {
-	describe('nodetypes', function() {
+	return function() {
 		var fragment = tEmpty.render(),
 			textNodes = tTextNode.render().childNodes,
 			elementNodes = tElements.render().childNodes;	
 	
 		it("should return a DocumentFragment in the rendering document", function() {
-			expect( fragment.nodeType ).toBe( document.DOCUMENT_FRAGMENT_NODE );
-			expect( fragment.ownerDocument ).toBe( document );
+			expect( fragment ).toHaveNodeType( document.DOCUMENT_FRAGMENT_NODE );
+			expect( fragment ).toBeInDocument( document );
 		});
 		
 		it("should create text nodes in the rendering document", function() {
-			expect( textNodes[0].nodeType ).toBe( document.TEXT_NODE );
-			expect( textNodes[0].textContent ).toBe("text node");
-			expect( textNodes[0].ownerDocument ).toBe( document );
+			expect( textNodes[0] ).toHaveNodeType( document.TEXT_NODE );
+			expect( textNodes[0] ).toHaveTextContent("text node");
+			expect( textNodes[0] ).toBeInDocument( document );
 		});
 		
-		it("should support a missing trailing double-quote", function() {
-			expect( textNodes[1].nodeType ).toBe( document.TEXT_NODE );
-			expect( textNodes[1].textContent ).toBe("text node");
+		it("should support escaped characters", function() {
+			expect( textNodes[1] ).toHaveTextContent("\"\n\t\b\f\r\\\"");
 		});
 		
-		it("should support literal double quotes", function() {
-			expect( textNodes[2].textContent ).toBe("text \"node\"");
+		it("should treat unknown escaped characters as non-escaped", function() {
+			expect( textNodes[2] ).toHaveTextContent("azeQSD");
+		});
+		
+		it("should allow all characters in text nodes", function() {
+			expect( textNodes[3] ).toHaveTextContent("é€Ω");
+		});
+		
+		it("should allow ASCII characters escaped as \\x??", function() {
+			expect( textNodes[4] ).toHaveTextContent("éé9é99éXe9");
+		});
+		
+		it("should allow Unicode characters escaped as \\u????", function() {
+			expect( textNodes[5] ).toHaveTextContent("é€€€ΩU03a9");
 		});
 		
 		it("should create element nodes in the rendering document", function() {
-			expect( elementNodes[0].nodeType ).toBe( document.ELEMENT_NODE );
-			expect( elementNodes[0].ownerDocument ).toBe( document );
+			expect( elementNodes[0] ).toHaveNodeType( document.ELEMENT_NODE );
+			expect( elementNodes[0] ).toBeInDocument( document );
 		});
 		
 		it("should create elements with the right tagName", function() {
@@ -40,5 +51,5 @@ define([
 				expect( node.tagName.toLowerCase() ).toBe( tags[index] );
 			});
 		});
-	});
+	};
 });

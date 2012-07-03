@@ -4,7 +4,7 @@ define([
 	'text!blockhelper/string.ist',
 	'text!blockhelper/none.ist'
 ], function(ist, textBlockhelper, textString, textNone) {
-	describe('blockhelpers', function() {
+	return function() {
 		it("should allow parsing templates with unknown @blocks", function() {
 			var thrown = false;
 			
@@ -156,5 +156,5 @@ define([
 			
 			expect( typeof arg ).toBe( 'undefined' );
 		});
-	});
+	};
 });

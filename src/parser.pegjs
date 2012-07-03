@@ -161,7 +161,12 @@
 	
 	
 	escapedCharacter = function(char) {
-		return { 'f': '\f', 'b': '\b', 't': '\t', 'n': '\n', 'r': '\r' }[char] || char;
+		if (char.length > 1) {
+			// 2 or 4 hex digits coming from \xNN or \uNNNN
+			return String.fromCharCode(parseInt(char, 16));
+		} else {
+			return { 'f': '\f', 'b': '\b', 't': '\t', 'n': '\n', 'r': '\r' }[char] || char;
+		}
 	};
 }
 
@@ -229,8 +234,8 @@ explicitElement
 { return createElement(tagName, qualifiers); }
 
 textNode "text node"
-= "\"" text:[^\n]*
-{ return createTextNode(text.join('')); /* TODO use properly quoted text */ }
+= text:quotedText
+{ return createTextNode(text); }
 
 contextPath "context property path"
 = first:identifier tail:("." i:identifier { return i; })*
@@ -239,9 +244,17 @@ contextPath "context property path"
 	return tail.join('.');
 }
 
+escapedUnicode
+= "u" a:[0-9a-z]i b:[0-9a-z]i c:[0-9a-z]i d:[0-9a-z]i
+{ return '' + a + b + c + d; }
+
+escapedASCII
+= "x" a:[0-9a-z]i b:[0-9a-z]i
+{ return '' + a + b; }
+
 escapedCharacter 
-= "\\" c:character
-{ return escapedCharacter(c); /* TODO support \u0000 and \x00 */ }
+= "\\" c:(escapedUnicode / escapedASCII / character)
+{ return escapedCharacter(c); }
 
 doubleQuotedText
 = "\"" chars:(escapedCharacter / [^\\\n\"])* "\""
@@ -264,3 +277,4 @@ pathDirective
 valueDirective
 = "@" name:identifier __ value:quotedText
 { return createDirective(name, undefined, value); }
+

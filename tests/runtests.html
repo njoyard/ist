@@ -21,15 +21,151 @@
 
         require(
             [
-            	'nodetypes',
-            	'qualifiers',
-            	'syntax',
-            	'interpolation',
-            	'blocks',
-            	'blockhelper',
-            	'createnode'
+            	'ist',
+            	'nodetypes', 'qualifiers', 'syntax', 'interpolation', 'blocks', 'blockhelper', 'createnode'
             ],
-            function(){
+            function(ist, nodetypes, qualifiers, syntax, interpolation, blocks, blockhelper, createnode){
+            	/* IST specific matchers */
+				beforeEach(function() {
+					var matchers = {};
+		
+					matchers.toParse = function() {
+						var template = this.actual,
+							err;
+				
+						this.message = function() {
+							return "Expected successful parsing but caught \"" + err.message + "\"";
+						};
+					
+						try {
+							ist(template);
+						} catch (e) {
+							err = e;
+						}
+					
+						return typeof err === 'undefined';
+					};
+				
+					matchers.toFailParse = function(message) {
+						var template = this.actual,
+							err;
+					
+						this.message = function() {
+							var actual;
+						
+							if (typeof err === "undefined") {
+								actual = "parsing succeeded";
+							} else {
+								actual = "caught \"" + err.message + "\" instead";
+							}
+						
+							return "Expected parse failure \"" + message + "\" but " + actual;
+						};
+					
+						try {
+							ist(template);
+						} catch (e) {
+							err = e;
+						}
+					
+						return typeof err !== 'undefined' && err.message === message;
+					};
+		
+					matchers.toRender = function(context) {
+						var template = this.actual,
+							err;
+					
+						this.message = function() {
+							return "Expected successful rendering but caught \"" + err.message + "\"";
+						};
+					
+						try {
+							template.render(context);
+						} catch (e) {
+							err = e;
+						}
+					
+						return typeof err === 'undefined';
+					};
+		
+					matchers.toFailRender = function(context) {
+						var template = this.actual,
+							err;
+					
+						this.message = function() {
+							var actual;
+						
+							if (typeof err === "undefined") {
+								actual = "rendering succeeded";
+							} else {
+								actual = "caught \"" + err.message + "\" instead";
+							}
+						
+							return "Expected render failure \"" + message + "\" but " + actual;
+						};
+					
+						try {
+							template.render(context);
+						} catch (e) {
+							err = e;
+						}
+					
+						return typeof err !== 'undefined' && err.message === message;
+					};
+					
+					matchers.toBeInDocument = function(doc) {
+						var actual = this.actual.ownerDocument;
+						
+						this.message = function() {
+							return "Unexpected owner document";
+						};
+						
+						return actual === doc;
+					};
+				
+					matchers.toHaveNodeType = function(nodeType) {
+						var actual = this.actual.nodeType;
+					
+						this.message = function() {
+							return "Expected node type " + nodeType + " instead of " + actual;
+						};
+					
+						return actual === nodeType;
+					};
+				
+					matchers.toBeElement = function(tagName) {
+						var actual = this.actual.tagName;
+						
+						this.message = function() {
+							return "Expected <" + tagName + "> element instead of <" + actual + ">";
+						};
+					
+						return actual.toLowerCase() === tagName.toLowerCase();
+					};
+				
+					matchers.toHaveTextContent = function(textContent) {
+						var actual = this.actual.textContent;
+						
+						this.message = function() {
+							return "Expected text content \"" + textContent + "\" instead of \"" + actual + "\"";
+						};
+					
+						return actual === textContent;
+					};
+			
+					this.addMatchers(matchers);
+				});
+            
+            	/* Describe tests */
+            	describe('nodetypes', nodetypes);
+            	describe('qualifiers', qualifiers);
+            	describe('syntax', syntax);
+            	describe('interpolation', interpolation);
+            	describe('blocks', blocks);
+            	describe('blockhelper', blockhelper);
+            	describe('createnode', createnode);
+            
+            	/* Run Jasmine */
                 jasmine.getEnv().addReporter(new jasmine.TrivialReporter());
                 jasmine.getEnv().execute();
             }

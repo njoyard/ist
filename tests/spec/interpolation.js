@@ -3,7 +3,7 @@ define([
 	'ist!interpolation/properties',
 	'ist!interpolation/this'
 ], function(tBase, tProperties, tThis) {
-	describe('interpolation', function() {
+	return function() {
 		var obj = { a: 1, b: '2' },
 			propObj = {
 				sub: { property: 'value' },
@@ -52,5 +52,5 @@ define([
 			propObj.access = {};
 			expect( function() { tProperties.render(propObj); } ).toThrow( 'Cannot find path access.to.deeply.nested.property in context' );
 		});
-	});
+	};
 });

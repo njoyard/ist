@@ -11,7 +11,7 @@ define([
 		propNodes = tProperties.render().childNodes,
 		mixedNodes = tMixed.render().childNodes;
 		
-	describe('qualifiers', function() {
+	return function() {
 		it("should be able to set an ID on elements", function() {
 			expect( idNodes[0].id ).toBe("id");
 		});
@@ -65,5 +65,5 @@ define([
 			expect( mixedNodes[0].getAttribute('test') ).toBe( "test \"value\"" );
 			expect( mixedNodes[0].prop ).toBe( "val" );
 		});
-	});
+	};
 });

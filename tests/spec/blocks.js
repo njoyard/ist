@@ -16,7 +16,7 @@ define([
 	'blocks/included_compiled'
 ], function(ist, tIf, tUnless, tWith, tEach, tInclude, textInclude,
 			textIncludeText, textIncludeInvalid) {
-	describe('blocks', function() {
+	return function() {
 		var tfObj = {
 				zero: 0,
 				emptystring: '',
@@ -230,5 +230,5 @@ define([
 		it("should fail to render templates with invalid includes", function() {
 			expect( function() { ist(textIncludeInvalid).render(); } ).toThrow( "Invalid included template 'blocks/included_invalid'" );
 		});
-	});
+	};
 });

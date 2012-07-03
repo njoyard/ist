@@ -19,7 +19,7 @@ define([
 		irootNodes = tIndentedRoot.render().childNodes,
 		cmtNodes = tComments.render().childNodes;
 	
-	describe('syntax', function() {
+	return function() {
 		it("should ignore empty and whitespace-only lines", function() {
 			expect( elNodes.length ).toBe(2);
 			expect( typeof elNodes[0] ).toNotBe('undefined');
@@ -88,5 +88,5 @@ define([
 		it("should support /* block comments */", function() {
 			
 		});
-	});
+	};
 });

@@ -1,5 +1,5 @@
 define(['ist'], function(ist) {
-	describe('createnode', function() {
+	return function() {
 		it("should be able to create single nodes using the createNode interface", function() {
 			var node = ist.createNode('div.class#id[attr=val][.prop=val]');
 			
@@ -45,5 +45,5 @@ define(['ist'], function(ist) {
 			expect( zero.toString().indexOf('DocumentFragment') ).toNotBe( -1 );
 			expect( mult.toString().indexOf('DocumentFragment') ).toNotBe( -1 );
 		});
-	});
+	};
 });
