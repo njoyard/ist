@@ -5,11 +5,12 @@
 IST is a DOM templating engine using a CSS selector-like syntax.  Templates are
 text files, which are first parsed and compiled into a template object, and then
 rendered into a DOM document using a context object.  This file documents usage
-of version 0.4.5.
+of version 0.5.
 
 Here is a brief overview of an IST template file:
 
 	div#content
+		/* Article list */
 	    @each articles
 	        div.article
 	            h1
@@ -27,7 +28,6 @@ Here is a brief overview of an IST template file:
 	            label[for=name]
 	                "Name :"
 	            input.commentInput#name[type=text]
-	            label[for=comment]
 	            textarea[cols=55]#commentArea
 	                "Enter your comment here"
 	                
@@ -109,6 +109,13 @@ However, indent is compared strictly: it has to be identical for all sibling
 nodes (ie nodes at the same level with the same parent).  Therefore it's best to
 avoid mixing tabs and spaces.
 
+You can add C-syntax block comments (like in CSS) anywhere in templates:
+
+	div.parent
+		/* Children specified
+		    below */
+		div.child
+
 ### Element nodes - Selectors
 
 CSS-like selectors are used to specify element nodes.  The element tag name is
@@ -136,13 +143,13 @@ some corner-cases, properties can be specified as follows:
 
 ### Text nodes
 
-Text nodes are specified with double quotes:
+Text nodes are specified with double or simple quotes:
 
-	"top-level text node"
+	"top-level 'text node'"
 	div.text
 		"child text node"
-		"any character is valid here including "double quotes""
-		"the final double quote is optional
+		"you can include \"escaped\" ch\x41ra\u0043ters"
+		'including\nnewlines'
 
 Of course text nodes cannot have any child nodes.
 
@@ -160,28 +167,123 @@ text nodes or in property/attribute values:
 Using string interpolation is not possible with ID or class qualifiers, but you
 can use `[.className={{ variable }}]` and `[.id={{ variable }}]`
 
-### Block directives
+### Control structures
 
-Block directives are used to control node generation with the help of context
+#### Conditionals
+
+You can render parts of the tree conditionnaly using @if and @unless directives
+as follows:
+
+	@if some.property.is.truthy
+		div.willBeRendered
+		
+	@unless some.property.is.truthy
+		div.willNotBeRendered
+
+Usual javascript truthiness is used here.
+
+#### Context switching
+
+When accessing the same part of the context object repeatedly, you may want to
+use the @with directive to make the template more readable:
+
+	span
+		"{{ deeply.nested.object.property1 }}"
+		"{{ deeply.nested.object.property2 }}"
+		
+	div.clearer
+		@with deeply.nested.object
+			"{{ property1 }}"
+			"{{ property2 }}"
+			
+#### Array iteration
+
+You can render part of the tree repeatedly for each element of an array using
+the @each directive as follows:
+
+	@each articles
+		h1
+			"{{ title }}"
+		div
+			"{{ content }}"
+			
+Under the @each directive, the special `loop` variable enables access to
+iteration details:
+
+	@each elements
+		@if loop.first
+			"first element"
+			br
+		"element {{ loop.index }} of {{ loop.length }}"
+		br
+		@if loop.last
+			"the last one"
+			
+The `loop.outer` variable enables acces to the outer context:
+
+	@each elements
+		"{{ loop.outer.elements.length }} should equal {{ loop.length }}"
+		
+#### External template inclusion
+
+A template file can be included in an other one using the `@include` directive:
+
+	@include "path/to/template"
+	@include "path/to/template.ist"
+	@include 'path/to/template'
+	@include 'path/to/template.ist'
+	
+The `@include`d template will be rendered in the current context.  When loading
+templates with the `ist!` plugin, included template paths must be relative (ie.
+path/to/a must refer to path/to/b as `@include "b"` or `@include "b.ist"` when
+loaded as `ist!path/to/a`), and are loaded automatically.
+
+However, when a template string is compiled directly, dependencies must have
+been loaded prior to rendering.  In the first example above, the helper will
+look for AMD modules named either `path/to/template`, `path/to/template.ist`,
+`ist!path/to/template` or `text!path/to/template.ist`.  One of these modules
+must resolve to either a template string or a compiled IST template.
+
+## Defining custom directive helpers
+
+Directives are used to control node generation with the help of context
 properties.  They allow to define custom iterators and handlers to operate on a
 narrowed down rendering context.  If you're used to [handlebars blocks][2],
-you'll find out that IST block directives work in the same way.
+you'll find out that IST directives work in a very similar way.
 
-#### Defining block helpers
+#### Defining directive helpers
 
-The syntax of block directives is as follows:
+The syntax of directives is as follows:
 
-	@directiveName path.to.context.property param1="value" param2="value"
+	@directiveName path.to.context.property
 		div.subtree
 			...
 
-Block helpers are used to render @directiveName blocks. Defining a helper is
-done using the following call:
+Instead of a context property value, directives can be called with a "direct"
+string value, using a single- or double-quoted string as argument:
 
-	ist.registerHelper('directiveName', function(subctx, subTemplate) {
+	@directiveName "direct value"
+		div.subtree
+			...
+		
+	@directiveName 'direct value'
+		div.subtree
+			...
+
+Finally, directives can be called without any argument:
+
+	@directiveName
+		div.subtree
+			...
+
+Directive helpers are defined using the following call:
+
+	ist.registerHelper('directiveName', function(subContext, subTemplate) {
 		// Helper code
 	});
 	
+*TODO*
+
 Helpers are called with the current rendering context as `this`, and with the
 narrowed down context as the first argument (`path.to.context.property` in the
 example above). The second argument is an object with the following properties:
@@ -423,7 +525,6 @@ by passing it as a third argument:
 
 The following features may be included in future versions:
 
-- comments
 - expression evaluation
 - i18n handling
 
