@@ -169,7 +169,7 @@
 /* PEGjs rules */
 
 templateLines
-= newlines first:line? tail:(newline newlines? line)* newlines
+= newline* first:line? tail:(newline+ line)* newline*
 { return generateNodeTree(first, tail); }
 
 line
@@ -179,18 +179,12 @@ line
 __ "whitespace"
 = [ \t]
 
-_ "optional whitespace"
-= __*
-
 indent "indent"
-= s:_
+= s:__*
 { return parseIndent(s, line); }
 
 newline "new line"
 = "\n"
-
-newlines "new lines"
-= newline*
 
 character "character"
 = [^\n]
@@ -254,10 +248,14 @@ escapedCharacter
 
 doubleQuotedText
 = "\"" chars:(escapedCharacter / [^\\\n\"])* "\""
-{ return chars.join(''); /* TODO support single quoted text */ }
+{ return chars.join(''); }
+
+singleQuotedText
+= "'" chars:(escapedCharacter / [^\\\n'])* "'"
+{ return chars.join(''); }
 
 quotedText "quoted text"
-= doubleQuotedText
+= doubleQuotedText / singleQuotedText
 
 directive "directive"
 = valueDirective / pathDirective / simpleDirective

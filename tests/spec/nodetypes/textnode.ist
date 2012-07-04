@@ -1,6 +1,8 @@
 "text node"
-"\"\n\t\b\f\r\\\""
+"\"\n'\'\t\b\f\r\\\""
 "\a\z\e\Q\S\D"
 "é€Ω"
 "\xe9\xe99\xe999\xE9\Xe9"
 "\u00e9\u20ac\u20AC\u20aC\u03a9\U03a9"
+'text node'
+'\'\n"\"\t\b\f\r\\\''

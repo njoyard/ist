@@ -20,7 +20,7 @@ define([
 		});
 		
 		it("should support escaped characters", function() {
-			expect( textNodes[1] ).toHaveTextContent("\"\n\t\b\f\r\\\"");
+			expect( textNodes[1] ).toHaveTextContent("\"\n''\t\b\f\r\\\"");
 		});
 		
 		it("should treat unknown escaped characters as non-escaped", function() {
@@ -37,6 +37,16 @@ define([
 		
 		it("should allow Unicode characters escaped as \\u????", function() {
 			expect( textNodes[5] ).toHaveTextContent("é€€€ΩU03a9");
+		});
+		
+		it("should create text nodes from single-quoted text", function() {
+			expect( textNodes[6] ).toHaveNodeType( document.TEXT_NODE );
+			expect( textNodes[6] ).toHaveTextContent("text node");
+			expect( textNodes[6] ).toBeInDocument( document );
+		});
+		
+		it("should support escaped characters in single-quoted text", function() {
+			expect( textNodes[7] ).toHaveTextContent('\'\n""\t\b\f\r\\\'');
 		});
 		
 		it("should create element nodes in the rendering document", function() {
