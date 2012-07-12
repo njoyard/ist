@@ -1,3 +1,14 @@
+v0.5
+- Full parser rewrite using PEGjs
+- Reworked directory structure and added build script (can use uglify-js)
+- New Context object, see README for API (mainly useful in directive helpers)
+- Block helpers: parameters changed to account for new Context object
+- Block helpers: named parameters are no longer supported (no use case)
+- Block helpers: accept "direct" quoted string as parameter instead of context path
+- Block helpers: allow returning undefined instead of an empty document fragment
+- @each: added loop.length, loop.first and loop.last
+- @each: fixed a bug when array items were arrays
+
 v0.4.5 - 2012-05-29
 - Fixed r.js build
 
