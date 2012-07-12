@@ -244,16 +244,52 @@ look for AMD modules named either `path/to/template`, `path/to/template.ist`,
 `ist!path/to/template` or `text!path/to/template.ist`.  One of these modules
 must resolve to either a template string or a compiled IST template.
 
-## Defining custom directive helpers
+## Single node creation
+
+IST also has a shortcut "single node" creation interface that support the same
+syntax as full template files.  You can call it as follows:
+
+	var myDiv = ist.createNode("div.class#id[prop=Value]");
+	
+It also supports rendering with context:
+
+	var myDiv = ist.createNode("div[class={{ cls }}]", { cls: 'myclass' });
+	
+Actually `createNode` is able to create several nodes at once using a CSS-like
+angle-bracket syntax:
+
+	var myParentDiv = ist.createNode(
+		'div.parent > div.child > "{{ text }}"',
+		{ text: "Text node content" }
+	);
+	
+And you can even use directives:
+
+	var myParentDiv = ist.createNode(
+		'div.parent > @each children > "{{ name }}"',
+		{ children: [ { name: 'alice' }, { name: 'bob' } ] }
+	);
+
+Please note however that `createNode` has a quite naive angle-bracket parser,
+and as such does not support angle brackets anywhere else than between nodes.
+Therefore you should only use it for trivial node tree creation.
+
+Finally, you can create nodes in an alternate document by passing it as a third
+argument:
+
+	var popupDiv = ist.createNode('div.inPopup', {}, popup.document);
+
+## Custom directives
 
 Directives are used to control node generation with the help of context
-properties.  They allow to define custom iterators and handlers to operate on a
+properties.  They allow defining custom iterators and handlers to operate on a
 narrowed down rendering context.  If you're used to [handlebars blocks][2],
-you'll find out that IST directives work in a very similar way.
+you'll find out that IST directives work in a very similar way. All built-in
+control structures are implemented this way.
 
-#### Defining directive helpers
+### Registering directive helpers
 
-The syntax of directives is as follows:
+The syntax of directives in templates files is as follows:
 
 	@directiveName path.to.context.property
 		div.subtree
@@ -279,27 +315,47 @@ Finally, directives can be called without any argument:
 Directive helpers are defined using the following call:
 
 	ist.registerHelper('directiveName', function(subContext, subTemplate) {
-		// Helper code
+		// Helper code, more on that later
 	});
-	
-*TODO*
 
-Helpers are called with the current rendering context as `this`, and with the
-narrowed down context as the first argument (`path.to.context.property` in the
-example above). The second argument is an object with the following properties:
+### Context objects
 
-- `document`: a reference to the rendering DOM document object
-- `options`: an object containing block parameters ("param1" and "param2" in the
-  example above). A parameter specified without name will be mapped to 'text'
-  (in this case, only the last nameless value will be kept).
-- `render`: renders the subtemplate, taking a rendering context as first
-  argument, and returning the resulting node (or document fragment).
+Directive helpers receive `Context` objects to encapsulate the current rendering
+context as well as the target Document and helper methods.  `Context` objects
+have the following API:
+
+* `Context.document` is the target document
+* `Context#createDocumentFragment()` is an alias to the same method in the
+  target document
+* `Context#createTextNode(textContent)` is an alias to the same method in the
+  target document
+* `Context#createElement(tagName[, namespace])` is an alias to createElement or
+  createElementNS (when called with `namespace`) in the current rendering
+  document
+* `Context.value` is the context value
+* `Context#getPath(path)` returns the value of a property or subproperty of the
+  current context, ie. `ctx.getPath('a.b.c')` returns `ctx.value['a']['b']['c']`
+* `Context#interpolate(string)`	interpolates "{{ path.to.property }}" occurences
+  inside `string`
+* `Context#createContext(newValue)`	creates and returns a new `Context` object
+  with `newValue` as value, but with the same rendering document
+* `Context#getSubContext(path)` is a shortcut to
+  `ctx.createContext(ctx.getPath(path))`
   
-Block directives can also be used without a subcontext specification; in this
-case the first argument to the helper will be `undefined`.
+Internally, IST always works with `Context` objects when rendering templates.
+Actually, you can directly pass a `Context` object to the `render` method of any
+IST compiled template (instead of a context object and a target document).
+	
+### Writing directive helpers
+
+Helpers are called with the current rendering `Context` as `this`, and with the
+narrowed down context as the first argument (or `undefined` when the directive
+is used without any argument).  The second argument is an IST compiled template
+created from what is "inside" the directive.
 
 Block helpers must return their result as either a DOM node or a (possibly
-empty) DOM document fragment.
+empty) DOM document fragment.  Returning `undefined` is also possible and has
+the same result as returning an empty fragment.
 
 Note that helpers must only be defined at the time a template is rendered.
 Template files can be parsed before the necessary block helpers are defined; 
@@ -311,7 +367,7 @@ helpers later.
 You can define a simple '@noop' block that simply renders the inner template
 without any context switching as follows:
 
-	ist.registerHelper('noop', function(subctx, subTemplate) {
+	ist.registerHelper('noop', function(subCtx, subTemplate) {
 		return subTemplate.render(this);
 	});
 	
@@ -326,6 +382,12 @@ will render the same as:
 	div.example
 		"using a {{ context.property }}"
 
+You could also use the same helper to annotate templates, although comments are
+already available for this purpose:
+
+	@noop "this block renders to an example div"
+		div.example
+
 An other simple example would be a '@disabled' block that prevents rendering
 part of a template tree:
 
@@ -335,16 +397,20 @@ part of a template tree:
 	@disabled
 		div.alsoNotRendered
 
-The associated helper simply always returns an empty fragment:
+The associated helper simply returns an empty fragment:
 
-	ist.registerHelper('noop', function(subctx, subTemplate) {
-		return subTemplate.document.createDocumentFragment();
+	ist.registerHelper('disabled', function() {
+		return this.createDocumentFragment();
 	});
+	
+As said before, returning `undefined` is the same, so you can simply write:
 
-#### Built-in block helpers
+	ist.registerHelper('disabled', function() {});
 
-IST built-in block helpers are documented below, along with their helper
-definition to help better understand how helpers work and what they can achieve.
+#### Built-in directive helpers
+
+Following are helper definitions for built-in directives as examples of what can
+be achieved with custom directives.
 
 ##### Conditionals
 
@@ -358,21 +424,15 @@ Conditional directives enable conditional rendering of a subtree:
 
 They are defined as follows:
 
-	ist.registerHelper('if', function(subcontext, subtemplate) {
-		if (subcontext) {
-			return subtemplate.render(this);
-		} else {
-			// Return empty fragment
-			return subtemplate.document.createDocumentFragment();
+	ist.registerHelper('if', function(subCtx, subTemplate) {
+		if (subCtx) {
+			return subTemplate.render(this);
 		}
 	});
 	
-	ist.registerHelper('unless', function(subcontext, subtemplate) {
-		if (!subcontext) {
-			return subtemplate.render(this);
-		} else {
-			// Return empty fragment
-			return subtemplate.document.createDocumentFragment();
+	ist.registerHelper('unless', function(subCtx, subTemplate) {
+		if (!subCtx) {
+			return subTemplate.render(this);
 		}
 	});
 	
@@ -381,19 +441,19 @@ They are defined as follows:
 
 The `@with` directive enables context narrowing:
 
-	span
+	div.suboptimal
 		"{{ deeply.nested.object.property1 }}"
 		"{{ deeply.nested.object.property2 }}"
 		
-	div.clearer
+	div.better
 		@with deeply.nested.object
 			"{{ property1 }}"
 			"{{ property2 }}"
 
 It is defined as follows:
 
-	ist.registerHelper('with', function(subcontext, subtemplate) {
-		return subtemplate.render(subcontext);
+	ist.registerHelper('with', function(subCtx, subTemplate) {
+		return subTemplate.render(subCtx);
 	});
 	
 ##### Basic iterator
@@ -407,25 +467,44 @@ switched to each of the array elements in turn:
 		div
 			"{{ content }}"
 
-Additionnaly, inside an `@each` directive, you can access the current loop index
-using `{{ loop.index }}`.  The outer context is also available as `loop.outer`.
-
 The 'each' helper is defined as follows:
 
 	ist.registerHelper('each', function(ctx, tmpl) {
-		var fragment = tmpl.document.createDocumentFragment(),
-			outer = this;
+		var fragment = this.createDocumentFragment(),
+			outer = this.value,
+			value = ctx.value;
 		
-		if (ctx) {
-			ctx.forEach(function(item, index) {
-				item.loop = {
-					index: index,
-					outer: outer
-				};
+		if (value && Array.isArray(value)) {
+			value.forEach(function(item, index) {
+				var xitem;
 				
-				fragment.appendChild(tmpl.render(item));
+				if (item !== null && (typeof item === 'object' || Array.isArray(item))) {
+					xitem = item;
+					item.loop = {
+						first: index == 0,
+						index: index,
+						last: index == value.length - 1,
+						length: value.length,
+						outer: outer
+					};
+				} else {
+					xitem = {
+						toString: function() { return item.toString(); },
+						loop: {
+							first: index == 0,
+							index: index,
+							last: index == value.length - 1,
+							length: value.length,
+							outer: outer
+						}
+					};
+				}
 				
-				delete item.loop;
+				fragment.appendChild(tmpl.render(ctx.createContext(xitem)));
+				
+				if (xitem === item) {
+					delete item.loop;
+				}
 			});
 		}
 		
@@ -438,24 +517,13 @@ A template file can be included in an other one using the `@include` directive:
 
 	@include "path/to/template"
 	@include "path/to/template.ist"
-	
-The `@include`d template will be rendered in the current context.  When loading
-templates with the `ist!` plugin, included template paths must be relative (ie.
-path/to/a must refer to path/to/b as `@include "b"` or `@include "b.ist"`), and
-are loaded automatically.
-
-However, when a template string is compiled directly, dependencies must have
-been loaded prior to rendering.  In the first example above, the helper will
-look for AMD modules named either `path/to/template`, `path/to/template.ist`,
-`ist!path/to/template` or `text!path/to/template.ist`.  One of these modules
-must resolve to either a template string or a compiled IST template.
 
 The code for the corresponding helper is shown below.  Please note that this
 helper alone is not sufficient: the requirejs plugin code also parses templates
 to add `@include`d templates to dependencies.
 
 	ist.registerHelper('include', function(ctx, tmpl) {
-		var what = tmpl.options.text.replace(/\.ist$/, ''),
+		var what = ctx.value.replace(/\.ist$/, ''),
 			found, tryReq;
 			
 		// Try to find a previously require()-d template or string
@@ -468,7 +536,7 @@ to add `@include`d templates to dependencies.
 		
 		while (!found && tryReq.length) {
 			try {
-				found = require(tryReq.shift());
+				found = requirejs(tryReq.shift());
 			} catch(e) {
 				if (tryReq.length === 0) {
 					throw new Error("Cannot find included template '" + what + "'");
@@ -489,44 +557,15 @@ to add `@include`d templates to dependencies.
 		}
 	});
 
-## Single node creation
 
-IST also has a shortcut "single node" creation interface that support the same
-syntax as full template files.  You can call it as follows:
-
-	myDiv = ist.createNode("div.class#id[prop=Value]");
-	
-It also supports rendering with context:
-
-	myDiv = ist.createNode("div[class={{ cls }}]", { cls: 'myclass' });
-	
-`createNode` is actually able to create several nodes at once using a CSS-like
-angle-bracket syntax:
-
-	myParentDiv = ist.createNode(
-		'div.parent > div.child > "{{ text }}"',
-		{ text: "Text node content" }
-	);
-	
-And you can even use directives:
-
-	myParentDiv = ist.createNode(
-		'div.parent > @each children > "{{ name }}"',
-		{ children: [ { name: 'alice' }, { name: 'bob' } ] }
-	);
-
-Please note however that `createNode` does not support angle brackets anywhere
-else than between nodes.  Finally, you can create nodes in an alternate document
-by passing it as a third argument:
-
-	popupDiv = ist.createNode('div.inPopup', null, popup.document);
 
 ## Planned features
 
 The following features may be included in future versions:
 
 - expression evaluation
-- i18n handling
+- easier i18n handling
+- template update with changed context content
 
 
 ## Feedback
