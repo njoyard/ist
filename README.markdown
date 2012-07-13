@@ -1,6 +1,8 @@
-# [IST][1] - Indented Selector Templating
+[IST][1] - Indented Selector Templating
+=======================================
 
-## Introduction
+Introduction
+------------
 
 IST is a DOM templating engine using a CSS selector-like syntax.  Templates are
 text files, which are first parsed and compiled into a template object, and then
@@ -9,47 +11,54 @@ of version 0.5.
 
 Here is a brief overview of an IST template file:
 
-	div#content
-		/* Article list */
-	    @each articles
-	        div.article
-	            h1
-	                "{{ title }}"
-	            "{{ text }}"
-	            
-	        @unless comments.length
-	            "No comments for now !"
-	            
-	        @each comments
-	            div.comment
-	                "{{ this }}"
-	                
-	        form.newcomment
-	            label[for=name]
-	                "Name :"
-	            input.commentInput#name[type=text]
-	            textarea[cols=55]#commentArea
-	                "Enter your comment here"
-	                
-	@include "common/footer"
+```css
+div#content
+    /* Article list */
+    @each articles
+        div.article
+            h1
+                "{{ title }}"
+            "{{ text }}"
+            
+        @unless comments.length
+            "No comments for now !"
+            
+        @each comments
+            div.comment
+                "{{ this }}"
+                
+        form.newcomment
+            label[for=name]
+                "Name :"
+            input.commentInput#name[type=text]
+            textarea[cols=55]#commentArea
+                "Enter your comment here"
+                
+@include "common/footer"
+```
 
-## Usage
+Usage
+-----
 
 ### Template compilation.
 
 IST can be used either as an AMD module or as a RequireJS plugin.  To compile a
 template string, use the module syntax as follows:
 
-	require(['ist'], function(ist) {
-		var myTemplate = ist('div#myId.myClass[myProp=myVal]');
-		...
-	});
+```js
+require(['ist'], function(ist) {
+	var myTemplate = ist('div#myId.myClass[myProp=myVal]');
+	/* ... */
+});
+```
 	
 To compile a template file, you can use the RequireJS plugin syntax:
 
-	require(['ist!path/to/template'], function(myTemplate) {
-		...
-	});
+```js
+require(['ist!path/to/template'], function(myTemplate) {
+	/* ... */
+});
+```
 
 Note that the plugin automatically adds an `.ist` extension to file names.
 
@@ -59,13 +68,18 @@ You can render a template using the `render` method of compiled templates and
 passing it a context object as its first argument.  By defaut, it will render
 using the global object `document` property (eg. `window.document`).
 
-	document.body.appendChild(myTemplate.render({ articles: [...] }));
+```js
+document.body.appendChild(myTemplate.render({ articles: [ /*...*/ ] }));
+```
 	
 When rendering to an other document, you can pass it as a second argument:
 
-	popup.document.body.appendChild(myTemplate.render({ ... }, popup.document));
+```js
+popup.document.body.appendChild(myTemplate.render({ /*...*/ }, popup.document));
+```
 
-## Template syntax
+Template syntax
+---------------
 
 ### Basics
 
@@ -74,36 +88,44 @@ are ignored by IST.  The tree structure is specified using indentation.  You can
 indent using (any number of) either spaces or tabs, but you have to be
 consistent.  An increase in indent means a parent-child relationship:
 
-	div.parent
-	    div.child
-		
+```css
+div.parent
+    div.child
+```
+
 Likewise, node with the same indent are siblings:
 
-	div.parent
-	    div.child
-	    div.child
-		
+```css
+div.parent
+    div.child
+    div.child
+```
+
 When decreasing indent, be careful to match a previous line with the same indent
 level:
 
-	div.parent
-	    div.child
-	  div.invalid
+```css
+div.parent
+    div.child
+  div.invalid
 
-	div.parent
-	    div.child
-	div.valid
+div.parent
+    div.child
+div.valid
+```
 	  
 There is no restriction in the size of indent. The following are all equivalent:
 
-	div.parent
-	 div.child
+```css
+div.parent
+ div.child
 
-	div.parent
-	             div.child
+div.parent
+             div.child
 
-	div.parent
-		div.child
+div.parent
+	div.child
+```
 
 However, indent is compared strictly: it has to be identical for all sibling
 nodes (ie nodes at the same level with the same parent).  Therefore it's best to
@@ -111,10 +133,12 @@ avoid mixing tabs and spaces.
 
 You can add C-syntax block comments (like in CSS) anywhere in templates:
 
-	div.parent
-		/* Children specified
-		    below */
-		div.child
+```css
+div.parent
+	/* Children specified
+	    below */
+	div.child
+```
 
 ### Element nodes - Selectors
 
@@ -122,34 +146,46 @@ CSS-like selectors are used to specify element nodes.  The element tag name is
 always specified first, and qualifiers follow, in any order, but without
 spacing. You can use ID qualifiers :
 
-	div#an_id
+```css
+div#an_id
+```
 
 class qualifiers:
 
-	span.a_class
+```css
+span.a_class
+```
 	
 and attribute qualifiers:
 
-	input[type=text]
+```css
+input[type=text]
+```
 	
 All those can be mixed in any order:
 
-	div#id.class1[style=display: none;].class2#final_id
+```css
+div#id.class1[style=display: none;].class2#final_id
+```
 	
 Note that when specifying multiple IDs, only the last one is kept.  Finally, for
 some corner-cases, properties can be specified as follows:
 
-	div[.className=one two three]
+```css
+div[.className=one two three]
+```
 
 ### Text nodes
 
 Text nodes are specified with double or simple quotes:
 
-	"top-level 'text node'"
-	div.text
-		"child text node"
-		"you can include \"escaped\" ch\x41ra\u0043ters"
-		'including\nnewlines'
+```css
+"top-level 'text node'"
+div.text
+	"child text node"
+	"you can include \"escaped\" ch\x41ra\u0043ters"
+	'including\nnewlines'
+```
 
 Of course text nodes cannot have any child nodes.
 
@@ -158,11 +194,13 @@ Of course text nodes cannot have any child nodes.
 You can insert values from the rendering context using double curly braces in
 text nodes or in property/attribute values:
 
-	"value is {{ value }}, bar is {{ bar }}"
-	div[.className={{ cssClass1 }} {{ cssClass2 }}]
-		"{{ access.to.context.sub.properties }}"
-		"Spaces inside braces are {{ignored     }}"
-		"The special keyword {{ this }} references the current context itself"
+```css
+"value is {{ value }}, bar is {{ bar }}"
+div[.className={{ cssClass1 }} {{ cssClass2 }}]
+	"{{ access.to.context.sub.properties }}"
+	"Spaces inside braces are {{ignored     }}"
+	"The special keyword {{ this }} references the current context itself"
+```
 
 Using string interpolation is not possible with ID or class qualifiers, but you
 can use `[.className={{ variable }}]` and `[.id={{ variable }}]`
@@ -171,67 +209,79 @@ can use `[.className={{ variable }}]` and `[.id={{ variable }}]`
 
 #### Conditionals
 
-You can render parts of the tree conditionnaly using @if and @unless directives
-as follows:
+You can render parts of the tree conditionnaly using `@if` and `@unless`
+directives as follows:
 
-	@if some.property.is.truthy
-		div.willBeRendered
-		
-	@unless some.property.is.truthy
-		div.willNotBeRendered
+```css
+@if some.property.is.truthy
+	div.willBeRendered
+	
+@unless some.property.is.truthy
+	div.willNotBeRendered
+```
 
 Usual javascript truthiness is used here.
 
 #### Context switching
 
 When accessing the same part of the context object repeatedly, you may want to
-use the @with directive to make the template more readable:
+use the `@with` directive to make the template more readable:
 
-	span
-		"{{ deeply.nested.object.property1 }}"
-		"{{ deeply.nested.object.property2 }}"
-		
-	div.clearer
-		@with deeply.nested.object
-			"{{ property1 }}"
-			"{{ property2 }}"
+```css
+span
+	"{{ deeply.nested.object.property1 }}"
+	"{{ deeply.nested.object.property2 }}"
+	
+div.better
+	@with deeply.nested.object
+		"{{ property1 }}"
+		"{{ property2 }}"
+```
 			
 #### Array iteration
 
 You can render part of the tree repeatedly for each element of an array using
-the @each directive as follows:
+the `@each` directive as follows:
 
-	@each articles
-		h1
-			"{{ title }}"
-		div
-			"{{ content }}"
+```css
+@each articles
+	h1
+		"{{ title }}"
+	div
+		"{{ content }}"
+```
 			
-Under the @each directive, the special `loop` variable enables access to
+Under the `@each` directive, the special `loop` variable enables access to
 iteration details:
 
-	@each elements
-		@if loop.first
-			"first element"
-			br
-		"element {{ loop.index }} of {{ loop.length }}"
+```css
+@each elements
+	@if loop.first
+		"first element"
 		br
-		@if loop.last
-			"the last one"
+	"element {{ loop.index }} of {{ loop.length }}"
+	br
+	@if loop.last
+		"the last one"
+```
 			
 The `loop.outer` variable enables acces to the outer context:
 
-	@each elements
-		"{{ loop.outer.elements.length }} should equal {{ loop.length }}"
+```css
+@each elements
+	"{{ loop.outer.elements.length }} should equal {{ loop.length }}"
+```
 		
 #### External template inclusion
 
 A template file can be included in an other one using the `@include` directive:
 
-	@include "path/to/template"
-	@include "path/to/template.ist"
-	@include 'path/to/template'
-	@include 'path/to/template.ist'
+```css
+@include "path/to/template"
+@include "path/to/template.ist"
+@include 'path/to/template'
+@include 'path/to/template.ist'
+```
 	
 The `@include`d template will be rendered in the current context.  When loading
 templates with the `ist!` plugin, included template paths must be relative (ie.
@@ -244,31 +294,40 @@ look for AMD modules named either `path/to/template`, `path/to/template.ist`,
 `ist!path/to/template` or `text!path/to/template.ist`.  One of these modules
 must resolve to either a template string or a compiled IST template.
 
-## Single node creation
+Single node creation
+--------------------
 
 IST also has a shortcut "single node" creation interface that support the same
 syntax as full template files.  You can call it as follows:
 
-	var myDiv = ist.createNode("div.class#id[prop=Value]");
+```js
+var myDiv = ist.createNode("div.class#id[prop=Value]");
+```
 	
 It also supports rendering with context:
 
-	var myDiv = ist.createNode("div[class={{ cls }}]", { cls: 'myclass' });
+```js
+var myDiv = ist.createNode("div[class={{ cls }}]", { cls: 'myclass' });
+```
 	
 Actually `createNode` is able to create several nodes at once using a CSS-like
 angle-bracket syntax:
 
-	var myParentDiv = ist.createNode(
-		'div.parent > div.child > "{{ text }}"',
-		{ text: "Text node content" }
-	);
-	
+```js
+var myParentDiv = ist.createNode(
+	'div.parent > div.child > "{{ text }}"',
+	{ text: "Text node content" }
+);
+```
+
 And you can even use directives:
 
-	var myParentDiv = ist.createNode(
-		'div.parent > @each children > "{{ name }}"',
-		{ children: [ { name: 'alice' }, { name: 'bob' } ] }
-	);
+```js
+var myParentDiv = ist.createNode(
+	'div.parent > @each children > "{{ name }}"',
+	{ children: [ { name: 'alice' }, { name: 'bob' } ] }
+);
+```
 
 Please note however that `createNode` has a quite naive angle-bracket parser,
 and as such does not support angle brackets anywhere else than between nodes.
@@ -277,9 +336,12 @@ Therefore you should only use it for trivial node tree creation.
 Finally, you can create nodes in an alternate document by passing it as a third
 argument:
 
-	var popupDiv = ist.createNode('div.inPopup', {}, popup.document);
+```js
+var popupDiv = ist.createNode('div.inPopup', {}, popup.document);
+```
 
-## Custom directives
+Custom directives
+-----------------
 
 Directives are used to control node generation with the help of context
 properties.  They allow defining custom iterators and handlers to operate on a
@@ -291,32 +353,40 @@ control structures are implemented this way.
 
 The syntax of directives in templates files is as follows:
 
-	@directiveName path.to.context.property
-		div.subtree
-			...
+```css
+@directiveName path.to.context.property
+	div.subtree
+		/* ... */
+```
 
 Instead of a context property value, directives can be called with a "direct"
 string value, using a single- or double-quoted string as argument:
 
-	@directiveName "direct value"
-		div.subtree
-			...
-		
-	@directiveName 'direct value'
-		div.subtree
-			...
+```css
+@directiveName "direct value"
+	div.subtree
+		/* ... */
+	
+@directiveName 'direct value'
+	div.subtree
+		/* ... */
+```
 
 Finally, directives can be called without any argument:
 
-	@directiveName
-		div.subtree
-			...
+```css
+@directiveName
+	div.subtree
+		/* ... */
+```
 
 Directive helpers are defined using the following call:
 
-	ist.registerHelper('directiveName', function(subContext, subTemplate) {
-		// Helper code, more on that later
-	});
+```js
+ist.registerHelper('directiveName', function(subContext, subTemplate) {
+	// Helper code, more on that later
+});
+```
 
 ### Context objects
 
@@ -367,45 +437,59 @@ helpers later.
 You can define a simple '@noop' block that simply renders the inner template
 without any context switching as follows:
 
-	ist.registerHelper('noop', function(subCtx, subTemplate) {
-		return subTemplate.render(this);
-	});
-	
+```js
+ist.registerHelper('noop', function(subCtx, subTemplate) {
+	return subTemplate.render(this);
+});
+```
+
 Having defined this helper, the following template:
 
-	@noop
-		div.example
-			"using a {{ context.property }}"
-			
-will render the same as:
-
+```css
+@noop
 	div.example
 		"using a {{ context.property }}"
+```
+	
+will render the same as:
+
+```css
+div.example
+	"using a {{ context.property }}"
+```
 
 You could also use the same helper to annotate templates, although comments are
 already available for this purpose:
 
-	@noop "this block renders to an example div"
-		div.example
+```css
+@noop "this block renders to an example div"
+	div.example
+```
 
 An other simple example would be a '@disabled' block that prevents rendering
 part of a template tree:
 
-	div.rendered
-		@disabled
-			div.notRendered
+```css
+div.rendered
 	@disabled
-		div.alsoNotRendered
+		div.notRendered
+@disabled
+	div.alsoNotRendered
+```
 
 The associated helper simply returns an empty fragment:
 
-	ist.registerHelper('disabled', function() {
-		return this.createDocumentFragment();
-	});
+```js
+ist.registerHelper('disabled', function() {
+	return this.createDocumentFragment();
+});
+```
 	
 As said before, returning `undefined` is the same, so you can simply write:
 
-	ist.registerHelper('disabled', function() {});
+```js
+ist.registerHelper('disabled', function() {});
+```
 
 #### Built-in directive helpers
 
@@ -416,150 +500,164 @@ be achieved with custom directives.
 
 Conditional directives enable conditional rendering of a subtree:
 
-	@if some.property.is.truthy
-		div.willBeRendered
-		
-	@unless some.property.is.truthy
-		div.willNotBeRendered
+```css
+@if some.property.is.truthy
+	div.willBeRendered
+	
+@unless some.property.is.truthy
+	div.willNotBeRendered
+```
 
 They are defined as follows:
 
-	ist.registerHelper('if', function(subCtx, subTemplate) {
-		if (subCtx) {
-			return subTemplate.render(this);
-		}
-	});
-	
-	ist.registerHelper('unless', function(subCtx, subTemplate) {
-		if (!subCtx) {
-			return subTemplate.render(this);
-		}
-	});
-	
+```js
+ist.registerHelper('if', function(subCtx, subTemplate) {
+	if (subCtx) {
+		return subTemplate.render(this);
+	}
+});
+
+ist.registerHelper('unless', function(subCtx, subTemplate) {
+	if (!subCtx) {
+		return subTemplate.render(this);
+	}
+});
+```
 
 ##### The 'with' block directive
 
 The `@with` directive enables context narrowing:
 
-	div.suboptimal
-		"{{ deeply.nested.object.property1 }}"
-		"{{ deeply.nested.object.property2 }}"
-		
-	div.better
-		@with deeply.nested.object
-			"{{ property1 }}"
-			"{{ property2 }}"
+```css
+div.suboptimal
+	"{{ deeply.nested.object.property1 }}"
+	"{{ deeply.nested.object.property2 }}"
+	
+div.better
+	@with deeply.nested.object
+		"{{ property1 }}"
+		"{{ property2 }}"
+```
 
 It is defined as follows:
 
-	ist.registerHelper('with', function(subCtx, subTemplate) {
-		return subTemplate.render(subCtx);
-	});
-	
+```js
+ist.registerHelper('with', function(subCtx, subTemplate) {
+	return subTemplate.render(subCtx);
+});
+```
+
 ##### Basic iterator
 
 The `@each` loop directive iterates over an array.  Context for the subtree is
 switched to each of the array elements in turn:
 
-	@each articles
-		h1
-			"{{ title }}"
-		div
-			"{{ content }}"
+```css
+@each articles
+	h1
+		"{{ title }}"
+	div
+		"{{ content }}"
+```
 
 The 'each' helper is defined as follows:
 
-	ist.registerHelper('each', function(ctx, tmpl) {
-		var fragment = this.createDocumentFragment(),
-			outer = this.value,
-			value = ctx.value;
-		
-		if (value && Array.isArray(value)) {
-			value.forEach(function(item, index) {
-				var xitem;
-				
-				if (item !== null && (typeof item === 'object' || Array.isArray(item))) {
-					xitem = item;
-					item.loop = {
+```js
+ist.registerHelper('each', function(ctx, tmpl) {
+	var fragment = this.createDocumentFragment(),
+		outer = this.value,
+		value = ctx.value;
+	
+	if (value && Array.isArray(value)) {
+		value.forEach(function(item, index) {
+			var xitem;
+			
+			if (item !== null && (typeof item === 'object' || Array.isArray(item))) {
+				xitem = item;
+				item.loop = {
+					first: index == 0,
+					index: index,
+					last: index == value.length - 1,
+					length: value.length,
+					outer: outer
+				};
+			} else {
+				xitem = {
+					toString: function() { return item.toString(); },
+					loop: {
 						first: index == 0,
 						index: index,
 						last: index == value.length - 1,
 						length: value.length,
 						outer: outer
-					};
-				} else {
-					xitem = {
-						toString: function() { return item.toString(); },
-						loop: {
-							first: index == 0,
-							index: index,
-							last: index == value.length - 1,
-							length: value.length,
-							outer: outer
-						}
-					};
-				}
-				
-				fragment.appendChild(tmpl.render(ctx.createContext(xitem)));
-				
-				if (xitem === item) {
-					delete item.loop;
-				}
-			});
-		}
-		
-		return fragment;
-	});
+					}
+				};
+			}
+			
+			fragment.appendChild(tmpl.render(ctx.createContext(xitem)));
+			
+			if (xitem === item) {
+				delete item.loop;
+			}
+		});
+	}
+	
+	return fragment;
+});
+```
 
 ##### External template inclusion
 
 A template file can be included in an other one using the `@include` directive:
 
-	@include "path/to/template"
-	@include "path/to/template.ist"
+```css
+@include "path/to/template"
+@include "path/to/template.ist"
+```
 
 The code for the corresponding helper is shown below.  Please note that this
 helper alone is not sufficient: the requirejs plugin code also parses templates
 to add `@include`d templates to dependencies.
 
-	ist.registerHelper('include', function(ctx, tmpl) {
-		var what = ctx.value.replace(/\.ist$/, ''),
-			found, tryReq;
-			
-		// Try to find a previously require()-d template or string
-		tryReq = [
-			what,
-			what + '.ist',
-			'ist!' + what,
-			'text!' + what + '.ist'
-		];
+```js
+ist.registerHelper('include', function(ctx, tmpl) {
+	var what = ctx.value.replace(/\.ist$/, ''),
+		found, tryReq;
 		
-		while (!found && tryReq.length) {
-			try {
-				found = requirejs(tryReq.shift());
-			} catch(e) {
-				if (tryReq.length === 0) {
-					throw new Error("Cannot find included template '" + what + "'");
-				}
+	// Try to find a previously require()-d template or string
+	tryReq = [
+		what,
+		what + '.ist',
+		'ist!' + what,
+		'text!' + what + '.ist'
+	];
+	
+	while (!found && tryReq.length) {
+		try {
+			found = requirejs(tryReq.shift());
+		} catch(e) {
+			if (tryReq.length === 0) {
+				throw new Error("Cannot find included template '" + what + "'");
 			}
 		}
-		
-		if (typeof found === 'string') {
-			// Compile template
-			found = ist(found, what);
-		}
-		
-		if (typeof found.render === 'function') {
-			// Render included template
-			return found.render(this, tmpl.document);
-		} else {
-			throw new Error("Invalid included template '" + what + "'");
-		}
-	});
+	}
+	
+	if (typeof found === 'string') {
+		// Compile template
+		found = ist(found, what);
+	}
+	
+	if (typeof found.render === 'function') {
+		// Render included template
+		return found.render(this, tmpl.document);
+	} else {
+		throw new Error("Invalid included template '" + what + "'");
+	}
+});
+```
 
-
-
-## Planned features
+Planned features
+----------------
 
 The following features may be included in future versions:
 
@@ -567,13 +665,14 @@ The following features may be included in future versions:
 - easier i18n handling
 - template update with changed context content
 
-
-## Feedback
+Feedback
+--------
 
 Feedback is always welcome. Feel free to fork IST and send me pull requests, to
 report bugs using the [issue tracker][4] or to contact me on [twitter][5] !
 
-## License
+License
+-------
 
 IST is distributed under the MIT license. See the file [`LICENSE`][3] for more
 information.
