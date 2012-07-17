@@ -206,7 +206,17 @@ div[.className={{ cssClass1 }} {{ cssClass2 }}]
 ```
 
 Using string interpolation is not possible with ID or class qualifiers, but you
-can use `[.className={{ variable }}]` and `[.id={{ variable }}]`
+can use `[.className={{ variable }}]` and `[.id={{ variable }}]`.
+
+IST also allows evaluating arbitrary expressions as follows:
+
+```css
+"19 / 2 = {` 19 + 2 `}"
+img[alt=current context has {` Object.keys(this).length `} properties]
+```
+
+Inside expressions, the current rendering context is accessible using `this`, as
+well as the target document using `document`.
 
 ### Control structures
 
@@ -672,7 +682,6 @@ Planned features
 
 The following features may be included in future versions:
 
-- expression evaluation
 - easier i18n handling
 - template update with changed context content
 
