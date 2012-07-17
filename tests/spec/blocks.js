@@ -94,16 +94,18 @@ define([
 		var withObj = {
 				subcontext: {
 					value: 'value',
-					sub: { property: 'value' }
+					sub: { property: 'value' },
+					prop: 'will appear'
 				},
 				sub: {
 					subcontext: {
 						value: 'value',
-						sub: { property: 'value' }
+						sub: { property: 'value' },
+						prop: 'will appear'
 					},
-					rootproperty: 'will not appear'
+					prop: 'will not appear'
 				},
-				rootproperty: 'will not appear'
+				prop: 'will not appear'
 			},
 			withNodes = tWith.render(withObj).childNodes;
 			
@@ -118,8 +120,8 @@ define([
 		});
 		
 		it("should not able to access root context elements in @with directive", function() {
-			expect( withNodes[2].textContent ).toBe( '' + undefined );
-			expect( withNodes[5].textContent ).toBe( '' + undefined );
+			expect( withNodes[2].textContent ).toBe( 'will appear' );
+			expect( withNodes[5].textContent ).toBe( 'will appear' );
 		});
 		
 		

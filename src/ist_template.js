@@ -9,6 +9,11 @@
  * http://github.com/k-o-x/ist
  */
 define(function() {
+	/* This is outside the strict part so that non-strict code can execute
+	   inside {{...}} blocks */
+	var interpolator = function(m, p1) {
+	}
+
 	"use strict";
 	
 	var ist, parser, fs,
@@ -96,14 +101,18 @@ define(function() {
 		},
 		
 		interpolate: function(text) {		
-			return text
-				.replace(/{`(.*?)`}/g, (function(m, p1) {
-						var func = new Function("document", "return " + p1 + ";");
-						return func.call(this.value, this.doc);
-					}).bind(this))
-				.replace(/{{(.*?)}}/g, (function(m, p1) {
-						return this.getPath(p1);
-					}).bind(this));
+			return text.replace(/{{(.*?)}}/g, (function(m, p1) {
+				var self = this,
+					argNames = typeof this.value === 'object' ? Object.keys(this.value) : [],
+					argVals = argNames.map(function(k) { return self.value[k]; }),
+					func;
+				
+				argNames.unshift('document');
+				argVals.unshift(this.doc);
+				func = new Function(argNames.join(','), "return " + p1 + ";");
+				
+				return func.apply(this.value, argVals);
+			}).bind(this));
 		},
 		
 		createContext: function(newValue) {

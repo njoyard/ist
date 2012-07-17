@@ -51,22 +51,23 @@ define([
 		
 		it("should fail to render when accessing properties of undefined context parts", function() {
 			propObj.access = {};
-			expect( function() { tProperties.render(propObj); } ).toThrow( 'Cannot find path access.to.deeply.nested.property in context' );
+			expect( function() { tProperties.render(propObj); } ).toThrow( "Cannot read property 'deeply' of undefined" );
 		});
 		
 		document.myClassValue = "document property value";
 		var exprNodes = tExpressions.render(obj).childNodes;
 		
-		it("should evaluate expressions using the {` expr `} syntax", function() {
+		it("should evaluate expressions", function() {
 			expect( exprNodes[0].textContent ).toBe( '' + (1 + 17 - 3 / 2) );
-		});
-		
-		it("should allow accessing the rendering context inside expressions using 'this'", function() {
 			expect( exprNodes[1].textContent ).toBe( '' + (obj.aNumber + 3) );
 		});
 		
 		it("should allow accessing the rendering document inside expressions using 'document'", function() {
 			expect( exprNodes[2].className ).toBe( document.myClassValue + 'suffix' );
+		});
+		
+		it("should execute arbitrary JS code inside expressions", function() {
+			expect( exprNodes[3].textContent ).toBe( '' + (Math.PI + (function(arg) { return Array.isArray(arg); })([1, 2])) );
 		});
 	};
 });

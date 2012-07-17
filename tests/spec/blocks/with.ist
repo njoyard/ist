@@ -1,9 +1,9 @@
 @with subcontext
 	"{{ value }}"
 	"{{ sub.property }}"
-	"{{ rootproperty }}"
+	"{{ prop }}"
 
 @with sub.subcontext
 	"{{ value }}"
 	"{{ sub.property }}"
-	"{{ rootproperty }}"
+	"{{ prop }}"
