@@ -37,6 +37,9 @@ div#content
 @include "common/footer"
 ```
 
+IST tries to reuse many syntax elements from CSS.  Thus, in most cases, setting
+your editor to highlight CSS syntax will give nice results.
+
 Usage
 -----
 
@@ -93,7 +96,7 @@ div.parent
     div.child
 ```
 
-Likewise, node with the same indent are siblings:
+Likewise, nodes with the same indent are siblings:
 
 ```css
 div.parent
