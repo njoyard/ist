@@ -659,6 +659,14 @@ ist.registerHelper('include', function(ctx, tmpl) {
 });
 ```
 
+Compatibility
+-------------
+
+IST has been successfully tested with the following browsers:
+- Chrome 18
+- Epiphany 3.4
+- Firefox 13
+
 Planned features
 ----------------
 
