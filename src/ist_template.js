@@ -95,8 +95,15 @@ define(function() {
 			}
 		},
 		
-		interpolate: function(text) {
-			return text.replace(/{{(.*?)}}/g, (function(m, p1) { return this.getPath(p1); }).bind(this));
+		interpolate: function(text) {		
+			return text
+				.replace(/{`(.*?)`}/g, (function(m, p1) {
+						var func = new Function("document", "return " + p1 + ";");
+						return func.call(this.value, this.doc);
+					}).bind(this))
+				.replace(/{{(.*?)}}/g, (function(m, p1) {
+						return this.getPath(p1);
+					}).bind(this));
 		},
 		
 		createContext: function(newValue) {

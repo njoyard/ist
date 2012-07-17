@@ -1,10 +1,11 @@
 define([
 	'ist!interpolation/base',
 	'ist!interpolation/properties',
-	'ist!interpolation/this'
-], function(tBase, tProperties, tThis) {
+	'ist!interpolation/this',
+	'ist!interpolation/expressions'
+], function(tBase, tProperties, tThis, tExpressions) {
 	return function() {
-		var obj = { a: 1, b: '2' },
+		var obj = { a: 1, b: '2', aNumber: 1234 },
 			propObj = {
 				sub: { property: 'value' },
 				access: { to: { deeply: { nested: { property: 'value' } } } }
@@ -51,6 +52,21 @@ define([
 		it("should fail to render when accessing properties of undefined context parts", function() {
 			propObj.access = {};
 			expect( function() { tProperties.render(propObj); } ).toThrow( 'Cannot find path access.to.deeply.nested.property in context' );
+		});
+		
+		document.myClassValue = "document property value";
+		var exprNodes = tExpressions.render(obj).childNodes;
+		
+		it("should evaluate expressions using the {` expr `} syntax", function() {
+			expect( exprNodes[0].textContent ).toBe( '' + (1 + 17 - 3 / 2) );
+		});
+		
+		it("should allow accessing the rendering context inside expressions using 'this'", function() {
+			expect( exprNodes[1].textContent ).toBe( '' + (obj.aNumber + 3) );
+		});
+		
+		it("should allow accessing the rendering document inside expressions using 'document'", function() {
+			expect( exprNodes[2].className ).toBe( document.myClassValue + 'suffix' );
 		});
 	};
 });
