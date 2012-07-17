@@ -101,7 +101,7 @@ define(function() {
 		},
 		
 		interpolate: function(text) {		
-			return text.replace(/{{(.*?)}}/g, (function(m, p1) {
+			return text.replace(/{{((?:}(?!})|[^}])*)}}/g, (function(m, p1) {
 				var self = this,
 					argNames = typeof this.value === 'object' ? Object.keys(this.value) : [],
 					argVals = argNames.map(function(k) { return self.value[k]; }),
