@@ -194,29 +194,54 @@ Of course text nodes cannot have any child nodes.
 
 ### String interpolation
 
-You can insert values from the rendering context using double curly braces in
-text nodes or in property/attribute values:
+You can insert values from the rendering context using double pairs of curly
+braces in text nodes:
 
 ```css
-"value is {{ value }}, bar is {{ bar }}"
-div[.className={{ cssClass1 }} {{ cssClass2 }}]
-	"{{ access.to.context.sub.properties }}"
-	"Spaces inside braces are {{ignored     }}"
-	"The special keyword {{ this }} references the current context itself"
+"value is {{ value }}, foo is {{ foo }}"
 ```
 
-Using string interpolation is not possible with ID or class qualifiers, but you
-can use `[.className={{ variable }}]` and `[.id={{ variable }}]`.
-
-IST also allows evaluating arbitrary expressions as follows:
+Rendering it with `myTemplate.render({ value: 42, foo: 'bar' });` would result
+in a text node containing "value is 42, foo is bar".  Spaces inside curly braces
+are ignored, and you can also access subproperties:
 
 ```css
-"19 / 2 = {` 19 + 2 `}"
-img[alt=current context has {` Object.keys(this).length `} properties]
+"value is {{values.fortyTwo}}, foo is {{  foo         }}"
 ```
 
-Inside expressions, the current rendering context is accessible using `this`, as
-well as the target document using `document`.
+would have the same result when rendered using:
+
+```js
+myTemplate.render({ values: { fortyTwo: 42 }, foo: 'bar' });
+```
+
+Curly braces can also be used in node attributes and properties:
+
+```css
+div[attribute={{ prop1 }} and {{ prop2 }}]
+```
+
+Using string interpolation is not currently possible with ID or class
+qualifiers, but you can use `[.className={{ foo }}]` and `[.id={{ bar.baz }}]`
+as a workaround.
+
+Inside curly braces, you can access the rendering context itself using `this`:
+
+```css
+"{{ propertyName }} is identical to {{ this.propertyName }}"
+```
+
+Actually you can execute arbitrary javascript code inside curly braces.
+
+```css
+"7 * 6 = {{ 7 * 6 }}"
+div[title=current context has {` Object.keys(this).length `} properties]
+	"{{ document.querySelector(\".new\") ? 'unread items !' : 'nothing new' }}"
+	"context method result = {{ aMethodName(42, Math.PI); }}"
+```
+
+Don't forget escaping single or double quotes (whichever applicableà inside
+curly braces.
 
 ### Control structures
 
