@@ -2,12 +2,12 @@
 	div.zero
 @unless emptystring
 	div.emptystring
-@unless null
-	div.null
-@unless undefined
-	div.undefined
-@unless false
-	div.false
+@unless _null
+	div._null
+@unless _undefined
+	div._undefined
+@unless _false
+	div._false
 @unless number
 	div.number
 @unless string
@@ -16,8 +16,8 @@
 	div.object
 @unless array
 	div.array
-@unless true
-	div.true
+@unless _true
+	div._true
 @unless sub.property1
 	div.subproperty1
 @unless sub.property2

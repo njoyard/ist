@@ -9,16 +9,19 @@
  * http://github.com/k-o-x/ist
  */
 define(function() {
-	/* This is outside the strict part so that non-strict code can execute
-	   inside {{...}} blocks */
-	var interpolator = function(m, p1) {
-	}
-
 	"use strict";
 	
 	var ist, parser, fs,
 		extend, jsEscape, preprocess, getXhr, fetchText,
 		Context, Node, ContainerNode, BlockNode, TextNode, ElementNode,
+		reservedWords = [
+			'break', 'case', 'catch', 'class', 'continue', 'debugger',
+			'default', 'delete', 'do', 'else', 'enum', 'export', 'extends',
+			'false', 'finally', 'for', 'function', 'if', 'import', 'in',
+			'instanceof', 'new', 'null', 'return', 'super', 'switch', 'this',
+			'throw', 'true', 'try',	'typeof', 'undefined', 'var', 'void',
+			'while', 'with'
+		],
 		helpers = {},
 		progIds = ['Msxml2.XMLHTTP', 'Microsoft.XMLHTTP', 'Msxml2.XMLHTTP.4.0'],
 		buildMap = [];
@@ -75,52 +78,32 @@ define(function() {
 			return this.doc.createTextNode(this.interpolate(text));
 		},
 		
-		getPath: function(path) {
-			var rec;
-		
-			path = path.trim();
-			if (path === 'this') {
-				return this.value;
-			}
-	
-			rec = function(pathArray, ctx) {
-				var subcontext = ctx[pathArray.shift()];
+		/**
+		 * Evaluate `expr` in a scope where the current context is available
+		 * as `this`, all its own properties that are not reserved words are
+		 * available as locals, and the target document is available as `document`.
+		 */
+		evaluate: function(expr) {
+			var self = this,
+				argNames = typeof this.value === 'object' ? Object.keys(this.value) : [],
+				argVals, func;
 			
-				if (pathArray.length > 0) {
-					return rec(pathArray, subcontext);
-				} else {
-					return subcontext;
-				}
-			}
+			argNames = argNames.filter(function(k) { return reservedWords.indexOf(k) === -1; });
+			argVals = argNames.map(function(k) { return self.value[k]; });
+			
+			argNames.unshift('document');
+			argVals.unshift(this.doc);
+			func = new Function(argNames.join(','), "return " + expr + ";");
 		
-			try {
-				return rec(path.split('.'), this.value);
-			} catch(e) {
-				throw new Error("Cannot find path " + path + " in context");
-			}
+			return func.apply(this.value, argVals);
 		},
 		
 		interpolate: function(text) {		
-			return text.replace(/{{((?:}(?!})|[^}])*)}}/g, (function(m, p1) {
-				var self = this,
-					argNames = typeof this.value === 'object' ? Object.keys(this.value) : [],
-					argVals = argNames.map(function(k) { return self.value[k]; }),
-					func;
-				
-				argNames.unshift('document');
-				argVals.unshift(this.doc);
-				func = new Function(argNames.join(','), "return " + p1 + ";");
-				
-				return func.apply(this.value, argVals);
-			}).bind(this));
+			return text.replace(/{{((?:}(?!})|[^}])*)}}/g, (function(m, p1) { return this.evaluate(p1); }).bind(this));
 		},
 		
 		createContext: function(newValue) {
 			return new Context(newValue, this.doc);
-		},
-		
-		getSubcontext: function(path) {
-			return this.createContext(this.getPath(path));
 		}
 	};
 	
@@ -246,10 +229,9 @@ define(function() {
 	/**
 	 * Block node
 	 */
-	BlockNode = function(name, path, value) {
+	BlockNode = function(name, expr) {
 		this.name = name;
-		this.path = path;
-		this.value = value;
+		this.expr = expr;
 	};
 	
 	extend(ContainerNode, BlockNode, {
@@ -262,10 +244,8 @@ define(function() {
 				throw new Error('No block helper for @' + this.name + ' has been registered');
 			}
 			
-			if (typeof this.path !== 'undefined') {
-				subContext = context.getSubcontext(this.path);
-			} else if (typeof this.value !== 'undefined') {
-				subContext = context.createContext(this.value);
+			if (typeof this.expr !== 'undefined') {
+				subContext = context.createContext(context.evaluate(this.expr));
 			}
 			
 			container.render = ContainerNode.prototype.render.bind(container);

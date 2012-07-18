@@ -20,21 +20,21 @@ define([
 		var tfObj = {
 				zero: 0,
 				emptystring: '',
-				null: null,
-				undefined: undefined,
-				false: false,
+				_null: null,
+				_undefined: undefined,
+				_false: false,
 				number: 12345,
 				string: 'string',
 				object: { an: 'object' },
 				array: [ 'an', 'array' ],
-				true: true,
+				_true: true,
 				sub: {
 					property1: true,
 					property2: false
 				}
 			},
-			falsy = ['zero', 'emptystring', 'null', 'undefined', 'false'],
-			truthy = ['number', 'string', 'object', 'array', 'true'],
+			falsy = ['zero', 'emptystring', '_null', '_undefined', '_false'],
+			truthy = ['number', 'string', 'object', 'array', '_true'],
 			ifFragment, unlessFragment;
 			
 		ifFragment = tIf.render(tfObj)
@@ -179,14 +179,14 @@ define([
 		
 		it("should fail to render when accessing properties of undefined context parts", function() {
 			tfObj.sub = undefined;
-			expect( function() { tIf.render(tfObj); } ).toThrow( 'Cannot find path sub.property1 in context' );
-			expect( function() { tUnless.render(tfObj); } ).toThrow( 'Cannot find path sub.property1 in context' );
+			expect( function() { tIf.render(tfObj); } ).toThrow( "Cannot read property 'property1' of undefined" );
+			expect( function() { tUnless.render(tfObj); } ).toThrow( "Cannot read property 'property1' of undefined" );
 			
 			withObj.sub = undefined;
-			expect( function() { tWith.render(withObj); } ).toThrow( 'Cannot find path sub.subcontext in context' );
+			expect( function() { tWith.render(withObj); } ).toThrow( "Cannot read property 'subcontext' of undefined" );
 			
 			eachObj.sub = undefined;
-			expect( function() { tEach.render(eachObj); } ).toThrow( 'Cannot find path sub.array in context' );
+			expect( function() { tEach.render(eachObj); } ).toThrow( "Cannot read property 'array' of undefined" );
 		});
 		
 		
