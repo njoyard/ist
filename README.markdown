@@ -243,16 +243,27 @@ div[title=current context has {` Object.keys(this).length `} properties]
 Don't forget escaping single or double quotes (whichever applicable) inside
 curly braces.
 
-Also, please note that you cannot directly access context properties that are
+Please note however that you cannot directly access context properties that are
 also javascript reserved words.  You will have to use the subscript syntax on
-`this`:
+`this`; consider the template below rendered using the context object
+`{ "typeof": "a", "true": "b", "undefined": "c" }`:
 
 ```css
 div.willThrowSyntaxError
+	/* Throws SyntaxError when rendered */
 	"{{ typeof }}"
 	
 div.willRenderCorrectly
+	/* Renders to "a" */
 	"{{ this['typeof'] }}"
+	
+div.willNotAccessContext
+	/* Renders to "true undefined" */
+	"{{ true }} {{ undefined }}"
+	
+div.willAccessContext
+	/* Renders to "b c" */
+	"{{ this['true'] }} {{ this['undefined'] }}
 ```
 
 ### Control structures
