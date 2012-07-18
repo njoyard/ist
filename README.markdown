@@ -240,8 +240,20 @@ div[title=current context has {` Object.keys(this).length `} properties]
 	"context method result = {{ aMethodName(42, Math.PI); }}"
 ```
 
-Don't forget escaping single or double quotes (whichever applicableà inside
+Don't forget escaping single or double quotes (whichever applicable) inside
 curly braces.
+
+Also, please note that you cannot directly access context properties that are
+also javascript reserved words.  You will have to use the subscript syntax on
+`this`:
+
+```css
+div.willThrowSyntaxError
+	"{{ typeof }}"
+	
+div.willRenderCorrectly
+	"{{ this['typeof'] }}"
+```
 
 ### Control structures
 
@@ -258,7 +270,13 @@ directives as follows:
 	div.willNotBeRendered
 ```
 
-Usual javascript truthiness is used here.
+Usual javascript truthiness is used here.  As inside curly braces, you can
+actually use an arbitrary JS expression instead:
+
+```css
+@if !document.querySelector('.mustAppearOnce')
+	div.mustAppearOnce
+```
 
 #### Context switching
 
@@ -275,7 +293,14 @@ div.better
 		"{{ property1 }}"
 		"{{ property2 }}"
 ```
-			
+
+As with `@if` and `@unless`, you can use expressions:
+
+```css
+@with { name: clients[12].firstName + ' ' + clients[12].lastName }
+	"Name: {{ name }}"
+```
+
 #### Array iteration
 
 You can render part of the tree repeatedly for each element of an array using
@@ -309,7 +334,17 @@ The `loop.outer` variable enables acces to the outer context:
 @each elements
 	"{{ loop.outer.elements.length }} should equal {{ loop.length }}"
 ```
-		
+
+And once again, you can use expressions:
+
+```css
+ul#menu
+	@each ['home', 'products', 'contact']
+		li
+			a[href=#sections/{{ this }}]
+				"{{ this }}"
+```
+
 #### External template inclusion
 
 A template file can be included in an other one using the `@include` directive:
@@ -397,15 +432,15 @@ The syntax of directives in templates files is as follows:
 		/* ... */
 ```
 
-Instead of a context property value, directives can be called with a "direct"
-string value, using a single- or double-quoted string as argument:
+Instead of a context "property path", directives can be called with any valid JS
+expression as an argument:
 
 ```css
-@directiveName "direct value"
+@directiveName "direct string value"
 	div.subtree
 		/* ... */
 	
-@directiveName 'direct value'
+@directiveName { a: 42, foo: 'bar' }
 	div.subtree
 		/* ... */
 ```
@@ -441,23 +476,24 @@ have the following API:
   createElementNS (when called with `namespace`) in the current rendering
   document
 * `Context.value` is the context value
-* `Context#getPath(path)` returns the value of a property or subproperty of the
-  current context, ie. `ctx.getPath('a.b.c')` returns `ctx.value['a']['b']['c']`
+* `Context#evaluate(expr)` evaluates `expr` in a scope where all context
+  properties are available as locals, and where `this` evaluates to the Context
+  object itself.
 * `Context#interpolate(string)`	interpolates "{{ path.to.property }}" occurences
   inside `string`
 * `Context#createContext(newValue)`	creates and returns a new `Context` object
   with `newValue` as value, but with the same rendering document
-* `Context#getSubContext(path)` is a shortcut to
-  `ctx.createContext(ctx.getPath(path))`
   
 Internally, IST always works with `Context` objects when rendering templates.
 Actually, you can directly pass a `Context` object to the `render` method of any
-IST compiled template (instead of a context object and a target document).
+IST compiled template (instead of a context object and an optional target
+document).
 	
 ### Writing directive helpers
 
 Helpers are called with the current rendering `Context` as `this`, and with the
-narrowed down context as the first argument (or `undefined` when the directive
+"narrowed down" context, taking the value from the expression following the
+`@directiveName` as the first argument (or `undefined` when the directive
 is used without any argument).  The second argument is an IST compiled template
 created from what is "inside" the directive.
 
