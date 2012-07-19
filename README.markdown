@@ -235,7 +235,7 @@ Actually you can execute arbitrary javascript code inside curly braces.
 
 ```css
 "7 * 6 = {{ 7 * 6 }}"
-div[title=current context has {` Object.keys(this).length `} properties]
+div[title=current context has {{ Object.keys(this).length }} properties]
 	"{{ document.querySelector(\".new\") ? 'unread items !' : 'nothing new' }}"
 	"context method result = {{ aMethodName(42, Math.PI); }}"
 ```
