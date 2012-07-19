@@ -1,4 +1,8 @@
-v0.5
+v0.5.1 - NEXT/UNRELEASED
+- Added expression evaluation to {{...}} blocks and @directives
+- Enhanced error handling and reporting
+
+v0.5 - 2012-07-12
 - Full parser rewrite using PEGjs
 - Reworked directory structure and added build script (can use uglify-js)
 - New Context object, see README for API (mainly useful in directive helpers)
