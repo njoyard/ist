@@ -263,7 +263,7 @@ div.willNotAccessContext
 	
 div.willAccessContext
 	/* Renders to "b c" */
-	"{{ this['true'] }} {{ this['undefined'] }}
+	"{{ this['true'] }} {{ this['undefined'] }}"
 ```
 
 ### Control structures
