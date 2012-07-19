@@ -11,8 +11,7 @@
 define(function() {
 	"use strict";
 	
-	var ist, parser, fs,
-		extend, jsEscape, preprocess, getXhr, fetchText,
+	var ist, parser, fs, extend, jsEscape, preprocess, getXhr, fetchText,
 		Context, Node, ContainerNode, BlockNode, TextNode, ElementNode,
 		reservedWords = [
 			'break', 'case', 'catch', 'class', 'continue', 'debugger',
@@ -24,7 +23,8 @@ define(function() {
 		],
 		helpers = {},
 		progIds = ['Msxml2.XMLHTTP', 'Microsoft.XMLHTTP', 'Msxml2.XMLHTTP.4.0'],
-		buildMap = [];
+		buildMap = [],
+		currentTemplate;
 		
 	
 	if (!Array.isArray) {
@@ -113,6 +113,18 @@ define(function() {
 	 */
 	Node = function() {};
 	Node.prototype = {
+		sourceLine: '<unknown>',
+		sourceFile: '<unknown>',
+	
+		completeError: function(err) {
+			err.message += " in '" + (this.sourceFile || '<unknown>') + "'";
+			if (typeof this.sourceLine != 'undefined') {
+				err.message += ' on line ' + this.sourceLine;
+			}
+			
+			return err;
+		},
+		
 		render: function(context, doc) {
 			if (!(context instanceof Context)) {
 				context = new Context(context, doc);
@@ -130,13 +142,19 @@ define(function() {
 	/**
 	 * Text node
 	 */
-	TextNode = function(text) {
+	TextNode = function(text, line) {
 		this.text = text;
+		this.sourceFile = currentTemplate;
+		this.sourceLine = line;
 	};
 	
 	extend(Node, TextNode, {
 		_render: function(context) {
-			return context.createTextNode(this.text);
+			try {
+				return context.createTextNode(this.text);
+			} catch(err) {
+				throw this.completeError(err);
+			}
 		},
 		
 		appendChild: function(node) {
@@ -172,8 +190,10 @@ define(function() {
 	/**
 	 * Element node
 	 */
-	ElementNode = function(tagName) {
+	ElementNode = function(tagName, line) {
 		this.tagName = tagName;
+		this.sourceFile = currentTemplate;
+		this.sourceLine = line;
 		this.attributes = {};
 		this.properties = {};
 		this.classes = [];
@@ -204,12 +224,22 @@ define(function() {
 			node.appendChild(ContainerNode.prototype._render.call(this, context));
 			
 			Object.keys(this.attributes).forEach(function(attr) {
-				var value = context.interpolate(self.attributes[attr]);
+				try {
+					var value = context.interpolate(self.attributes[attr]);
+				} catch (err) {
+					throw this.completeError(err);
+				}
+				
 				node.setAttribute(attr, value);
 			});
 			
 			Object.keys(this.properties).forEach(function(prop) {
-				var value = context.interpolate(self.properties[prop]);
+				try {
+					var value = context.interpolate(self.properties[prop]);
+				} catch (err) {
+					throw this.completeError(err);
+				}
+				
 				node[prop] = value;
 			});
 			
@@ -229,9 +259,11 @@ define(function() {
 	/**
 	 * Block node
 	 */
-	BlockNode = function(name, expr) {
+	BlockNode = function(name, expr, line) {
 		this.name = name;
 		this.expr = expr;
+		this.sourceFile = currentTemplate;
+		this.sourceLine = line;
 	};
 	
 	extend(ContainerNode, BlockNode, {
@@ -245,13 +277,21 @@ define(function() {
 			}
 			
 			if (typeof this.expr !== 'undefined') {
-				subContext = context.createContext(context.evaluate(this.expr));
+				try {
+					subContext = context.createContext(context.evaluate(this.expr));
+				} catch(err) {
+					throw this.completeError(err);
+				}
 			}
 			
 			container.render = ContainerNode.prototype.render.bind(container);
 			container._render = ContainerNode.prototype._render.bind(self);
 			
-			ret = helpers[this.name].call(context, subContext, container);
+			try {
+				ret = helpers[this.name].call(context, subContext, container);
+			} catch (err) {
+				throw this.completeError(err);
+			}
 			
 			if (typeof ret === 'undefined') {
 				return context.createDocumentFragment();
@@ -298,17 +338,19 @@ define(function() {
 	ist = function(template, name) {
 		var parsed;
 		
-		name = name || '<unknown>';
+		currentTemplate = name || '<unknown>';
 		
 		try {
 			parsed = parser.parse(preprocess(template));
 		} catch(e) {
-			throw new Error(
-				"In " + name + " on line " + e.line +
-				(typeof e.column !== 'undefined' ?  ", character " + e.column : '') +
-				": " + e.message
-			);
+			e.message += " in '" + currentTemplate + "' on line " + e.line +
+				(typeof e.column !== 'undefined' ?  ", character " + e.column : '');
+						
+			currentTemplate = undefined;
+			throw e;
 		}
+		
+		currentTemplate = undefined;
 		
 		return parsed;
 	};

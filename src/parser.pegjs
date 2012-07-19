@@ -125,14 +125,14 @@
 	
 	
 	// Text node helper
-	createTextNode = function(text) {
-		return new TextNode(text);
+	createTextNode = function(text, line) {
+		return new TextNode(text, line);
 	};
 	
 
 	// Element object helper
-	createElement = function(tagName, qualifiers) {
-		var elem = new ElementNode(tagName);
+	createElement = function(tagName, qualifiers, line) {
+		var elem = new ElementNode(tagName, line);
 
 		qualifiers.forEach(function(q) {
 			if (typeof q.id !== 'undefined') {
@@ -151,8 +151,8 @@
 	
 	
 	// Directive object helper
-	createDirective = function(name, expr) {
-		return new BlockNode(name, expr);
+	createDirective = function(name, expr, line) {
+		return new BlockNode(name, expr, line);
 	};
 	
 	
@@ -217,15 +217,15 @@ element "element"
 
 implicitElement
 = qualifiers:elemQualifier+
-{ return createElement('div', qualifiers); }
+{ return createElement('div', qualifiers, line); }
 
 explicitElement
 = tagName:identifier qualifiers:elemQualifier*
-{ return createElement(tagName, qualifiers); }
+{ return createElement(tagName, qualifiers, line); }
 
 textNode "text node"
 = text:quotedText
-{ return createTextNode(text); }
+{ return createTextNode(text, line); }
 
 contextPath "context property path"
 = first:identifier tail:("." i:identifier { return i; })*
@@ -262,10 +262,10 @@ directive "directive"
 
 simpleDirective
 = "@" name:identifier
-{ return createDirective(name); }
+{ return createDirective(name, undefined, line); }
 
 exprDirective
 = "@" name:identifier __+ expr:character+
-{ console.log("expression=\"" + expr.join('') + "\""); return createDirective(name, expr.join('')); }
+{ return createDirective(name, expr.join(''), line); }
 
 

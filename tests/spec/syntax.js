@@ -72,13 +72,13 @@ define([
 		it("should fail to add children to text nodes", function() {
 			expect( function() {
 				ist(textNoTextChildren);
-			}).toThrow("In <unknown> on line 2: Cannot add children to text node");
+			}).toThrow("Cannot add children to text node in '<unknown>' on line 2");
 		});
 		
 		it("should fail to parse deindented nodes without any matching sibling", function() {
 			expect( function() {
 				ist(textNoMatchingIndent, 'templateName');
-			}).toThrow("In templateName on line 3, character 1: Unexpected indent");
+			}).toThrow("Unexpected indent in 'templateName' on line 3, character 1");
 		});
 		
 		it("should support indented root nodes", function() {

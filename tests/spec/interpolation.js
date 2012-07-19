@@ -51,7 +51,7 @@ define([
 		
 		it("should fail to render when accessing properties of undefined context parts", function() {
 			propObj.access = {};
-			expect( function() { tProperties.render(propObj); } ).toThrow( "Cannot read property 'deeply' of undefined" );
+			expect( function() { tProperties.render(propObj); } ).toThrow( "Cannot read property 'deeply' of undefined in 'interpolation/properties' on line 2" );
 		});
 		
 		document.myClassValue = "document property value";

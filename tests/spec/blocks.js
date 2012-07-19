@@ -179,14 +179,14 @@ define([
 		
 		it("should fail to render when accessing properties of undefined context parts", function() {
 			tfObj.sub = undefined;
-			expect( function() { tIf.render(tfObj); } ).toThrow( "Cannot read property 'property1' of undefined" );
-			expect( function() { tUnless.render(tfObj); } ).toThrow( "Cannot read property 'property1' of undefined" );
+			expect( function() { tIf.render(tfObj); } ).toThrow( "Cannot read property 'property1' of undefined in 'blocks/if' on line 21" );
+			expect( function() { tUnless.render(tfObj); } ).toThrow( "Cannot read property 'property1' of undefined in 'blocks/unless' on line 21" );
 			
 			withObj.sub = undefined;
-			expect( function() { tWith.render(withObj); } ).toThrow( "Cannot read property 'subcontext' of undefined" );
+			expect( function() { tWith.render(withObj); } ).toThrow( "Cannot read property 'subcontext' of undefined in 'blocks/with' on line 6" );
 			
 			eachObj.sub = undefined;
-			expect( function() { tEach.render(eachObj); } ).toThrow( "Cannot read property 'array' of undefined" );
+			expect( function() { tEach.render(eachObj); } ).toThrow( "Cannot read property 'array' of undefined in 'blocks/each' on line 6" );
 		});
 		
 		
@@ -208,7 +208,7 @@ define([
 		});
 		
 		it("should fail to render templates with missing @include files", function() {
-			expect( function() { ist(textInclude).render(); } ).toThrow( "Cannot find included template 'included'" );
+			expect( function() { ist(textInclude).render(); } ).toThrow( "Cannot find included template 'included' in '<unknown>' on line 2" );
 		});
 		
 		it("should use templates previously loaded with the ist! plugin when rendering a string template", function() {
@@ -230,7 +230,7 @@ define([
 		});
 		
 		it("should fail to render templates with invalid includes", function() {
-			expect( function() { ist(textIncludeInvalid).render(); } ).toThrow( "Invalid included template 'blocks/included_invalid'" );
+			expect( function() { ist(textIncludeInvalid).render(); } ).toThrow( "Invalid included template 'blocks/included_invalid' in '<unknown>' on line 1" );
 		});
 	};
 });
