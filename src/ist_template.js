@@ -117,10 +117,18 @@ define(function() {
 		sourceFile: '<unknown>',
 	
 		completeError: function(err) {
-			err.message += " in '" + (this.sourceFile || '<unknown>') + "'";
+			var current = "in '" + (this.sourceFile || '<unknown>') + "'";
+			
 			if (typeof this.sourceLine != 'undefined') {
-				err.message += ' on line ' + this.sourceLine;
+				current += ' on line ' + this.sourceLine;
 			}
+			
+			if (typeof err.istStack === 'undefined') {
+				err.message += " " + current
+				err.istStack = [];
+			}
+			
+			err.istStack.push(current);
 			
 			return err;
 		},
