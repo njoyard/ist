@@ -1,4 +1,4 @@
-v0.5.1 - NEXT/UNRELEASED
+v0.5.1 - 2012-07-20
 - Added expression evaluation to {{...}} blocks and @directives
 - Enhanced error handling and reporting
 - Allowed implicit node creation (with qualifiers only; was working since 0.5
