@@ -1,2 +1,5 @@
+# Do not track dist/
+dist
+
 # Do not track compiled parser
 src/parser.js
