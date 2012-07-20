@@ -786,7 +786,7 @@ Copyright (c) 2012 Nicolas Joyard
 [3]: https://github.com/njoyard/ist/blob/master/LICENSE
 [4]: https://github.com/njoyard/ist/issues
 [5]: http://twitter.com/meringueman
-[6]: https://github.com/njoyard/ist/blob/release/dist/ist.js
-[7]: https://github.com/njoyard/ist/blob/release/dist/ist-min.js
+[6]: https://github.com/njoyard/ist/raw/release/dist/ist.js
+[7]: https://github.com/njoyard/ist/raw/release/dist/ist-min.js
 [8]: http://pegjs.majda.cz/
 
