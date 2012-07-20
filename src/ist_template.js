@@ -58,6 +58,7 @@ define(function() {
 	Context = function(object, doc) {
 		this.value = object;
 		this.doc = doc || document;
+		this.variables = { document: [ this.doc ] };
 	};
 	
 	
@@ -78,6 +79,24 @@ define(function() {
 			return this.doc.createTextNode(this.interpolate(text));
 		},
 		
+		pushEvalVar: function(name, value) {
+			if (typeof this.variables[name] === 'undefined') {
+				this.variables[name] = [];
+			}
+			
+			this.variables[name].push(value);
+		},
+		
+		popEvalVar: function(name) {
+			var ret = this.variables[name].pop();
+			
+			if (this.variables[name].length === 0) {
+				delete this.variables[name];
+			}
+			
+			return ret;
+		},
+		
 		/**
 		 * Evaluate `expr` in a scope where the current context is available
 		 * as `this`, all its own properties that are not reserved words are
@@ -86,16 +105,16 @@ define(function() {
 		evaluate: function(expr) {
 			var self = this,
 				argNames = typeof this.value === 'object' ? Object.keys(this.value) : [],
-				argVals, func;
+				varNames = Object.keys(this.variables),
+				argVals, varVals, func;
 			
 			argNames = argNames.filter(function(k) { return reservedWords.indexOf(k) === -1; });
 			argVals = argNames.map(function(k) { return self.value[k]; });
+			varVals = varNames.map(function(k) { return self.variables[k][0]; });
 			
-			argNames.unshift('document');
-			argVals.unshift(this.doc);
-			func = new Function(argNames.join(','), "return " + expr + ";");
+			func = new Function(argNames.concat(varNames).join(','), "return " + expr + ";");
 		
-			return func.apply(this.value, argVals);
+			return func.apply(this.value, argVals.concat(varVals));
 		},
 		
 		interpolate: function(text) {		
@@ -439,35 +458,17 @@ define(function() {
 		
 		if (value && Array.isArray(value)) {
 			value.forEach(function(item, index) {
-				var xitem;
+				var sctx = ctx.createContext(item);
 				
-				if (item !== null && (typeof item === 'object' || Array.isArray(item))) {
-					xitem = item;
-					item.loop = {
-						first: index == 0,
-						index: index,
-						last: index == value.length - 1,
-						length: value.length,
-						outer: outer
-					};
-				} else {
-					xitem = {
-						toString: function() { return item.toString(); },
-						loop: {
-							first: index == 0,
-							index: index,
-							last: index == value.length - 1,
-							length: value.length,
-							outer: outer
-						}
-					};
-				}
-				
-				fragment.appendChild(tmpl.render(ctx.createContext(xitem)));
-				
-				if (xitem === item) {
-					delete item.loop;
-				}
+				sctx.pushEvalVar('loop', {
+					first: index == 0,
+					index: index,
+					last: index == value.length - 1,
+					length: value.length,
+					outer: outer
+				});
+				fragment.appendChild(tmpl.render(sctx));
+				sctx.popEvalVar('loop');
 			});
 		}
 		
