@@ -1,6 +1,8 @@
 v0.5.1 - NEXT/UNRELEASED
 - Added expression evaluation to {{...}} blocks and @directives
 - Enhanced error handling and reporting
+- Allowed implicit node creation (with qualifiers only; was working since 0.5
+  but undocumented and untested)
 
 v0.5 - 2012-07-12
 - Full parser rewrite using PEGjs
