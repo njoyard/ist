@@ -104,17 +104,17 @@ define(function() {
 		 */
 		evaluate: function(expr) {
 			var self = this,
-				argNames = typeof this.value === 'object' ? Object.keys(this.value) : [],
+				ctxNames = typeof this.value === 'object' ? Object.keys(this.value) : [],
 				varNames = Object.keys(this.variables),
-				argVals, varVals, func;
+				ctxValues, varValues, func;
 			
-			argNames = argNames.filter(function(k) { return reservedWords.indexOf(k) === -1; });
-			argVals = argNames.map(function(k) { return self.value[k]; });
-			varVals = varNames.map(function(k) { return self.variables[k][0]; });
+			ctxNames = ctxNames.filter(function(k) { return reservedWords.indexOf(k) === -1; });
+			ctxValues = ctxNames.map(function(k) { return self.value[k]; });
+			varValues = varNames.map(function(k) { return self.variables[k][0]; });
 			
-			func = new Function(argNames.concat(varNames).join(','), "return " + expr + ";");
+			func = new Function(ctxNames.concat(varNames).join(','), "return " + expr + ";");
 		
-			return func.apply(this.value, argVals.concat(varVals));
+			return func.apply(this.value, ctxValues.concat(varValues));
 		},
 		
 		interpolate: function(text) {		
