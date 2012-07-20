@@ -4,10 +4,10 @@
 Introduction
 ------------
 
-IST is a DOM templating engine using a CSS selector-like syntax.  Templates are
-text files, which are first parsed and compiled into a template object, and then
-rendered into a DOM document using a context object.  This file documents usage
-of version 0.5.
+IST is a javascript DOM templating engine using a CSS selector-like syntax.
+Templates are text files, which are first parsed and compiled into a template
+object, and then rendered into a DOM document using a context object.  This file
+documents usage of version 0.5.
 
 Here is a brief overview of an IST template file:
 
@@ -42,6 +42,17 @@ your editor to highlight CSS syntax will give nice results.
 
 Usage
 -----
+
+### Downloading and building
+
+The latest built release is available on the `release` branch [here][6]
+([minified version][7]).
+
+The `master` branch features the latest changes but can be unstable; to build
+it, download a source tarball or clone the repository then launch the `build.sh`
+script from the `src` directory.  You'll need [pegjs][8] to build IST, and
+optionally uglify-js to build the minified version; you can get both using npm.
+Both builds are created in the `dist` directory.
 
 ### Template compilation.
 
@@ -287,6 +298,10 @@ actually use an arbitrary JS expression instead:
 ```css
 @if !document.querySelector('.mustAppearOnce')
 	div.mustAppearOnce
+	
+@if user === 'admin'
+	div.adminPanel
+		/* ... */
 ```
 
 #### Context switching
@@ -338,6 +353,9 @@ iteration details:
 	@if loop.last
 		"the last one"
 ```
+
+The `loop` variable hides any context property with the same name, but you can
+still access it using `this.loop` (or `this["loop"]`).
 			
 The `loop.outer` variable enables acces to the outer context:
 
@@ -494,6 +512,14 @@ have the following API:
   inside `string`
 * `Context#createContext(newValue)`	creates and returns a new `Context` object
   with `newValue` as value, but with the same rendering document
+* `Context#pushEvalVal(name, value)` adds a variable to the scope used in
+  `evaluate`, overriding any previous value.  This can be used to add variables
+  that can be used in expressions in `{{...}}` blocks or after directive names.
+  For an example of usage, see below how the `@each` directive pushes the `loop`
+  variable.
+* `Context#popEvalVal(name)` removes a variable from the scope used in
+  `evaluate`, restoring its previous value if any, and returning the popped
+  value.  For an example of usage, see the `@each` directive.
   
 Internally, IST always works with `Context` objects when rendering templates.
 Actually, you can directly pass a `Context` object to the `render` method of any
@@ -596,15 +622,15 @@ Conditional directives enable conditional rendering of a subtree:
 They are defined as follows:
 
 ```js
-ist.registerHelper('if', function(subCtx, subTemplate) {
-	if (subCtx) {
-		return subTemplate.render(this);
+ist.registerHelper('if', function(ctx, tmpl) {
+	if (ctx.value) {
+		return tmpl.render(this);
 	}
 });
 
-ist.registerHelper('unless', function(subCtx, subTemplate) {
-	if (!subCtx) {
-		return subTemplate.render(this);
+ist.registerHelper('unless', function(ctx, tmpl) {
+	if (!ctx.value) {
+		return tmpl.render(this);
 	}
 });
 ```
@@ -627,8 +653,8 @@ div.better
 It is defined as follows:
 
 ```js
-ist.registerHelper('with', function(subCtx, subTemplate) {
-	return subTemplate.render(subCtx);
+ist.registerHelper('with', function(ctx, tmpl) {
+	return tmpl.render(ctx);
 });
 ```
 
@@ -645,7 +671,9 @@ switched to each of the array elements in turn:
 		"{{ content }}"
 ```
 
-The 'each' helper is defined as follows:
+The 'each' helper is defined as follows; note how `pushEvalVar` and `popEvalVar`
+are used to create the `loop` variable (even if `popEvalVar` is useless in this
+particular example as the subcontext is destroyed immediately most of the time).
 
 ```js
 ist.registerHelper('each', function(ctx, tmpl) {
@@ -655,35 +683,17 @@ ist.registerHelper('each', function(ctx, tmpl) {
 	
 	if (value && Array.isArray(value)) {
 		value.forEach(function(item, index) {
-			var xitem;
+			var sctx = ctx.createContext(item);
 			
-			if (item !== null && (typeof item === 'object' || Array.isArray(item))) {
-				xitem = item;
-				item.loop = {
-					first: index == 0,
-					index: index,
-					last: index == value.length - 1,
-					length: value.length,
-					outer: outer
-				};
-			} else {
-				xitem = {
-					toString: function() { return item.toString(); },
-					loop: {
-						first: index == 0,
-						index: index,
-						last: index == value.length - 1,
-						length: value.length,
-						outer: outer
-					}
-				};
-			}
-			
-			fragment.appendChild(tmpl.render(ctx.createContext(xitem)));
-			
-			if (xitem === item) {
-				delete item.loop;
-			}
+			sctx.pushEvalVar('loop', {
+				first: index == 0,
+				index: index,
+				last: index == value.length - 1,
+				length: value.length,
+				outer: outer
+			});
+			fragment.appendChild(tmpl.render(sctx));
+			sctx.popEvalVar('loop');
 		});
 	}
 	
@@ -753,7 +763,6 @@ Planned features
 ----------------
 
 The following features may be included in future versions:
-
 - easier i18n handling
 - template update with changed context content
 
@@ -772,8 +781,12 @@ information.
 Copyright (c) 2012 Nicolas Joyard
 
 
-[1]: http://github.com/njoyard/ist
+[1]: http://njoyard.github.com/ist
 [2]: http://handlebarsjs.com/block_helpers.html
 [3]: https://github.com/njoyard/ist/blob/master/LICENSE
 [4]: https://github.com/njoyard/ist/issues
 [5]: http://twitter.com/meringueman
+[6]: https://github.com/njoyard/ist/blob/release/dist/ist.js
+[7]: https://github.com/njoyard/ist/blob/release/dist/ist-min.js
+[8]: http://pegjs.majda.cz/
+
