@@ -7,7 +7,7 @@ Introduction
 IST is a javascript DOM templating engine using a CSS selector-like syntax.
 Templates are text files, which are first parsed and compiled into a template
 object, and then rendered into a DOM document using a context object.  This file
-documents usage of version 0.5.
+documents usage of version 0.5.1.
 
 Here is a brief overview of an IST template file:
 
@@ -187,6 +187,14 @@ some corner-cases, properties can be specified as follows:
 
 ```css
 div[.className=one two three]
+```
+
+You can also omit the tag name when at least one qualifier is present.  It will
+implicitly mean 'div'.
+
+```css
+.anImplicitDiv
+#anOtherOne
 ```
 
 ### Text nodes

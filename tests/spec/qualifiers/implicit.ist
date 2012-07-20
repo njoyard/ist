@@ -1,0 +1,5 @@
+#implicitId
+.implicitClass
+[implicitAttribute=value]
+[.implicitProperty=value]
+#implicitMultiple.class[attr=value][.prop=value]
