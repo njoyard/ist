@@ -2,8 +2,9 @@ define([
 	'ist!interpolation/base',
 	'ist!interpolation/properties',
 	'ist!interpolation/this',
-	'ist!interpolation/expressions'
-], function(tBase, tProperties, tThis, tExpressions) {
+	'ist!interpolation/expressions',
+	'ist!interpolation/errors'
+], function(tBase, tProperties, tThis, tExpressions, tErrors) {
 	return function() {
 		var obj = { a: 1, b: '2', aNumber: 1234 },
 			propObj = {
@@ -68,6 +69,17 @@ define([
 		
 		it("should execute arbitrary JS code inside expressions", function() {
 			expect( exprNodes[3].textContent ).toBe( '' + (Math.PI + (function(arg) { return Array.isArray(arg); })([1, 2])) );
+		});
+		
+		it("should report errors thrown by expressions when rendering", function() {
+			expect( function() { tErrors.render({ test: 'syntax' }); } )
+				.toThrow("Unexpected identifier in 'interpolation/errors' on line 2");
+				
+			expect( function() { tErrors.render({ test: 'type' }); } )
+				.toThrow("a is not defined in 'interpolation/errors' on line 5");
+				
+			expect( function() { tErrors.render({ test: 'throw' }); } )
+				.toThrow("custom error in 'interpolation/errors' on line 8");
 		});
 	};
 });

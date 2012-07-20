@@ -8,6 +8,7 @@ define([
 	'text!blocks/include.ist',
 	'text!blocks/includetext.ist',
 	'text!blocks/includeinvalid.ist',
+	'ist!blocks/errors',
 	
 	'blocks/included_invalid',
 	'ist!blocks/included_ist',
@@ -15,7 +16,7 @@ define([
 	'blocks/included_string',
 	'blocks/included_compiled'
 ], function(ist, tIf, tUnless, tWith, tEach, tInclude, textInclude,
-			textIncludeText, textIncludeInvalid) {
+			textIncludeText, textIncludeInvalid, tErrors) {
 	return function() {
 		var tfObj = {
 				zero: 0,
@@ -231,6 +232,19 @@ define([
 		
 		it("should fail to render templates with invalid includes", function() {
 			expect( function() { ist(textIncludeInvalid).render(); } ).toThrow( "Invalid included template 'blocks/included_invalid' in '<unknown>' on line 1" );
+		});
+		
+		
+		
+		it("should report errors thrown by expressions when rendering", function() {
+			expect( function() { tErrors.render({ test: 'syntax' }); } )
+				.toThrow("Unexpected identifier in 'blocks/errors' on line 2");
+				
+			expect( function() { tErrors.render({ test: 'type' }); } )
+				.toThrow("a is not defined in 'blocks/errors' on line 6");
+				
+			expect( function() { tErrors.render({ test: 'throw' }); } )
+				.toThrow("custom error in 'blocks/errors' on line 10");
 		});
 	};
 });

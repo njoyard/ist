@@ -1,0 +1,11 @@
+@if test === "syntax"
+	@if syntax error
+		"oops"
+	
+@if test === "type"
+	@if a.b()
+		"oops"
+	
+@if test === "throw"
+	@if (function() { throw new Error('custom error'); })()
+		"oops"

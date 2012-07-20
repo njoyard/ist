@@ -1,0 +1,8 @@
+@if test === "syntax"
+	"{{ syntax error }}"
+	
+@if test === "type"
+	"{{ a.b() }}"
+	
+@if test === "throw"
+	"{{ (function() { throw new Error('custom error'); })() }}"
