@@ -49,10 +49,10 @@ The latest built release is available on the `release` branch [here][6]
 ([minified version][7]).
 
 The `master` branch features the latest changes but can be unstable; to build
-it, download a source tarball or clone the repository then launch the `build.sh`
-script from the `src` directory.  You'll need [pegjs][8] to build IST, and
-optionally uglify-js to build the minified version; you can get both using npm.
-Both builds are created in the `dist` directory.
+it, download a source tarball or clone the repository then run `make` in the
+repository root.  You'll need [pegjs][8] to build IST, and optionally uglify-js
+to build the minified version; you can get both using npm.  Both builds are
+created in the `dist` directory.
 
 ### Template compilation.
 

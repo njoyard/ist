@@ -329,7 +329,8 @@ define(function() {
 	});
 	
 	
-//PARSER//
+// PEGjs parser start
+// PEGjs parser end
 	
 	/**
 	 * Template preprocessor; handle what the parser cannot handle
