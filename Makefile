@@ -27,7 +27,7 @@ ist: dist/ist.js
 dist/ist.js: dist src/ist_template.js src/parser.js
 	sed "\;// PEGjs parser start; r src/parser.js" src/ist_template.js > dist/ist.js
 
-ist-min: dist/ist-min.js
-dist/ist-min.js: test_uglifyjs dist dist/ist.js
+ist-min: test_uglifyjs dist/ist-min.js
+dist/ist-min.js: dist dist/ist.js
 	$(UGLIFYJS) -o dist/ist-min.js dist/ist.js
 
