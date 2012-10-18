@@ -37,7 +37,7 @@ div#content
 @include "common/footer"
 ```
 
-IST tries to reuse many syntax elements from CSS.  Thus, in most cases, setting
+IST tries to reuse many syntax elements from CSS so that, in most cases, setting
 your editor to highlight CSS syntax will give nice results.
 
 IST can be used either as a standalone script, as an AMD module or as a
@@ -127,7 +127,7 @@ require(['ist!path/to/template'], function(myTemplate) {
 });
 ```
 
-Note that the plugin automatically adds an `.ist` extension to file names.
+Note that the plugin automatically adds a `.ist` extension to file names.
 
 ### Rendering
 
@@ -437,7 +437,32 @@ ul#menu
 
 #### External template inclusion
 
-A template file can be included in an other one using the `@include` directive:
+A template file can be included in an other one using the `@include` directive.
+The usage of this directive depends on whether you loaded IST as a standalone
+script or using an AMD loader, but in both cases, the `@include`d template
+will be rendered with the current context.
+
+In both cases, you can include templates from an existing `<script>` tag using
+its `id` attribute:
+
+```html
+<script type="text/ist" id="mainTemplate">
+	div.container
+		div.content
+	@include "footerTemplate"
+</script>
+
+<script type="text/ist" id="footerTemplate">
+	div.footer
+		"Copyright (c) MyCompany"
+</script>
+```
+
+Note that the order of definition does not matter.  In the example above,
+"footerTemplate" can be included in "mainTemplate" even if defined afterwards.
+
+When using an AMD loader, you can additionnaly use the following syntax to
+include other templates:
 
 ```css
 @include "path/to/template"
@@ -446,16 +471,17 @@ A template file can be included in an other one using the `@include` directive:
 @include 'path/to/template.ist'
 ```
 	
-The `@include`d template will be rendered in the current context.  When loading
-templates with the `ist!` plugin, included template paths must be relative (ie.
-path/to/a must refer to path/to/b as `@include "b"` or `@include "b.ist"` when
-loaded as `ist!path/to/a`), and are loaded automatically.
+When loading templates with the `ist!` plugin, included template paths must be
+relative (ie. path/to/a must refer to path/to/b as `@include "b"` or
+`@include "b.ist"` when loaded as `ist!path/to/a`), and are loaded
+automatically.
 
 However, when a template string is compiled directly, dependencies must have
-been loaded prior to rendering.  In the first example above, the helper will
-look for AMD modules named either `path/to/template`, `path/to/template.ist`,
-`ist!path/to/template` or `text!path/to/template.ist`.  One of these modules
-must resolve to either a template string or a compiled IST template.
+been loaded prior to rendering (unless the dependency is a `<script>` tag ID).
+In the first example above, the helper will look for AMD modules named either
+`path/to/template`, `path/to/template.ist`, `ist!path/to/template` or
+`text!path/to/template.ist`.  One of these modules must resolve to either a
+template string or a compiled IST template.
 
 Single node creation
 --------------------
