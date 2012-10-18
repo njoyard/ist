@@ -2,6 +2,7 @@ next version
 - Rewrote build script using make
 - Added support for standalone usage (without an AMD loader)
 - Added support for template in <script> tags
+- Updated tests to handle Firefox exception messages
 
 v0.5.1 - 2012-07-20
 - Added expression evaluation to {{...}} blocks and @directives

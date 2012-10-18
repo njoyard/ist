@@ -52,7 +52,10 @@ define([
 		
 		it("should fail to render when accessing properties of undefined context parts", function() {
 			propObj.access = {};
-			expect( function() { tProperties.render(propObj); } ).toThrow( "Cannot read property 'deeply' of undefined in 'interpolation/properties' on line 2" );
+			expect( function() { tProperties.render(propObj); } ).toThrowAny([
+				"Cannot read property 'deeply' of undefined in 'interpolation/properties' on line 2",
+				"access.to is undefined in 'interpolation/properties' on line 2"
+			]);
 		});
 		
 		document.myClassValue = "document property value";
@@ -73,7 +76,10 @@ define([
 		
 		it("should report errors thrown by expressions when rendering", function() {
 			expect( function() { tErrors.render({ test: 'syntax' }); } )
-				.toThrow("Unexpected identifier in 'interpolation/errors' on line 2");
+				.toThrowAny([
+					"Unexpected identifier in 'interpolation/errors' on line 2",
+					"missing ; before statement in 'interpolation/errors' on line 2"
+				]);
 				
 			expect( function() { tErrors.render({ test: 'type' }); } )
 				.toThrow("a is not defined in 'interpolation/errors' on line 5");

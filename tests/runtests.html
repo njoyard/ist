@@ -38,6 +38,30 @@
 				beforeEach(function() {
 					var matchers = {};
 		
+					matchers.toThrowAny = function(messages) {
+						var thrown;
+						
+						this.message = function() {
+							var actual;
+							
+							if (thrown) {
+								actual = "it threw '" + thrown + "'";
+							} else {
+								actual = "it didn't throw any exception";
+							}
+							
+							return "Expected function to throw any of " + messages.map(function(m) { return "'" + m + "'"; }).join(", ") + " but " + actual;
+						};
+						
+						try {
+							this.actual();
+						} catch(e) {
+							thrown = e.message || e;
+						}
+						
+						return typeof thrown !== 'undefined' && messages.indexOf(thrown) != -1;
+					},
+		
 					matchers.toParse = function() {
 						var template = this.actual,
 							err;

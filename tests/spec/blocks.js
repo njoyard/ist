@@ -180,14 +180,26 @@ define([
 		
 		it("should fail to render when accessing properties of undefined context parts", function() {
 			tfObj.sub = undefined;
-			expect( function() { tIf.render(tfObj); } ).toThrow( "Cannot read property 'property1' of undefined in 'blocks/if' on line 21" );
-			expect( function() { tUnless.render(tfObj); } ).toThrow( "Cannot read property 'property1' of undefined in 'blocks/unless' on line 21" );
+			expect( function() { tIf.render(tfObj); } ).toThrowAny([
+				"Cannot read property 'property1' of undefined in 'blocks/if' on line 21",
+				"sub is undefined in 'blocks/if' on line 21"
+			]);
+			expect( function() { tUnless.render(tfObj); } ).toThrowAny([
+				"Cannot read property 'property1' of undefined in 'blocks/unless' on line 21",
+				"sub is undefined in 'blocks/unless' on line 21"
+			]);
 			
 			withObj.sub = undefined;
-			expect( function() { tWith.render(withObj); } ).toThrow( "Cannot read property 'subcontext' of undefined in 'blocks/with' on line 6" );
+			expect( function() { tWith.render(withObj); } ).toThrowAny([
+				"Cannot read property 'subcontext' of undefined in 'blocks/with' on line 6",
+				"sub is undefined in 'blocks/with' on line 6"
+			]);
 			
 			eachObj.sub = undefined;
-			expect( function() { tEach.render(eachObj); } ).toThrow( "Cannot read property 'array' of undefined in 'blocks/each' on line 6" );
+			expect( function() { tEach.render(eachObj); } ).toThrowAny([
+				"Cannot read property 'array' of undefined in 'blocks/each' on line 6",
+				"sub is undefined in 'blocks/each' on line 6"
+			]);
 		});
 		
 		
@@ -246,7 +258,10 @@ define([
 		
 		it("should report errors thrown by expressions when rendering", function() {
 			expect( function() { tErrors.render({ test: 'syntax' }); } )
-				.toThrow("Unexpected identifier in 'blocks/errors' on line 2");
+				.toThrowAny([
+					"Unexpected identifier in 'blocks/errors' on line 2",
+					"missing ; before statement in 'blocks/errors' on line 2"
+				]);
 				
 			expect( function() { tErrors.render({ test: 'type' }); } )
 				.toThrow("a is not defined in 'blocks/errors' on line 6");
