@@ -446,13 +446,13 @@ In both cases, you can include templates from an existing `<script>` tag using
 its `id` attribute:
 
 ```html
-<script type="text/ist" id="mainTemplate">
+<script type="text/x-ist" id="mainTemplate">
 	div.container
 		div.content
 	@include "footerTemplate"
 </script>
 
-<script type="text/ist" id="footerTemplate">
+<script type="text/x-ist" id="footerTemplate">
 	div.footer
 		"Copyright (c) MyCompany"
 </script>
