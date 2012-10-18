@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<script type="text/javascript">
+			window.ist = "previous ist value";
+		</script>
+		<script type="text/javascript" src="../../../dist/ist.js"></script>
+	</head>
+	<body>
+		<script type="text/x-ist" id="template1">
+			div.parent
+				div.child
+					"text node"
+		</script>
+		
+		<script type="text/javascript">
+			window.testIstPresent = function() {
+				return window.ist;
+			};
+			
+			window.testTemplate = function() {
+				return ist("@include 'template1'");
+			};
+			
+			window.testNoConflict = function() {
+				var ist1 = window.ist,
+					ist2 = window.ist.noConflict(),
+					ist3 = window.ist;
+					
+				return { before: ist1, result: ist2, after: ist3 };
+			};
+		</script>
+	</body>
+</html>

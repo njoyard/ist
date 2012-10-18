@@ -5,6 +5,13 @@
     <link rel="stylesheet" href="lib/jasmine/jasmine.css">
 </head>
 <body>
+	<script type="text/x-ist" id="scriptTag">
+		div.insideScriptTag
+			div.child
+				@if variable === "value"
+					div.conditional
+	</script>
+	
     <script src="lib/jasmine/jasmine.js"></script>
     <script src="lib/jasmine/jasmine-html.js"></script>
     <script src="lib/requirejs/require.js"></script>
@@ -22,9 +29,11 @@
         require(
             [
             	'ist',
-            	'nodetypes', 'qualifiers', 'syntax', 'interpolation', 'blocks', 'blockhelper', 'createnode'
+            	'nodetypes', 'qualifiers', 'syntax', 'interpolation', 'blocks',
+            	'blockhelper', 'createnode', 'usage'
             ],
-            function(ist, nodetypes, qualifiers, syntax, interpolation, blocks, blockhelper, createnode){
+            function(ist, nodetypes, qualifiers, syntax, interpolation, blocks,
+            	blockhelper, createnode, usage){
             	/* IST specific matchers */
 				beforeEach(function() {
 					var matchers = {};
@@ -157,6 +166,7 @@
 				});
             
             	/* Describe tests */
+            	describe('usage', usage);
             	describe('nodetypes', nodetypes);
             	describe('qualifiers', qualifiers);
             	describe('syntax', syntax);

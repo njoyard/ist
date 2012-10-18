@@ -202,13 +202,21 @@ define([
 			expect( inclFragment.querySelector('.parent .included .includedchild') ).toNotBe( null );
 		});
 		
+		it("should allow including templates from <script type=\"text/x-ist\" id=\"...\"> tags", function() {
+			var inclFragment = tInclude.render({ variable: 'value' });
+			
+			expect( inclFragment.querySelector('.parent .insideScriptTag' ) ).toNotBe( null );
+			expect( inclFragment.querySelector('.parent .insideScriptTag .child' ) ).toNotBe( null );
+			expect( inclFragment.querySelector('.parent .insideScriptTag .child .conditional' ) ).toNotBe( null );
+		});
+		
 		it("should render includes in current context", function() {
 			var inclFragment = tInclude.render({ variable: 'value' });
 			
 			expect( inclFragment.querySelector('.parent .included .includedchild').firstChild.textContent ).toBe( 'value' );
 		});
 		
-		it("should fail to render templates with missing @include files", function() {
+		it("should fail to render templates with missing @include files/<script> tags", function() {
 			expect( function() { ist(textInclude).render(); } ).toThrow( "Cannot find included template 'included' in '<unknown>' on line 2" );
 		});
 		

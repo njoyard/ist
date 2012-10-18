@@ -16,6 +16,7 @@
 	var definition = function(requirejs) {
 	
 		var ist, parser, fs, extend, jsEscape, preprocess, getXhr, fetchText,
+			findScriptTag,
 			Context, Node, ContainerNode, BlockNode, TextNode, ElementNode,
 			reservedWords = [
 				'break', 'case', 'catch', 'class', 'continue', 'debugger',
@@ -44,6 +45,28 @@
 				.replace(/[\t]/g, "\\t")
 				.replace(/[\n]/g, "\\n")
 				.replace(/[\r]/g, "\\r");
+		};
+		
+		
+		findScriptTag = function(id) {
+			var found, scripts; 
+
+			try {
+				scripts = document.querySelectorAll('script#' + id);
+			} catch(e) {
+				// DOM exception when selector is invalid - no <script> tag with this id
+				return;
+			}
+				
+			if (scripts) {
+				Array.prototype.slice.call(scripts).forEach(function(s) {
+					if (!found && s.getAttribute('type') === 'text/x-ist') {
+						found = s.innerHTML;
+					}
+				});
+			}
+			
+			return found;
 		};
 	
 	
@@ -493,19 +516,7 @@
 				scripts, found, tryReq;
 			
 			// Try to find a <script type="text/x-ist" id="...">
-			try {
-				scripts = document.querySelectorAll('script#' + what);
-			} catch (e) {
-				// DOM exception
-			}
-			
-			if (scripts) {
-				Array.prototype.slice(scripts).forEach(function(s) {
-					if (!found && s.getAttribute('type') === 'text/x-ist') {
-						found = s.innerHTML;
-					}
-				});
-			}
+			found = findScriptTag(what);
 			
 			if (isAMD)
 			{
@@ -634,13 +645,18 @@
 						 
 					text = text.replace(/^(\s*)@include\s+(?:text=)?(['"])((?:(?=(\\?))\4.)*?)\2/gm,
 						function(m, p1, p2, p3) {
-							var dpath = dirname + '/' + p3.replace(/\.ist$/, '');
+							if (!findScriptTag(p3)) {
+								var dpath = dirname + '/' + p3.replace(/\.ist$/, '');
 					
-							if (deps.indexOf('ist!' + dpath) === -1) {
-								deps.push('ist!' + dpath);
+								if (deps.indexOf('ist!' + dpath) === -1) {
+									deps.push('ist!' + dpath);
+								}
+					
+								return p1 + '@include "' + dpath + '"';
+							} else {
+								// Script tag found, do not change directive
+								return m;
 							}
-					
-							return p1 + '@include "' + dpath + '"';
 						});
 			
 					if (config.isBuild) {

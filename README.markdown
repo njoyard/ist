@@ -7,7 +7,7 @@ Introduction
 IST is a javascript DOM templating engine using a CSS selector-like syntax.
 Templates are text files, which are first parsed and compiled into a template
 object, and then rendered into a DOM document using a context object.  This file
-documents usage of version 0.5.1.
+documents usage of version 0.5.2.
 
 Here is a brief overview of an IST template file:
 
@@ -21,7 +21,7 @@ div#content
             "{{ text }}"
             
         @unless comments.length
-            "No comments for now !"
+            "No comments yet !"
             
         @each comments
             div.comment
@@ -40,6 +40,9 @@ div#content
 IST tries to reuse many syntax elements from CSS.  Thus, in most cases, setting
 your editor to highlight CSS syntax will give nice results.
 
+IST can be used either as a standalone script, as an AMD module or as a
+RequireJS plugin.
+
 Usage
 -----
 
@@ -56,12 +59,62 @@ created in the `dist` directory.
 
 ### Template compilation.
 
-IST can be used either as an AMD module or as a RequireJS plugin.  To compile a
+#### Standalone usage
+
+When loaded as a standalone script, IST registers as `ist` (or `window.ist`).
+You can compile a template string by simply passing it to ist:
+
+```js
+var myTemplate = ist("...");
+```
+
+When `window.ist` is already used, you can call `ist.noConflict` to restore its
+previous value:
+
+```js
+var istTemplatingEngine = ist.noConflict();
+// window.ist is now restored to its previous value
+
+var myTemplate = istTemplatingEngine("...");
+```
+
+To avoid hard-coding IST templates in Javascript strings, you can use `<script>`
+tags with an `id` attribute and a `type` attribute of `text/x-ist`.  You can
+refer to these templates using their `id` as in the following example:
+
+```html
+<html>
+	<head>
+		<script type="text/javascript" src="ist.js"></script>
+		
+		<script type="text/x-ist" id="myTemplate">
+			/* IST template code */
+			div.parent
+				div#child
+		</script>
+		
+		<script type="text/javascript">
+			function startup() {
+				var myTemplate = ist("@include 'myTemplate'");
+				
+				/* ... */
+			}
+		</script>
+	</head>
+	<body onload="startup();">
+		<!-- ... -->
+	</body>
+</html>
+```
+
+#### AMD usage
+
+IST can also be used as an AMD module or as a RequireJS plugin.  To compile a
 template string, use the module syntax as follows:
 
 ```js
 require(['ist'], function(ist) {
-	var myTemplate = ist('div#myId.myClass[myProp=myVal]');
+	var myTemplate = ist('...');
 	/* ... */
 });
 ```

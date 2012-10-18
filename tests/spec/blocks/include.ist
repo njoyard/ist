@@ -1,3 +1,4 @@
 div.parent
 	@include "included.ist"
 	@include "included"
+	@include "scriptTag"
