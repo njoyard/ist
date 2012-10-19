@@ -1,6 +1,6 @@
 /** @license
  * IST: Indented Selector Templating
- * version 0.5.1
+ * version 0.5.2
  *
  * Copyright (c) 2012 Nicolas Joyard
  * Released under the MIT license.
