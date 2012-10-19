@@ -1,4 +1,4 @@
-next version
+v0.5.2 - 2012-10-20
 - Rewrote build script using make
 - Added support for standalone usage (without an AMD loader)
 - Added support for template in <script> tags
