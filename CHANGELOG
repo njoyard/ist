@@ -1,4 +1,11 @@
-v0.5.1 - NEXT/UNRELEASED
+next version
+- Rewrote build script using make
+- Added support for standalone usage (without an AMD loader)
+- Added support for template in <script> tags
+- Updated tests to handle Firefox exception messages
+- Added fromScriptTag helper
+
+v0.5.1 - 2012-07-20
 - Added expression evaluation to {{...}} blocks and @directives
 - Enhanced error handling and reporting
 - Allowed implicit node creation (with qualifiers only; was working since 0.5

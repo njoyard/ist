@@ -5,9 +5,17 @@
     <link rel="stylesheet" href="lib/jasmine/jasmine.css">
 </head>
 <body>
+	<script type="text/x-ist" id="scriptTag">
+		div.insideScriptTag
+			div.child
+				@if variable === "value"
+					div.conditional
+	</script>
+	
     <script src="lib/jasmine/jasmine.js"></script>
     <script src="lib/jasmine/jasmine-html.js"></script>
     <script src="lib/requirejs/require.js"></script>
+    
     <script>
         require({
             baseUrl: 'spec',
@@ -22,12 +30,38 @@
         require(
             [
             	'ist',
-            	'nodetypes', 'qualifiers', 'syntax', 'interpolation', 'blocks', 'blockhelper', 'createnode'
+            	'nodetypes', 'qualifiers', 'syntax', 'interpolation', 'blocks',
+            	'blockhelper', 'createnode', 'usage'
             ],
-            function(ist, nodetypes, qualifiers, syntax, interpolation, blocks, blockhelper, createnode){
+            function(ist, nodetypes, qualifiers, syntax, interpolation, blocks,
+            	blockhelper, createnode, usage){
             	/* IST specific matchers */
 				beforeEach(function() {
 					var matchers = {};
+		
+					matchers.toThrowAny = function(messages) {
+						var thrown;
+						
+						this.message = function() {
+							var actual;
+							
+							if (thrown) {
+								actual = "it threw '" + thrown + "'";
+							} else {
+								actual = "it didn't throw any exception";
+							}
+							
+							return "Expected function to throw any of " + messages.map(function(m) { return "'" + m + "'"; }).join(", ") + " but " + actual;
+						};
+						
+						try {
+							this.actual();
+						} catch(e) {
+							thrown = e.message || e;
+						}
+						
+						return typeof thrown !== 'undefined' && messages.indexOf(thrown) != -1;
+					},
 		
 					matchers.toParse = function() {
 						var template = this.actual,
@@ -157,6 +191,7 @@
 				});
             
             	/* Describe tests */
+            	describe('usage', usage);
             	describe('nodetypes', nodetypes);
             	describe('qualifiers', qualifiers);
             	describe('syntax', syntax);

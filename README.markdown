@@ -7,7 +7,7 @@ Introduction
 IST is a javascript DOM templating engine using a CSS selector-like syntax.
 Templates are text files, which are first parsed and compiled into a template
 object, and then rendered into a DOM document using a context object.  This file
-documents usage of version 0.5.1.
+documents usage of version 0.5.2.
 
 Here is a brief overview of an IST template file:
 
@@ -21,7 +21,7 @@ div#content
             "{{ text }}"
             
         @unless comments.length
-            "No comments for now !"
+            "No comments yet !"
             
         @each comments
             div.comment
@@ -37,8 +37,11 @@ div#content
 @include "common/footer"
 ```
 
-IST tries to reuse many syntax elements from CSS.  Thus, in most cases, setting
+IST tries to reuse many syntax elements from CSS so that, in most cases, setting
 your editor to highlight CSS syntax will give nice results.
+
+IST can be used either as a standalone script, as an AMD module or as a
+RequireJS plugin.
 
 Usage
 -----
@@ -49,19 +52,69 @@ The latest built release is available on the `release` branch [here][6]
 ([minified version][7]).
 
 The `master` branch features the latest changes but can be unstable; to build
-it, download a source tarball or clone the repository then launch the `build.sh`
-script from the `src` directory.  You'll need [pegjs][8] to build IST, and
-optionally uglify-js to build the minified version; you can get both using npm.
-Both builds are created in the `dist` directory.
+it, download a source tarball or clone the repository then run `make` in the
+repository root.  You'll need [pegjs][8] to build IST, and optionally uglify-js
+to build the minified version; you can get both using npm.  Both builds are
+created in the `dist` directory.
 
 ### Template compilation.
 
-IST can be used either as an AMD module or as a RequireJS plugin.  To compile a
+#### Standalone usage
+
+When loaded as a standalone script, IST registers as `ist` (or `window.ist`).
+You can compile a template string by simply passing it to ist:
+
+```js
+var myTemplate = ist("...");
+```
+
+When `window.ist` is already used, you can call `ist.noConflict` to restore its
+previous value:
+
+```js
+var istTemplatingEngine = ist.noConflict();
+// window.ist is now restored to its previous value
+
+var myTemplate = istTemplatingEngine("...");
+```
+
+To avoid hard-coding IST templates in Javascript strings, you can use `<script>`
+tags with an `id` attribute and a `type` attribute of `text/x-ist`.  You can
+refer to these templates using their `id` as in the following example:
+
+```html
+<html>
+	<head>
+		<script type="text/javascript" src="ist.js"></script>
+		
+		<script type="text/x-ist" id="myTemplate">
+			/* IST template code */
+			div.parent
+				div#child
+		</script>
+		
+		<script type="text/javascript">
+			function startup() {
+				var myTemplate = ist.fromScriptTag("myTemplate");
+				
+				/* ... */
+			}
+		</script>
+	</head>
+	<body onload="startup();">
+		<!-- ... -->
+	</body>
+</html>
+```
+
+#### AMD usage
+
+IST can also be used as an AMD module or as a RequireJS plugin.  To compile a
 template string, use the module syntax as follows:
 
 ```js
 require(['ist'], function(ist) {
-	var myTemplate = ist('div#myId.myClass[myProp=myVal]');
+	var myTemplate = ist('...');
 	/* ... */
 });
 ```
@@ -74,7 +127,9 @@ require(['ist!path/to/template'], function(myTemplate) {
 });
 ```
 
-Note that the plugin automatically adds an `.ist` extension to file names.
+Note that the plugin automatically adds a `.ist` extension to file names.
+
+Of course you can also access `<script>` tags as in the standalone case.
 
 ### Rendering
 
@@ -384,7 +439,32 @@ ul#menu
 
 #### External template inclusion
 
-A template file can be included in an other one using the `@include` directive:
+A template file can be included in an other one using the `@include` directive.
+The usage of this directive depends on whether you loaded IST as a standalone
+script or using an AMD loader, but in both cases, the `@include`d template
+will be rendered with the current context.
+
+In both cases, you can include templates from an existing `<script>` tag using
+its `id` attribute:
+
+```html
+<script type="text/x-ist" id="mainTemplate">
+	div.container
+		div.content
+	@include "footerTemplate"
+</script>
+
+<script type="text/x-ist" id="footerTemplate">
+	div.footer
+		"Copyright (c) MyCompany"
+</script>
+```
+
+Note that the order of definition does not matter.  In the example above,
+"footerTemplate" can be included in "mainTemplate" even if defined afterwards.
+
+When using an AMD loader, you can additionnaly use the following syntax to
+include other templates:
 
 ```css
 @include "path/to/template"
@@ -393,16 +473,17 @@ A template file can be included in an other one using the `@include` directive:
 @include 'path/to/template.ist'
 ```
 	
-The `@include`d template will be rendered in the current context.  When loading
-templates with the `ist!` plugin, included template paths must be relative (ie.
-path/to/a must refer to path/to/b as `@include "b"` or `@include "b.ist"` when
-loaded as `ist!path/to/a`), and are loaded automatically.
+When loading templates with the `ist!` plugin, included template paths must be
+relative (ie. path/to/a must refer to path/to/b as `@include "b"` or
+`@include "b.ist"` when loaded as `ist!path/to/a`), and are loaded
+automatically.
 
 However, when a template string is compiled directly, dependencies must have
-been loaded prior to rendering.  In the first example above, the helper will
-look for AMD modules named either `path/to/template`, `path/to/template.ist`,
-`ist!path/to/template` or `text!path/to/template.ist`.  One of these modules
-must resolve to either a template string or a compiled IST template.
+been loaded prior to rendering (unless the dependency is a `<script>` tag ID).
+In the first example above, the helper will look for AMD modules named either
+`path/to/template`, `path/to/template.ist`, `ist!path/to/template` or
+`text!path/to/template.ist`.  One of these modules must resolve to either a
+template string or a compiled IST template.
 
 Single node creation
 --------------------
@@ -516,8 +597,8 @@ have the following API:
 * `Context#evaluate(expr)` evaluates `expr` in a scope where all context
   properties are available as locals, and where `this` evaluates to the Context
   object itself.
-* `Context#interpolate(string)`	interpolates "{{ path.to.property }}" occurences
-  inside `string`
+* `Context#interpolate(string)`	interpolates "{{ ... }}" occurences inside
+  `string`
 * `Context#createContext(newValue)`	creates and returns a new `Context` object
   with `newValue` as value, but with the same rendering document
 * `Context#pushEvalVal(name, value)` adds a variable to the scope used in
