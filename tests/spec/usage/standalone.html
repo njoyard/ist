@@ -22,6 +22,10 @@
 				return ist("@include 'template1'");
 			};
 			
+			window.testFromScript = function() {
+				return ist.fromScriptTag("template1");
+			};
+			
 			window.testNoConflict = function() {
 				var ist1 = window.ist,
 					ist2 = window.ist.noConflict(),

@@ -21,6 +21,9 @@ define([], function() {
 					var template = ifw.testTemplate();
 					expect( typeof template.render ).toBe( 'function' );
 					
+					var template = ifw.testFromScript();
+					expect( typeof template.render ).toBe( 'function' );
+					
 					var noconflict = ifw.testNoConflict();
 					expect( noconflict.before ).toBe( ist );
 					expect( noconflict.result ).toBe( ist );
