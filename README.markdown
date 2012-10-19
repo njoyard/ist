@@ -95,7 +95,7 @@ refer to these templates using their `id` as in the following example:
 		
 		<script type="text/javascript">
 			function startup() {
-				var myTemplate = ist("@include 'myTemplate'");
+				var myTemplate = ist.fromScriptTag("myTemplate");
 				
 				/* ... */
 			}
@@ -107,7 +107,7 @@ refer to these templates using their `id` as in the following example:
 </html>
 ```
 
-#### AMD usage
+#### AMD usage
 
 IST can also be used as an AMD module or as a RequireJS plugin.  To compile a
 template string, use the module syntax as follows:
@@ -128,6 +128,8 @@ require(['ist!path/to/template'], function(myTemplate) {
 ```
 
 Note that the plugin automatically adds a `.ist` extension to file names.
+
+Of course you can also access `<script>` tags as in the standalone case.
 
 ### Rendering
 
@@ -439,7 +441,7 @@ ul#menu
 
 A template file can be included in an other one using the `@include` directive.
 The usage of this directive depends on whether you loaded IST as a standalone
-script or using an AMD loader, but in both cases, the `@include`d template
+script or using an AMD loader, but in both cases, the `@include`d template
 will be rendered with the current context.
 
 In both cases, you can include templates from an existing `<script>` tag using
@@ -458,10 +460,10 @@ its `id` attribute:
 </script>
 ```
 
-Note that the order of definition does not matter.  In the example above,
+Note that the order of definition does not matter.  In the example above,
 "footerTemplate" can be included in "mainTemplate" even if defined afterwards.
 
-When using an AMD loader, you can additionnaly use the following syntax to
+When using an AMD loader, you can additionnaly use the following syntax to
 include other templates:
 
 ```css

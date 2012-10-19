@@ -438,6 +438,18 @@
 			rendered = ist(template).render(context, doc);
 			return rendered.childNodes.length === 1 ? rendered.firstChild : rendered;
 		};
+		
+		
+		/**
+		 * <script> tag template parser
+		 */
+		ist.fromScriptTag = function(id) {
+			var template = findScriptTag(id);
+			
+			if (template) {
+				return ist(template);
+			}
+		};
 	
 	
 		/**
