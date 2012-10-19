@@ -232,7 +232,6 @@
 			_render: function(context) {
 				var fragment = context.createDocumentFragment();
 			
-				this.children = this.children || [];
 				this.children.forEach(function(c) {
 					fragment.appendChild(c._render(context));
 				});
@@ -246,6 +245,8 @@
 		 * Element node
 		 */
 		ElementNode = function(tagName, line) {
+			ContainerNode.call(this);
+		
 			this.tagName = tagName;
 			this.sourceFile = currentTemplate;
 			this.sourceLine = line;
@@ -315,6 +316,8 @@
 		 * Block node
 		 */
 		BlockNode = function(name, expr, line) {
+			ContainerNode.call(this);
+			
 			this.name = name;
 			this.expr = expr;
 			this.sourceFile = currentTemplate;
