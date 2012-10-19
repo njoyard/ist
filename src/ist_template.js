@@ -220,11 +220,12 @@
 		/**
 		 * Container node
 		 */
-		ContainerNode = function() {};
+		ContainerNode = function() {
+			this.children = [];
+		};
 	
 		extend(Node, ContainerNode, {
 			appendChild: function(node) {
-				this.children = this.children || [];
 				this.children.push(node);
 			},
 		
