@@ -597,8 +597,8 @@ have the following API:
 * `Context#evaluate(expr)` evaluates `expr` in a scope where all context
   properties are available as locals, and where `this` evaluates to the Context
   object itself.
-* `Context#interpolate(string)`	interpolates "{{ path.to.property }}" occurences
-  inside `string`
+* `Context#interpolate(string)`	interpolates "{{ ... }}" occurences inside
+  `string`
 * `Context#createContext(newValue)`	creates and returns a new `Context` object
   with `newValue` as value, but with the same rendering document
 * `Context#pushEvalVal(name, value)` adds a variable to the scope used in
