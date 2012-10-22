@@ -182,23 +182,27 @@ define([
 			tfObj.sub = undefined;
 			expect( function() { tIf.render(tfObj); } ).toThrowAny([
 				"Cannot read property 'property1' of undefined in 'blocks/if' on line 21",
-				"sub is undefined in 'blocks/if' on line 21"
+				"sub is undefined in 'blocks/if' on line 21",
+				"'undefined' is not an object (evaluating 'sub.property1') in 'blocks/if' on line 21"
 			]);
 			expect( function() { tUnless.render(tfObj); } ).toThrowAny([
 				"Cannot read property 'property1' of undefined in 'blocks/unless' on line 21",
-				"sub is undefined in 'blocks/unless' on line 21"
+				"sub is undefined in 'blocks/unless' on line 21",
+				"'undefined' is not an object (evaluating 'sub.property1') in 'blocks/unless' on line 21"
 			]);
 			
 			withObj.sub = undefined;
 			expect( function() { tWith.render(withObj); } ).toThrowAny([
 				"Cannot read property 'subcontext' of undefined in 'blocks/with' on line 6",
-				"sub is undefined in 'blocks/with' on line 6"
+				"sub is undefined in 'blocks/with' on line 6",
+				"'undefined' is not an object (evaluating 'sub.subcontext') in 'blocks/with' on line 6"
 			]);
 			
 			eachObj.sub = undefined;
 			expect( function() { tEach.render(eachObj); } ).toThrowAny([
 				"Cannot read property 'array' of undefined in 'blocks/each' on line 6",
-				"sub is undefined in 'blocks/each' on line 6"
+				"sub is undefined in 'blocks/each' on line 6",
+				"'undefined' is not an object (evaluating 'sub.array') in 'blocks/each' on line 6"
 			]);
 		});
 		
@@ -260,11 +264,15 @@ define([
 			expect( function() { tErrors.render({ test: 'syntax' }); } )
 				.toThrowAny([
 					"Unexpected identifier in 'blocks/errors' on line 2",
-					"missing ; before statement in 'blocks/errors' on line 2"
+					"missing ; before statement in 'blocks/errors' on line 2",
+					"Expected an identifier but found 'error' instead in 'blocks/errors' on line 2"
 				]);
 				
 			expect( function() { tErrors.render({ test: 'type' }); } )
-				.toThrow("a is not defined in 'blocks/errors' on line 6");
+				.toThrowAny([
+					"a is not defined in 'blocks/errors' on line 6",
+					"Can't find variable: a in 'blocks/errors' on line 6"
+				]);
 				
 			expect( function() { tErrors.render({ test: 'throw' }); } )
 				.toThrow("custom error in 'blocks/errors' on line 10");

@@ -54,7 +54,8 @@ define([
 			propObj.access = {};
 			expect( function() { tProperties.render(propObj); } ).toThrowAny([
 				"Cannot read property 'deeply' of undefined in 'interpolation/properties' on line 2",
-				"access.to is undefined in 'interpolation/properties' on line 2"
+				"access.to is undefined in 'interpolation/properties' on line 2",
+				"'undefined' is not an object (evaluating 'access.to.deeply') in 'interpolation/properties' on line 2"
 			]);
 		});
 		
@@ -78,11 +79,15 @@ define([
 			expect( function() { tErrors.render({ test: 'syntax' }); } )
 				.toThrowAny([
 					"Unexpected identifier in 'interpolation/errors' on line 2",
-					"missing ; before statement in 'interpolation/errors' on line 2"
+					"missing ; before statement in 'interpolation/errors' on line 2",
+					"Expected an identifier but found 'error' instead in 'interpolation/errors' on line 2"
 				]);
 				
 			expect( function() { tErrors.render({ test: 'type' }); } )
-				.toThrow("a is not defined in 'interpolation/errors' on line 5");
+				.toThrowAny([
+					"a is not defined in 'interpolation/errors' on line 5",
+					"Can't find variable: a in 'interpolation/errors' on line 5"
+				]);
 				
 			expect( function() { tErrors.render({ test: 'throw' }); } )
 				.toThrow("custom error in 'interpolation/errors' on line 8");
