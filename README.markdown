@@ -874,7 +874,7 @@ Copyright (c) 2012 Nicolas Joyard
 [2]: http://handlebarsjs.com/block_helpers.html
 [3]: https://github.com/njoyard/ist/blob/master/LICENSE
 [4]: https://github.com/njoyard/ist/issues
-[5]: http://twitter.com/meringueman
+[5]: http://twitter.com/njoyard
 [6]: https://github.com/njoyard/ist/raw/master/dist/ist.js
 [7]: https://github.com/njoyard/ist/raw/master/dist/ist-min.js
 [8]: http://pegjs.majda.cz/
