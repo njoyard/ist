@@ -401,8 +401,8 @@ parser = (function(){
     parse: function(input, startRule) {
       var parseFunctions = {
         "templateLines": parse_templateLines,
-        "line": parse_line,
         "__": parse___,
+        "line": parse_line,
         "indent": parse_indent,
         "newline": parse_newline,
         "character": parse_character,
@@ -416,7 +416,6 @@ parser = (function(){
         "implicitElement": parse_implicitElement,
         "explicitElement": parse_explicitElement,
         "textNode": parse_textNode,
-        "contextPath": parse_contextPath,
         "escapedUnicode": parse_escapedUnicode,
         "escapedASCII": parse_escapedASCII,
         "escapedCharacter": parse_escapedCharacter,
@@ -611,6 +610,26 @@ parser = (function(){
         return result0;
       }
       
+      function parse___() {
+        var result0;
+        
+        reportFailures++;
+        if (/^[ \t]/.test(input.charAt(pos.offset))) {
+          result0 = input.charAt(pos.offset);
+          advance(pos, 1);
+        } else {
+          result0 = null;
+          if (reportFailures === 0) {
+            matchFailed("[ \\t]");
+          }
+        }
+        reportFailures--;
+        if (reportFailures === 0 && result0 === null) {
+          matchFailed("whitespace");
+        }
+        return result0;
+      }
+      
       function parse_line() {
         var result0, result1, result2, result3;
         var pos0, pos1;
@@ -628,26 +647,10 @@ parser = (function(){
           }
           if (result1 !== null) {
             result2 = [];
-            if (/^[ \t]/.test(input.charAt(pos.offset))) {
-              result3 = input.charAt(pos.offset);
-              advance(pos, 1);
-            } else {
-              result3 = null;
-              if (reportFailures === 0) {
-                matchFailed("[ \\t]");
-              }
-            }
+            result3 = parse___();
             while (result3 !== null) {
               result2.push(result3);
-              if (/^[ \t]/.test(input.charAt(pos.offset))) {
-                result3 = input.charAt(pos.offset);
-                advance(pos, 1);
-              } else {
-                result3 = null;
-                if (reportFailures === 0) {
-                  matchFailed("[ \\t]");
-                }
-              }
+              result3 = parse___();
             }
             if (result2 !== null) {
               result0 = [result0, result1, result2];
@@ -668,26 +671,6 @@ parser = (function(){
         }
         if (result0 === null) {
           pos = clone(pos0);
-        }
-        return result0;
-      }
-      
-      function parse___() {
-        var result0;
-        
-        reportFailures++;
-        if (/^[ \t]/.test(input.charAt(pos.offset))) {
-          result0 = input.charAt(pos.offset);
-          advance(pos, 1);
-        } else {
-          result0 = null;
-          if (reportFailures === 0) {
-            matchFailed("[ \\t]");
-          }
-        }
-        reportFailures--;
-        if (reportFailures === 0 && result0 === null) {
-          matchFailed("whitespace");
         }
         return result0;
       }
@@ -1196,103 +1179,6 @@ parser = (function(){
         reportFailures--;
         if (reportFailures === 0 && result0 === null) {
           matchFailed("text node");
-        }
-        return result0;
-      }
-      
-      function parse_contextPath() {
-        var result0, result1, result2, result3;
-        var pos0, pos1, pos2, pos3;
-        
-        reportFailures++;
-        pos0 = clone(pos);
-        pos1 = clone(pos);
-        result0 = parse_identifier();
-        if (result0 !== null) {
-          result1 = [];
-          pos2 = clone(pos);
-          pos3 = clone(pos);
-          if (input.charCodeAt(pos.offset) === 46) {
-            result2 = ".";
-            advance(pos, 1);
-          } else {
-            result2 = null;
-            if (reportFailures === 0) {
-              matchFailed("\".\"");
-            }
-          }
-          if (result2 !== null) {
-            result3 = parse_identifier();
-            if (result3 !== null) {
-              result2 = [result2, result3];
-            } else {
-              result2 = null;
-              pos = clone(pos3);
-            }
-          } else {
-            result2 = null;
-            pos = clone(pos3);
-          }
-          if (result2 !== null) {
-            result2 = (function(offset, line, column, i) { return i; })(pos2.offset, pos2.line, pos2.column, result2[1]);
-          }
-          if (result2 === null) {
-            pos = clone(pos2);
-          }
-          while (result2 !== null) {
-            result1.push(result2);
-            pos2 = clone(pos);
-            pos3 = clone(pos);
-            if (input.charCodeAt(pos.offset) === 46) {
-              result2 = ".";
-              advance(pos, 1);
-            } else {
-              result2 = null;
-              if (reportFailures === 0) {
-                matchFailed("\".\"");
-              }
-            }
-            if (result2 !== null) {
-              result3 = parse_identifier();
-              if (result3 !== null) {
-                result2 = [result2, result3];
-              } else {
-                result2 = null;
-                pos = clone(pos3);
-              }
-            } else {
-              result2 = null;
-              pos = clone(pos3);
-            }
-            if (result2 !== null) {
-              result2 = (function(offset, line, column, i) { return i; })(pos2.offset, pos2.line, pos2.column, result2[1]);
-            }
-            if (result2 === null) {
-              pos = clone(pos2);
-            }
-          }
-          if (result1 !== null) {
-            result0 = [result0, result1];
-          } else {
-            result0 = null;
-            pos = clone(pos1);
-          }
-        } else {
-          result0 = null;
-          pos = clone(pos1);
-        }
-        if (result0 !== null) {
-          result0 = (function(offset, line, column, first, tail) {
-        	tail.unshift(first);
-        	return tail.join('.');
-        })(pos0.offset, pos0.line, pos0.column, result0[0], result0[1]);
-        }
-        if (result0 === null) {
-          pos = clone(pos0);
-        }
-        reportFailures--;
-        if (reportFailures === 0 && result0 === null) {
-          matchFailed("context property path");
         }
         return result0;
       }
