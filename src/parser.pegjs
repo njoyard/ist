@@ -172,12 +172,12 @@ templateLines
 = newline* first:line? tail:(newline+ line)* newline*
 { return generateNodeTree(first, tail); }
 
-line
-= depth:indent s:(element / textNode / directive) [ \t]*
-{ return { indent: depth, item: s, num: line }; }
-
 __ "whitespace"
 = [ \t]
+
+line
+= depth:indent s:(element / textNode / directive) __*
+{ return { indent: depth, item: s, num: line }; }
 
 indent "indent"
 = s:__*
@@ -226,13 +226,6 @@ explicitElement
 textNode "text node"
 = text:quotedText
 { return createTextNode(text, line); }
-
-contextPath "context property path"
-= first:identifier tail:("." i:identifier { return i; })*
-{
-	tail.unshift(first);
-	return tail.join('.');
-}
 
 escapedUnicode
 = "u" a:[0-9a-z]i b:[0-9a-z]i c:[0-9a-z]i d:[0-9a-z]i
