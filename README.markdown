@@ -48,10 +48,10 @@ Usage
 
 ### Downloading and building
 
-The latest built release is available on the `release` branch [here][6]
+The latest built release is available on the `master` branch [here][6]
 ([minified version][7]).
 
-The `master` branch features the latest changes but can be unstable; to build
+The `devel` branch features the latest changes but can be unstable; to build
 it, download a source tarball or clone the repository then run `make` in the
 repository root.  You'll need [pegjs][8] to build IST, and optionally uglify-js
 to build the minified version; you can get both using npm.  Both builds are
@@ -875,7 +875,7 @@ Copyright (c) 2012 Nicolas Joyard
 [3]: https://github.com/njoyard/ist/blob/master/LICENSE
 [4]: https://github.com/njoyard/ist/issues
 [5]: http://twitter.com/meringueman
-[6]: https://github.com/njoyard/ist/raw/release/dist/ist.js
-[7]: https://github.com/njoyard/ist/raw/release/dist/ist-min.js
+[6]: https://github.com/njoyard/ist/raw/master/dist/ist.js
+[7]: https://github.com/njoyard/ist/raw/master/dist/ist-min.js
 [8]: http://pegjs.majda.cz/
 
