@@ -1,3 +1,7 @@
+next version
+- Added tags [ to be documented ]
+- Fixed error reporting when evaluating code anywhere but in text nodes
+
 v0.5.2 - 2012-10-20
 - Rewrote build script using make
 - Added support for standalone usage (without an AMD loader)
