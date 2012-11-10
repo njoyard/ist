@@ -131,7 +131,7 @@
 	
 
 	// Element object helper
-	createElement = function(tagName, qualifiers, line) {
+	createElement = function(tagName, qualifiers, tag, line) {
 		var elem = new ElementNode(tagName, line);
 
 		qualifiers.forEach(function(q) {
@@ -145,6 +145,10 @@
 				elem.setProperty(q.prop, q.value);
 			}
 		});
+		
+		if (typeof tag !== 'undefined') {
+			elem.setTag(tag);
+		}
 
 		return elem;
 	};
@@ -193,6 +197,10 @@ identifier "identifier"
 = h:[a-z_]i t:[a-z0-9_-]i*
 { return h + t.join(''); }
 
+nodeTag
+= __+ "!" tag:identifier
+{ return tag; }
+
 elemId
 = "#" id:identifier
 { return { 'id': id }; }
@@ -216,12 +224,12 @@ element "element"
 = implicitElement / explicitElement
 
 implicitElement
-= qualifiers:elemQualifier+
-{ return createElement('div', qualifiers, line); }
+= qualifiers:elemQualifier+ tag:nodeTag?
+{ return createElement('div', qualifiers, tag, line); }
 
 explicitElement
-= tagName:identifier qualifiers:elemQualifier*
-{ return createElement(tagName, qualifiers, line); }
+= tagName:identifier qualifiers:elemQualifier* tag:nodeTag?
+{ return createElement(tagName, qualifiers, tag, line); }
 
 textNode "text node"
 = text:quotedText

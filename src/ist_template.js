@@ -155,9 +155,13 @@
 	
 	
 		/**
-		 * Base node (not renderable, just helps building Context object)
+		 * Base node, not renderable. Helps building context objects, exception
+		 * messages, and finding tagged subtemplates.
 		 */
-		Node = function() {};
+		Node = function() {
+			this.tag = '';
+		};
+		
 		Node.prototype = {
 			sourceLine: '<unknown>',
 			sourceFile: '<unknown>',
@@ -178,6 +182,16 @@
 			
 				return err;
 			},
+			
+			setTag: function(tag) {
+				this.tag = tag;
+			},
+			
+			findTag: function(tag) {
+				if (this.tag === tag) {
+					return this;
+				}
+			},
 		
 			render: function(context, doc) {
 				if (!(context instanceof Context)) {
@@ -197,6 +211,8 @@
 		 * Text node
 		 */
 		TextNode = function(text, line) {
+			Node.call(this);
+		
 			this.text = text;
 			this.sourceFile = currentTemplate;
 			this.sourceLine = line;
@@ -221,12 +237,38 @@
 		 * Container node
 		 */
 		ContainerNode = function() {
+			Node.call(this);
+			
 			this.children = [];
+			this.tagCache = {};
 		};
 	
 		extend(Node, ContainerNode, {
 			appendChild: function(node) {
 				this.children.push(node);
+			},
+			
+			findTag: function(tag) {
+				var found = Node.prototype.findTag.call(this, tag),
+					i, len;
+				
+				if (found) {
+					return found;
+				}
+				
+				if (typeof this.tagCache[tag] !== 'undefined') {
+					return this.tagCache[tag];
+				}
+				
+				found = this.children.reduce(function(found, child) {
+					return found || child.findTag(tag);
+				}, null);
+				
+				if (found) {
+					this.tagCache[tag] = found;
+				}
+				
+				return found;
 			},
 		
 			_render: function(context) {
@@ -283,7 +325,7 @@
 					try {
 						var value = context.interpolate(self.attributes[attr]);
 					} catch (err) {
-						throw this.completeError(err);
+						throw self.completeError(err);
 					}
 				
 					node.setAttribute(attr, value);
@@ -293,7 +335,7 @@
 					try {
 						var value = context.interpolate(self.properties[prop]);
 					} catch (err) {
-						throw this.completeError(err);
+						throw self.completeError(err);
 					}
 				
 					node[prop] = value;

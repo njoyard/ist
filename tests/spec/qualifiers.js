@@ -4,8 +4,9 @@ define([
 	'ist!qualifiers/attributes',
 	'ist!qualifiers/properties',
 	'ist!qualifiers/mixed',
-	'ist!qualifiers/implicit'
-], function(tId, tClass, tAttributes, tProperties, tMixed, tImplicit) {
+	'ist!qualifiers/implicit',
+	'ist!qualifiers/tag'
+], function(tId, tClass, tAttributes, tProperties, tMixed, tImplicit, tTag) {
 	var idNodes = tId.render().childNodes,
 		classNodes = tClass.render().childNodes,
 		attrNodes = tAttributes.render().childNodes,
@@ -86,6 +87,30 @@ define([
 			expect( implicitNodes[4].className ).toBe( "class" );
 			expect( implicitNodes[4].getAttribute( 'attr' ) ).toBe( "value" );
 			expect( implicitNodes[4].prop ).toBe( "value" );
+		});
+		
+		it("should allow accessing subtrees using tags", function() {
+			expect( typeof tTag.findTag ).toBe( 'function' );
+			expect( tTag.findTag('unknown') ).toBe( null );
+			
+			var level1 = tTag.findTag('level_1_tag');
+			var level2 = tTag.findTag('level_2_tag');
+			var level3 = tTag.findTag('level_3_tag');
+			
+			expect( typeof level1.render ).toBe( 'function' );
+			expect( typeof level2.render ).toBe( 'function' );
+			expect( typeof level3.render ).toBe( 'function' );
+			
+			var node1 = level1.render()
+			var node2 = level2.render();
+			var node3 = level3.render();
+			
+			expect( node1.tagName.toLowerCase() ).toBe( 'div' );
+			expect( node1.classList.contains('level1') ).toBe( true );
+			expect( node2.tagName.toLowerCase() ).toBe( 'div' );
+			expect( node2.classList.contains('level2') ).toBe( true );
+			expect( node3.tagName.toLowerCase() ).toBe( 'div' );
+			expect( node3.classList.contains('level3') ).toBe( true );
 		});
 	};
 });
