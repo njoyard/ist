@@ -1,6 +1,6 @@
 /** @license
  * IST: Indented Selector Templating
- * version 0.5.2
+ * version 0.5.3
  *
  * Copyright (c) 2012 Nicolas Joyard
  * Released under the MIT license.
@@ -155,9 +155,13 @@
 	
 	
 		/**
-		 * Base node (not renderable, just helps building Context object)
+		 * Base node, not renderable. Helps building context objects, exception
+		 * messages, and finding tagged subtemplates.
 		 */
-		Node = function() {};
+		Node = function() {
+			this.partialName = '';
+		};
+		
 		Node.prototype = {
 			sourceLine: '<unknown>',
 			sourceFile: '<unknown>',
@@ -178,6 +182,16 @@
 			
 				return err;
 			},
+			
+			setPartialName: function(partialName) {
+				this.partialName = partialName;
+			},
+			
+			findPartial: function(partialName) {
+				if (this.partialName === partialName) {
+					return this;
+				}
+			},
 		
 			render: function(context, doc) {
 				if (!(context instanceof Context)) {
@@ -197,6 +211,8 @@
 		 * Text node
 		 */
 		TextNode = function(text, line) {
+			Node.call(this);
+		
 			this.text = text;
 			this.sourceFile = currentTemplate;
 			this.sourceLine = line;
@@ -221,12 +237,38 @@
 		 * Container node
 		 */
 		ContainerNode = function() {
+			Node.call(this);
+			
 			this.children = [];
+			this.partialCache = {};
 		};
 	
 		extend(Node, ContainerNode, {
 			appendChild: function(node) {
 				this.children.push(node);
+			},
+			
+			findPartial: function(partialName) {
+				var found = Node.prototype.findPartial.call(this, partialName),
+					i, len;
+				
+				if (found) {
+					return found;
+				}
+				
+				if (typeof this.partialCache[partialName] !== 'undefined') {
+					return this.partialCache[partialName];
+				}
+				
+				found = this.children.reduce(function(found, child) {
+					return found || child.findPartial(partialName);
+				}, null);
+				
+				if (found) {
+					this.partialCache[partialName] = found;
+				}
+				
+				return found;
 			},
 		
 			_render: function(context) {
@@ -283,7 +325,7 @@
 					try {
 						var value = context.interpolate(self.attributes[attr]);
 					} catch (err) {
-						throw this.completeError(err);
+						throw self.completeError(err);
 					}
 				
 					node.setAttribute(attr, value);
@@ -293,7 +335,7 @@
 					try {
 						var value = context.interpolate(self.properties[prop]);
 					} catch (err) {
-						throw this.completeError(err);
+						throw self.completeError(err);
 					}
 				
 					node[prop] = value;

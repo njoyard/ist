@@ -7,7 +7,7 @@ Introduction
 IST is a javascript DOM templating engine using a CSS selector-like syntax.
 Templates are text files, which are first parsed and compiled into a template
 object, and then rendered into a DOM document using a context object.  This file
-documents usage of version 0.5.2.
+documents usage of version 0.5.3.
 
 Here is a brief overview of an IST template file:
 
@@ -485,6 +485,54 @@ In the first example above, the helper will look for AMD modules named either
 `text!path/to/template.ist`.  One of these modules must resolve to either a
 template string or a compiled IST template.
 
+### Partials
+
+Partials allow accessing part of a template tree as if it were a full template.
+It may be useful for example when an update to an array (rendered using an @each
+directive) is needed.  Partial names are specified in a template using the
+`!name` syntax next to a regular node:
+
+```css
+div.liveTweets
+	@each tweets
+		/* Tweet partial */
+		div.tweet !tweet
+			span.author
+				"@{{ author }}"
+			span.text
+				"{{ text }}"
+```
+
+Partial names must be specified last on a node line, and must be preceded by at
+least one space or tab character.
+
+Partials can be accessed using the `findPartial` method of a template, which
+takes the partial name as an argument.  It returns the first matching partial,
+which can be manipulated as any other template :
+
+```js
+var myTemplate = ist(...);
+
+function initialRender(tweets) {
+	document.body.appendChild(
+		myTemplate.render({ tweets: tweets });
+	);
+}
+
+function addNewTweet(author, text) {
+	var container = document.querySelector(".liveTweets"),
+		partial = myTemplate.findPartial("tweet");
+		
+	container.appendChild(
+		partial.render({ author: author, text: text })
+	);
+}
+
+```
+
+Additionnaly, partials can be nested, and a sub-partial may be accessed using
+`findPartial` on either the "main" template or any "parent" partial.
+
 Single node creation
 --------------------
 
@@ -848,18 +896,12 @@ IST has been successfully tested with the following browsers:
 - Epiphany 3.4
 - Firefox 13
 
-Planned features
-----------------
-
-The following features may be included in future versions:
-- easier i18n handling
-- template update with changed context content
-
 Feedback
 --------
 
 Feedback is always welcome. Feel free to fork IST and send me pull requests, to
-report bugs using the [issue tracker][4] or to contact me on [twitter][5] !
+report bugs using the [issue tracker][4] or to contact me on twitter as
+[@njoyard][5].
 
 License
 -------
