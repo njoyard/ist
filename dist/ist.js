@@ -1,6 +1,6 @@
 /** @license
  * IST: Indented Selector Templating
- * version 0.5.2
+ * version 0.5.3
  *
  * Copyright (c) 2012 Nicolas Joyard
  * Released under the MIT license.
@@ -155,9 +155,13 @@
 	
 	
 		/**
-		 * Base node (not renderable, just helps building Context object)
+		 * Base node, not renderable. Helps building context objects, exception
+		 * messages, and finding tagged subtemplates.
 		 */
-		Node = function() {};
+		Node = function() {
+			this.partialName = '';
+		};
+		
 		Node.prototype = {
 			sourceLine: '<unknown>',
 			sourceFile: '<unknown>',
@@ -178,6 +182,16 @@
 			
 				return err;
 			},
+			
+			setPartialName: function(partialName) {
+				this.partialName = partialName;
+			},
+			
+			findPartial: function(partialName) {
+				if (this.partialName === partialName) {
+					return this;
+				}
+			},
 		
 			render: function(context, doc) {
 				if (!(context instanceof Context)) {
@@ -197,6 +211,8 @@
 		 * Text node
 		 */
 		TextNode = function(text, line) {
+			Node.call(this);
+		
 			this.text = text;
 			this.sourceFile = currentTemplate;
 			this.sourceLine = line;
@@ -221,12 +237,38 @@
 		 * Container node
 		 */
 		ContainerNode = function() {
+			Node.call(this);
+			
 			this.children = [];
+			this.partialCache = {};
 		};
 	
 		extend(Node, ContainerNode, {
 			appendChild: function(node) {
 				this.children.push(node);
+			},
+			
+			findPartial: function(partialName) {
+				var found = Node.prototype.findPartial.call(this, partialName),
+					i, len;
+				
+				if (found) {
+					return found;
+				}
+				
+				if (typeof this.partialCache[partialName] !== 'undefined') {
+					return this.partialCache[partialName];
+				}
+				
+				found = this.children.reduce(function(found, child) {
+					return found || child.findPartial(partialName);
+				}, null);
+				
+				if (found) {
+					this.partialCache[partialName] = found;
+				}
+				
+				return found;
 			},
 		
 			_render: function(context) {
@@ -283,7 +325,7 @@
 					try {
 						var value = context.interpolate(self.attributes[attr]);
 					} catch (err) {
-						throw this.completeError(err);
+						throw self.completeError(err);
 					}
 				
 					node.setAttribute(attr, value);
@@ -293,7 +335,7 @@
 					try {
 						var value = context.interpolate(self.properties[prop]);
 					} catch (err) {
-						throw this.completeError(err);
+						throw self.completeError(err);
 					}
 				
 					node[prop] = value;
@@ -407,6 +449,7 @@ parser = (function(){
         "newline": parse_newline,
         "character": parse_character,
         "identifier": parse_identifier,
+        "partial": parse_partial,
         "elemId": parse_elemId,
         "elemClass": parse_elemClass,
         "elemAttribute": parse_elemAttribute,
@@ -802,6 +845,57 @@ parser = (function(){
         return result0;
       }
       
+      function parse_partial() {
+        var result0, result1, result2;
+        var pos0, pos1;
+        
+        pos0 = clone(pos);
+        pos1 = clone(pos);
+        result1 = parse___();
+        if (result1 !== null) {
+          result0 = [];
+          while (result1 !== null) {
+            result0.push(result1);
+            result1 = parse___();
+          }
+        } else {
+          result0 = null;
+        }
+        if (result0 !== null) {
+          if (input.charCodeAt(pos.offset) === 33) {
+            result1 = "!";
+            advance(pos, 1);
+          } else {
+            result1 = null;
+            if (reportFailures === 0) {
+              matchFailed("\"!\"");
+            }
+          }
+          if (result1 !== null) {
+            result2 = parse_identifier();
+            if (result2 !== null) {
+              result0 = [result0, result1, result2];
+            } else {
+              result0 = null;
+              pos = clone(pos1);
+            }
+          } else {
+            result0 = null;
+            pos = clone(pos1);
+          }
+        } else {
+          result0 = null;
+          pos = clone(pos1);
+        }
+        if (result0 !== null) {
+          result0 = (function(offset, line, column, name) { return name; })(pos0.offset, pos0.line, pos0.column, result0[2]);
+        }
+        if (result0 === null) {
+          pos = clone(pos0);
+        }
+        return result0;
+      }
+      
       function parse_elemId() {
         var result0, result1;
         var pos0, pos1;
@@ -1108,9 +1202,10 @@ parser = (function(){
       
       function parse_implicitElement() {
         var result0, result1;
-        var pos0;
+        var pos0, pos1;
         
         pos0 = clone(pos);
+        pos1 = clone(pos);
         result1 = parse_elemQualifier();
         if (result1 !== null) {
           result0 = [];
@@ -1122,7 +1217,20 @@ parser = (function(){
           result0 = null;
         }
         if (result0 !== null) {
-          result0 = (function(offset, line, column, qualifiers) { return createElement('div', qualifiers, line); })(pos0.offset, pos0.line, pos0.column, result0);
+          result1 = parse_partial();
+          result1 = result1 !== null ? result1 : "";
+          if (result1 !== null) {
+            result0 = [result0, result1];
+          } else {
+            result0 = null;
+            pos = clone(pos1);
+          }
+        } else {
+          result0 = null;
+          pos = clone(pos1);
+        }
+        if (result0 !== null) {
+          result0 = (function(offset, line, column, qualifiers, partial) { return createElement('div', qualifiers, partial, line); })(pos0.offset, pos0.line, pos0.column, result0[0], result0[1]);
         }
         if (result0 === null) {
           pos = clone(pos0);
@@ -1145,7 +1253,14 @@ parser = (function(){
             result2 = parse_elemQualifier();
           }
           if (result1 !== null) {
-            result0 = [result0, result1];
+            result2 = parse_partial();
+            result2 = result2 !== null ? result2 : "";
+            if (result2 !== null) {
+              result0 = [result0, result1, result2];
+            } else {
+              result0 = null;
+              pos = clone(pos1);
+            }
           } else {
             result0 = null;
             pos = clone(pos1);
@@ -1155,7 +1270,7 @@ parser = (function(){
           pos = clone(pos1);
         }
         if (result0 !== null) {
-          result0 = (function(offset, line, column, tagName, qualifiers) { return createElement(tagName, qualifiers, line); })(pos0.offset, pos0.line, pos0.column, result0[0], result0[1]);
+          result0 = (function(offset, line, column, tagName, qualifiers, partial) { return createElement(tagName, qualifiers, partial, line); })(pos0.offset, pos0.line, pos0.column, result0[0], result0[1], result0[2]);
         }
         if (result0 === null) {
           pos = clone(pos0);
@@ -1803,7 +1918,7 @@ parser = (function(){
       	
       
       	// Element object helper
-      	createElement = function(tagName, qualifiers, line) {
+      	createElement = function(tagName, qualifiers, partial, line) {
       		var elem = new ElementNode(tagName, line);
       
       		qualifiers.forEach(function(q) {
@@ -1817,6 +1932,10 @@ parser = (function(){
       				elem.setProperty(q.prop, q.value);
       			}
       		});
+      		
+      		if (typeof partial !== 'undefined') {
+      			elem.setPartialName(partial);
+      		}
       
       		return elem;
       	};
