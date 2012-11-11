@@ -5,8 +5,8 @@ define([
 	'ist!qualifiers/properties',
 	'ist!qualifiers/mixed',
 	'ist!qualifiers/implicit',
-	'ist!qualifiers/tag'
-], function(tId, tClass, tAttributes, tProperties, tMixed, tImplicit, tTag) {
+	'ist!qualifiers/partials'
+], function(tId, tClass, tAttributes, tProperties, tMixed, tImplicit, tPartial) {
 	var idNodes = tId.render().childNodes,
 		classNodes = tClass.render().childNodes,
 		attrNodes = tAttributes.render().childNodes,
@@ -89,13 +89,13 @@ define([
 			expect( implicitNodes[4].prop ).toBe( "value" );
 		});
 		
-		it("should allow accessing subtrees using tags", function() {
-			expect( typeof tTag.findTag ).toBe( 'function' );
-			expect( tTag.findTag('unknown') ).toBe( null );
+		it("should allow accessing partials", function() {
+			expect( typeof tPartial.findPartial ).toBe( 'function' );
+			expect( tPartial.findPartial('unknown') ).toBe( null );
 			
-			var level1 = tTag.findTag('level_1_tag');
-			var level2 = tTag.findTag('level_2_tag');
-			var level3 = tTag.findTag('level_3_tag');
+			var level1 = tPartial.findPartial('level_1_partial');
+			var level2 = tPartial.findPartial('level_2_partial');
+			var level3 = tPartial.findPartial('level_3_partial');
 			
 			expect( typeof level1.render ).toBe( 'function' );
 			expect( typeof level2.render ).toBe( 'function' );

@@ -159,7 +159,7 @@
 		 * messages, and finding tagged subtemplates.
 		 */
 		Node = function() {
-			this.tag = '';
+			this.partialName = '';
 		};
 		
 		Node.prototype = {
@@ -183,12 +183,12 @@
 				return err;
 			},
 			
-			setTag: function(tag) {
-				this.tag = tag;
+			setPartialName: function(partialName) {
+				this.partialName = partialName;
 			},
 			
-			findTag: function(tag) {
-				if (this.tag === tag) {
+			findPartial: function(partialName) {
+				if (this.partialName === partialName) {
 					return this;
 				}
 			},
@@ -240,7 +240,7 @@
 			Node.call(this);
 			
 			this.children = [];
-			this.tagCache = {};
+			this.partialCache = {};
 		};
 	
 		extend(Node, ContainerNode, {
@@ -248,24 +248,24 @@
 				this.children.push(node);
 			},
 			
-			findTag: function(tag) {
-				var found = Node.prototype.findTag.call(this, tag),
+			findPartial: function(partialName) {
+				var found = Node.prototype.findPartial.call(this, partialName),
 					i, len;
 				
 				if (found) {
 					return found;
 				}
 				
-				if (typeof this.tagCache[tag] !== 'undefined') {
-					return this.tagCache[tag];
+				if (typeof this.partialCache[partialName] !== 'undefined') {
+					return this.partialCache[partialName];
 				}
 				
 				found = this.children.reduce(function(found, child) {
-					return found || child.findTag(tag);
+					return found || child.findPartial(partialName);
 				}, null);
 				
 				if (found) {
-					this.tagCache[tag] = found;
+					this.partialCache[partialName] = found;
 				}
 				
 				return found;

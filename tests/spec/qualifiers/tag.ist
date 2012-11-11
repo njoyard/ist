@@ -1,3 +1,0 @@
-div.level1 !level_1_tag
-	div.level2			   	 	 !level_2_tag
-		.level3 !level_3_tag
