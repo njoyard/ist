@@ -1,5 +1,5 @@
-next version
-- Added tags [ to be documented ]
+v0.5.3 - 2012-11-11
+- Added partials
 - Fixed error reporting when evaluating code anywhere but in text nodes
 
 v0.5.2 - 2012-10-20
