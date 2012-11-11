@@ -1,6 +1,7 @@
 v0.5.3 - 2012-11-11
 - Added partials
-- Fixed error reporting when evaluating code anywhere but in text nodes
+- Fixed error reporting (was buggy when evaluating code anywhere but in text
+  nodes) and added new tests for it
 
 v0.5.2 - 2012-10-20
 - Rewrote build script using make
