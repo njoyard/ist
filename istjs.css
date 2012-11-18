@@ -202,10 +202,13 @@ span.button a {
 	border: 0;
 }
 
-#error {
+.error, #error {
 	background-color: #fdd;
 	padding: 0.25em;
 	border-radius: 0.25em;
+}
+
+#error {
 	display: none;
 }
 
