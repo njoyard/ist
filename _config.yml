@@ -1,0 +1,4 @@
+server: true
+auto: true
+pygments: true
+markdown: rdiscount

@@ -1,0 +1,32 @@
+---
+layout: default
+id: home
+---
+<section class="about">
+	<h1>About</h1>
+	
+	{% highlight css %}{% include example.ist %}{% endhighlight %}
+	
+	<section>ist.js is a javascript DOM templating engine. Unlike most other templating engines, it directly generates DOM nodes that you can insert into your document nodes which is often faster than inserting HTML code. It uses indented CSS selectors to describe node trees, and features partials, directives and custom block helpers.</section>
+	
+	<section>ist.js tries to re-use as many syntax elements from CSS as possible, thus setting your editor to CSS should give nice results in most cases.</section>
+
+	<section class="buttons">
+		<span class="button"><a href="https://raw.github.com/njoyard/ist/master/dist/ist.js">Download ist.js</a></span>
+		<span class="button"><a href="https://raw.github.com/njoyard/ist/master/dist/ist-min.js">Minified version</a></span>
+	</section>
+	
+	<section>You can try the <a href="online.html">online demo</a>, browse the <a href="doc.html">documentation</a> or take a look at the <a href="https://github.com/njoyard/ist">GitHub repository</a>.</section>
+</section>
+
+<section class="news">
+	<h1>Latest news</h1>
+	{% for post in site.posts limit:3 %}
+	<article>
+		<h2>{{ post.title }}</h2>
+		<div class="date">{{ post.date | date_to_long_string }}</div>
+		{{ post.content }}
+	</article>
+	{% endfor %}
+</section>
+
