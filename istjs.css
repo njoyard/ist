@@ -75,15 +75,7 @@ header h2 {
 	background-image: url(images/background.png);
 	
 	padding: 0.8333em;
-	
-	font-family: 'Bitter', serif;
-	font-size: 12pt;
-	font-weight: bold;
-	color: #ccc;
-}
-
-.graybanner a:link, .graybanner a:visited, .graybanner a:active, .graybanner a:hover {
-	text-decoration: none;
+	text-align: center;
 }
 
 .graybanner a:link, .graybanner a:visited, .graybanner a:active {
@@ -99,19 +91,27 @@ nav {
 	border-top-right-radius: .5em;
 
 	margin-top: 0.8333em;
+	
+	font-family: 'Bitter', serif;
+	font-size: 12pt;
+	font-weight: bold;
+	color: #ccc;
 }
 
 nav ul {
 	list-style-type: none;
 	margin: 0;
 	padding: 0;
-	text-align: center;
 }
 
 nav li {
 	display: inline-block;
 	margin: 0 2em;
 	padding: 0;
+}
+
+nav a:link, nav a:visited, nav a:active, nav a:hover {
+	text-decoration: none;
 }
 
 .main {
@@ -125,6 +125,32 @@ footer {
 	border-bottom-right-radius: .5em;
 	
 	margin-bottom: 4em;
+	color: white;
+	font-size: 8pt;
+}
+
+footer a:link, footer a:visited, footer a:active, footer a:hover {
+	text-decoration: underline;
+}
+
+footer .links img {
+	vertical-align: text-bottom;
+	margin-right: 0.4em;
+	
+	width: 1.3em;
+	height: 1.3em;
+}
+
+footer .links ul {
+	list-style-type: none;
+	margin: 0;
+	padding: 0;
+}
+
+footer .links li {
+	display: inline-block;
+	margin: 0 2em;
+	padding: 0;
 }
 
 /* Posts */
