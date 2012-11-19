@@ -5,14 +5,16 @@ define([
 	'ist!qualifiers/properties',
 	'ist!qualifiers/mixed',
 	'ist!qualifiers/implicit',
-	'ist!qualifiers/partials'
-], function(tId, tClass, tAttributes, tProperties, tMixed, tImplicit, tPartial) {
+	'ist!qualifiers/partials',
+	'ist!qualifiers/inlineText'
+], function(tId, tClass, tAttributes, tProperties, tMixed, tImplicit, tPartial, tInlineText) {
 	var idNodes = tId.render().childNodes,
 		classNodes = tClass.render().childNodes,
 		attrNodes = tAttributes.render().childNodes,
 		propNodes = tProperties.render().childNodes,
 		mixedNodes = tMixed.render().childNodes,
-		implicitNodes = tImplicit.render().childNodes;
+		implicitNodes = tImplicit.render().childNodes,
+		inlineTextNodes = tInlineText.render({ variable: "value" }).childNodes;
 		
 	return function() {
 		it("should be able to set an ID on elements", function() {
@@ -111,6 +113,24 @@ define([
 			expect( node2.classList.contains('level2') ).toBe( true );
 			expect( node3.tagName.toLowerCase() ).toBe( 'div' );
 			expect( node3.classList.contains('level3') ).toBe( true );
+		});
+		
+		it("should allow inline text nodes", function() {
+			expect( inlineTextNodes[0].firstChild ).toHaveNodeType( document.TEXT_NODE );
+			expect( inlineTextNodes[0].firstChild ).toHaveTextContent("inline text");
+			
+			expect( inlineTextNodes[0].childNodes[1] ).toHaveNodeType( document.ELEMENT_NODE );
+			expect( inlineTextNodes[0].childNodes[1].tagName.toLowerCase() ).toBe( "div" );
+			expect( inlineTextNodes[0].childNodes[1].classList.contains("otherChild") ).toBe( true );
+			
+			expect( inlineTextNodes[1].firstChild ).toHaveNodeType( document.TEXT_NODE );
+			expect( inlineTextNodes[1].firstChild ).toHaveTextContent("inline text");
+			
+			expect( inlineTextNodes[2].firstChild ).toHaveNodeType( document.TEXT_NODE );
+			expect( inlineTextNodes[2].firstChild ).toHaveTextContent("inline text");
+			
+			expect( inlineTextNodes[3].firstChild ).toHaveNodeType( document.TEXT_NODE );
+			expect( inlineTextNodes[3].firstChild ).toHaveTextContent("inline text value");
 		});
 	};
 });

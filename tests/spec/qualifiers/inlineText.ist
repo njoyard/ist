@@ -1,0 +1,5 @@
+div "inline text"
+	div.otherChild
+div     "inline text"
+div 	'inline text'
+div    "inline text {{ variable }}"

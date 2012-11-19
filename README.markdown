@@ -16,23 +16,19 @@ div#content
     /* Article list */
     @each articles
         div.article
-            h1
-                "{{ title }}"
+            h1 "{{ title }}"
             "{{ text }}"
             
         @unless comments.length
             "No comments yet !"
             
         @each comments
-            div.comment
-                "{{ this }}"
+            div.comment "{{ this }}"
                 
         form.newcomment
-            label[for=name]
-                "Name :"
+            label[for=name] "Name :"
             input.commentInput#name[type=text]
-            textarea[cols=55]#commentArea
-                "Enter your comment here"
+            textarea[cols=55]#commentArea "Enter your comment here"
                 
 @include "common/footer"
 ```
@@ -254,7 +250,8 @@ implicitly mean 'div'.
 
 ### Text nodes
 
-Text nodes are specified with double or simple quotes:
+Text nodes are specified with double or simple quotes. They cannot have any
+child nodes:
 
 ```css
 "top-level 'text node'"
@@ -264,7 +261,14 @@ div.text
 	'including\nnewlines'
 ```
 
-Of course text nodes cannot have any child nodes.
+You can also specify a text node on the same line as its parent element.  In
+this case it must be separated from the element by at least one space
+
+```css
+div.text "child text node"
+	"you can add more child nodes here"
+	div.otherChild
+```
 
 ### String interpolation
 
@@ -331,13 +335,12 @@ div.willRenderCorrectly
 	/* Renders to "a" */
 	"{{ this['typeof'] }}"
 	
-div.willNotAccessContext
-	/* Renders to "true undefined" */
-	"{{ true }} {{ undefined }}"
+/* Renders to "true undefined" */
+div.willNotAccessContext "{{ true }} {{ undefined }}"
 	
-div.willAccessContext
-	/* Renders to "b c" */
-	"{{ this['true'] }} {{ this['undefined'] }}"
+/* Renders to "b c" */
+div.willAccessContext "{{ this['true'] }} {{ this['undefined'] }}"
+	
 ```
 
 ### Control structures

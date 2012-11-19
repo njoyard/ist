@@ -131,7 +131,7 @@
 	
 
 	// Element object helper
-	createElement = function(tagName, qualifiers, partial, line) {
+	createElement = function(tagName, qualifiers, additions, line) {
 		var elem = new ElementNode(tagName, line);
 
 		qualifiers.forEach(function(q) {
@@ -146,8 +146,14 @@
 			}
 		});
 		
-		if (typeof partial !== 'undefined') {
-			elem.setPartialName(partial);
+		if (typeof additions !== 'undefined') {
+			if (additions.partial.length > 0) {
+				elem.setPartialName(additions.partial);
+			}
+			
+			if (additions.textnode instanceof TextNode) {
+				elem.appendChild(additions.textnode);
+			}
 		}
 
 		return elem;
@@ -198,7 +204,7 @@ identifier "identifier"
 { return h + t.join(''); }
 
 partial
-= __+ "!" name:identifier
+= "!" name:identifier
 { return name; }
 
 elemId
@@ -224,12 +230,16 @@ element "element"
 = implicitElement / explicitElement
 
 implicitElement
-= qualifiers:elemQualifier+ partial:partial?
-{ return createElement('div', qualifiers, partial, line); }
+= qualifiers:elemQualifier+ additions:elementAdditions
+{ return createElement('div', qualifiers, additions, line); }
 
 explicitElement
-= tagName:identifier qualifiers:elemQualifier* partial:partial?
-{ return createElement(tagName, qualifiers, partial, line); }
+= tagName:identifier qualifiers:elemQualifier* additions:elementAdditions
+{ return createElement(tagName, qualifiers, additions, line); }
+
+elementAdditions
+= t:(__+ t:textNode { return t; } )? p:(__+ p:partial { return p; } )?
+{ return { textnode: t, partial: p }; }
 
 textNode "text node"
 = text:quotedText
