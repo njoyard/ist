@@ -1,3 +1,7 @@
+---
+layout:default
+id:devel
+---
 
 {% assign opencurly = '{{' %}
 {% assign closecurly = '}}' %}
