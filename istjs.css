@@ -189,6 +189,16 @@ article .date {
 	margin: 0 0.5em;
 }
 
+code {
+	border: 1px solid #5c5c5c;
+	background-color: white;
+}
+
+.highlight code {
+	border: 0;
+	background: transparent;
+}
+
 /* Main page specifics */
 
 .about section {
