@@ -9,7 +9,7 @@ Development
 Source code
 -----------
 
-The source code for ist.js is accessible on [github][master]. The [master branch][master] contains the latest released (and hopefully stable) version, while the [devel branch][devel] features the latest developments but may be unstable.
+The source code for ist.js is accessible on [GitHub][master]. The [master branch][master] contains the latest released (and hopefully stable) version, while the [devel branch][devel] features the latest developments but may be unstable.
 
 You can also directly grab the source code as a [zip archive][zip] or a [tar.gz archive][targz].
 
