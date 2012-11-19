@@ -161,6 +161,7 @@ footer .links li {
 
 /* Posts */
 article {
+	margin-bottom: 3em;
 }
 
 article h2 {
