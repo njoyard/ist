@@ -1,3 +1,7 @@
+next version
+- Added support for inline text nodes (text nodes specified on the same line
+  as an element node: div.class "text child")
+
 v0.5.3 - 2012-11-11
 - Added partials
 - Fixed error reporting (was buggy when evaluating code anywhere but in text
