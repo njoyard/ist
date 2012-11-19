@@ -1,7 +1,4 @@
----
-layout: default
-id: doc
----
+
 
 {% assign opencurly = '{{' %}
 {% assign closecurly = '}}' %}
