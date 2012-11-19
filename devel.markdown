@@ -1,3 +1,7 @@
+---
+layout:default
+id:devel
+---
 
 Development
 ===========
@@ -43,7 +47,7 @@ Don't hesitate to [report bugs][issues] on GitHub, even the little hitches _do_ 
 [targz]: https://github.com/njoyard/ist/archive/master.tar.gz
 [issues]: https://github.com/njoyard/ist/issues
 [twitter]: http://twitter.com/njoyard
-[nodeje]: http://nodejs.org/
+[nodejs]: http://nodejs.org/
 [pegjs]: http://pegjs.majda.cz/
 [uglifyjs]: https://github.com/mishoo/UglifyJS
 [jasmine]: http://pivotal.github.com/jasmine/
