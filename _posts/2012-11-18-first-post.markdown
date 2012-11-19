@@ -1,10 +1,4 @@
 ---
-title: First post
+title: New website
 ---
-This is my first post
-
-* testing
-* unordered
-* lists
-
-See the [online demo](online.html) !
+Welcome to the new website for ist.js !

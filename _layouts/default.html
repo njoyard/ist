@@ -13,7 +13,7 @@
 			<h1>ist.js</h1>
 			<h2>DOM templating made natural</title>
 		</header>
-		<nav>
+		<nav class="graybanner">
 			<ul class="menu">
 				<li {% if page.id == "home" %}class="selected"{% endif %}><a href="index.html">Home</a></li>
 				<li {% if page.id == "news" %}class="selected"{% endif %}><a href="news.html">News</a></li>
@@ -25,7 +25,7 @@
 		<section class="main">
 			{{ content }}
 		</section>
-		<footer>
+		<footer class="graybanner">
 			footer content
 		</footer>
 		<!--<script src="http://www.google-analytics.com/ga.js" type="text/javascript"></script>
