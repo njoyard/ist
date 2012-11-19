@@ -15,7 +15,7 @@ Introduction
 IST is a javascript DOM templating engine using a CSS selector-like syntax.
 Templates are text files, which are first parsed and compiled into a template
 object, and then rendered into a DOM document using a context object.  This file
-documents usage of version 0.5.3.
+documents usage of version 0.5.4.
 
 Here is a brief overview of an IST template file:
 
@@ -24,23 +24,19 @@ div#content
     /* Article list */
     @each articles
         div.article
-            h1
-                "{{ opencurly }} title {{ closecurly }}"
+            h1 "{{ opencurly }} title {{ closecurly }}"
             "{{ opencurly }} text {{ closecurly }}"
             
         @unless comments.length
             "No comments yet !"
             
         @each comments
-            div.comment
-                "{{ opencurly }} this {{ closecurly }}"
+            div.comment "{{ opencurly }} this {{ closecurly }}"
                 
         form.newcomment
-            label[for=name]
-                "Name :"
+            label[for=name] "Name :"
             input.commentInput#name[type=text]
-            textarea[cols=55]#commentArea
-                "Enter your comment here"
+            textarea[cols=55]#commentArea "Enter your comment here"
                 
 @include "common/footer"
 {% endhighlight %}
@@ -249,7 +245,9 @@ implicitly mean 'div'.
 
 ### Text nodes
 
-Text nodes are specified with double or simple quotes:
+
+Text nodes are specified with double or simple quotes. They cannot have any
+child nodes:
 
 {% highlight css %}
 "top-level 'text node'"
@@ -259,7 +257,14 @@ div.text
     'including\nnewlines'
 {% endhighlight %}
 
-Of course text nodes cannot have any child nodes.
+You can also specify a text node on the same line as its parent element.  In
+this case it must be separated from the element by at least one space
+
+{% highlight css %}
+div.text "child text node"
+    "you can add more child nodes here"
+    div.otherChild
+{% endhighlight %}
 
 ### String interpolation
 
@@ -325,14 +330,13 @@ div.willThrowSyntaxError
 div.willRenderCorrectly
     /* Renders to "a" */
     "{{ opencurly }} this['typeof'] {{ closecurly }}"
+
+/* Renders to "true undefined" */
+div.willNotAccessContext "{{ opencurly }} true {{ closecurly }} {{ opencurly }} undefined {{ closecurly }}"
+
+/* Renders to "b c" */
+div.willAccessContext "{{ opencurly }} this['true'] {{ closecurly }} {{ opencurly }} this['undefined'] {{ closecurly }}"
     
-div.willNotAccessContext
-    /* Renders to "true undefined" */
-    "{{ opencurly }} true {{ closecurly }} {{ opencurly }} undefined {{ closecurly }}"
-    
-div.willAccessContext
-    /* Renders to "b c" */
-    "{{ opencurly }} this['true'] {{ closecurly }} {{ opencurly }} this['undefined'] {{ closecurly }}"
 {% endhighlight %}
 
 ### Control structures

@@ -1,0 +1,14 @@
+---
+title: ist.js v0.5.4 released
+---
+
+ist.js v0.5.4 has just been released. It now supports inline text nodes, so that
+the following are equivalent:
+
+{% highlight css %}
+h1
+	"My wonderful title"
+
+h1 "My wonderful title"
+{% endhighlight %}
+

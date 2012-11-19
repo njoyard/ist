@@ -6,8 +6,7 @@ header
 section#main
     @each articles
         article
-            h1
-                "{{ opencurly }} title {{ closecurly }}"
+            h1 "{{ opencurly }} title {{ closecurly }}"
             "{{ opencurly }} text {{ closecurly }}"
 footer
     @include "footer.ist"

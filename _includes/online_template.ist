@@ -1,19 +1,15 @@
 {% assign opencurly = '{{' %}{% assign closecurly = '}}' %}@each articles
     article
-        h3
-            "{{ opencurly }} title {{ closecurly }}"
+        h3 "{{ opencurly }} title {{ closecurly }}"
 
-        h4
-            "{{ opencurly }} subtitle {{ closecurly }}"
+        h4 "{{ opencurly }} subtitle {{ closecurly }}"
 
         @if typeof (paragraphs) !== 'undefined'
             @each paragraphs
-                p
-                    "{{ opencurly }} this {{ closecurly }}"
+                p "{{ opencurly }} this {{ closecurly }}"
         
         @if text
-            p
-                "{{ opencurly }} text {{ closecurly }}"
+            p "{{ opencurly }} text {{ closecurly }}"
 
         span[style=font-style: italic;]
             "Article {{ opencurly }} loop.index + 1 {{ closecurly }} of {{ opencurly }} loop.length {{ closecurly }}"
