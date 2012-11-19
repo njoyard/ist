@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html>
 	<head>
 		<title>ist.js DOM templating engine</title>
@@ -15,15 +15,16 @@
 		</header>
 		<nav class="graybanner">
 			<ul class="menu">
-				<li {% if page.id == "home" %}class="selected"{% endif %}><a href="index.html">Home</a></li>
-				<li {% if page.id == "news" %}class="selected"{% endif %}><a href="news.html">News</a></li>
-				<li {% if page.id == "online" %}class="selected"{% endif %}><a href="online.html">Online demo</a></li>
-				<li {% if page.id == "doc" %}class="selected"{% endif %}><a href="doc.html">Documentation</a></li>
-				<li {% if page.id == "devel" %}class="selected"{% endif %}><a href="devel.html">Development</a></li>
+				<li><a href="index.html">Home</a></li>
+				<li><a href="news.html">News</a></li>
+				<li><a href="online.html">Online demo</a></li>
+				<li><a href="doc.html">Documentation</a></li>
+				<li><a href="devel.html">Development</a></li>
 			</ul>
 		</nav>
 		<section class="main">
-			{{ content }}
+			<h1>404 - Not found</h1>
+			Oops, it seems you tried to reach a page that does not exist...
 		</section>
 		<footer class="graybanner">
 			footer content
