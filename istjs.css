@@ -74,7 +74,6 @@ header h2 {
 	background-color: #343434;
 	background-image: url(images/background.png);
 	
-	padding: 0.8333em;
 	text-align: center;
 }
 
@@ -91,6 +90,7 @@ nav {
 	border-top-right-radius: .5em;
 
 	margin-top: 0.8333em;
+	padding: 0.8333em;
 	
 	font-family: 'Bitter', serif;
 	font-size: 12pt;
@@ -125,8 +125,14 @@ footer {
 	border-bottom-right-radius: .5em;
 	
 	margin-bottom: 4em;
+	padding: 0.5em;
+	
 	color: white;
 	font-size: 8pt;
+}
+
+footer section {
+	margin: 0.5em;
 }
 
 footer a:link, footer a:visited, footer a:active, footer a:hover {
