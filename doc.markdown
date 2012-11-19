@@ -1,6 +1,6 @@
 ---
 layout: default
-id: devel
+id: doc
 ---
 
 {% assign opencurly = '{{' %}
