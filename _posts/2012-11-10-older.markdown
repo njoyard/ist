@@ -1,4 +1,0 @@
----
-title: Older post
----
-This is an older post
