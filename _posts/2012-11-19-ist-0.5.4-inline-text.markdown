@@ -1,4 +1,5 @@
 ---
+layout: post
 title: ist.js v0.5.4 released
 ---
 

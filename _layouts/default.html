@@ -4,8 +4,9 @@
 		<title>ist.js DOM templating engine</title>
 		<link href='http://fonts.googleapis.com/css?family=Bitter:400,700,400italic' rel='stylesheet' type='text/css'>
 		<link href='http://fonts.googleapis.com/css?family=Open+Sans:400italic,700italic,400,700' rel='stylesheet' type='text/css'>
-		<link rel="stylesheet" type="text/css" href="istjs.css">
-		<link rel="stylesheet" type="text/css" href="solarized.css">
+		<link rel="stylesheet" type="text/css" href="{{ site.url }}/istjs.css">
+		<link rel="stylesheet" type="text/css" href="{{ site.url }}/solarized.css">
+		<link rel="icon" href="{{ site.url }}/images/favicon.ico">
 	</head>
 	<body>
 		<a href="https://github.com/njoyard/ist"><img style="position: absolute; top: 0; right: 0; border: 0;" src="https://s3.amazonaws.com/github/ribbons/forkme_right_darkblue_121621.png" alt="Fork me on GitHub"></a>
@@ -15,11 +16,11 @@
 		</header>
 		<nav class="graybanner">
 			<ul class="menu">
-				<li {% if page.id == "home" %}class="selected"{% endif %}><a href="index.html">Home</a></li>
-				<li {% if page.id == "news" %}class="selected"{% endif %}><a href="news.html">News</a></li>
-				<li {% if page.id == "online" %}class="selected"{% endif %}><a href="online.html">Online demo</a></li>
-				<li {% if page.id == "doc" %}class="selected"{% endif %}><a href="doc.html">Documentation</a></li>
-				<li {% if page.id == "devel" %}class="selected"{% endif %}><a href="devel.html">Development</a></li>
+				<li {% if page.id == "home" %}class="selected"{% endif %}><a href="{{ site.url }}/index.html">Home</a></li>
+				<li {% if page.id == "news" %}class="selected"{% endif %}><a href="{{ site.url }}/news.html">News</a></li>
+				<li {% if page.id == "online" %}class="selected"{% endif %}><a href="{{ site.url }}/online.html">Online demo</a></li>
+				<li {% if page.id == "doc" %}class="selected"{% endif %}><a href="{{ site.url }}/doc.html">Documentation</a></li>
+				<li {% if page.id == "devel" %}class="selected"{% endif %}><a href="{{ site.url }}/devel.html">Development</a></li>
 			</ul>
 		</nav>
 		<section class="main">
@@ -34,13 +35,17 @@
 				<ul>
 					<li>
 						<a href="http://twitter.com/njoyard">
-							<img src="images/twitter.png">@njoyard
+							<img src="{{ site.url }}/images/twitter.png">@njoyard
 						</a>
 					</li>
 					<li>
-						<img src="images/github.png">
+						<img src="{{ site.url }}/images/github.png">
 						<a href="https://github.com/njoyard/ist">ist.js on GitHub</a> &ndash;
 						<a href="https://github.com/njoyard/ist/issues">Issue tracker</a>
+					</li>
+					<li>
+						<img src="{{ site.url }}/images/rss.png">
+						<a href="{{ site.url }}/atom.xml">Atom feed</a>
 					</li>
 					<li>
 						Website powered by <a href="http://jekyllrb.com">Jekyll</a> &ndash;

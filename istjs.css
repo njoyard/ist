@@ -49,20 +49,20 @@ body > * {
 	margin: auto;
 }
 
-header {
+body > header {
 	text-align: center;
 	color: white;
 	
 	margin: 4em auto;
 }
 
-header h1 {
+body > header h1 {
 	font-size: 36pt;
 	text-shadow: -1px -1px 0px #111;
 	margin: 0;
 }
 
-header h2 {
+body > header h2 {
 	font-family: 'Open Sans', 'Helvetica Neue', sans-serif;
 	font-size: 9pt;
 	font-weight: normal;

@@ -1,4 +1,5 @@
 ---
+layout: post
 title: New website
 ---
 Welcome to the new website for ist.js.  I'm still polishing things up a bit here, but overall it should be nearly fully functional.  Make sure to try the [online demo](online.html) !
