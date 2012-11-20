@@ -583,7 +583,7 @@ Custom directives
 
 Directives are used to control node generation with the help of context
 properties.  They allow defining custom iterators and handlers to operate on a
-narrowed down rendering context.  If you're used to [handlebars blocks][2],
+narrowed down rendering context.  If you're used to [handlebars blocks][1],
 you'll find out that IST directives work in a very similar way. All built-in
 control structures are implemented this way.
 
@@ -887,36 +887,5 @@ ist.registerHelper('include', function(ctx, tmpl) {
 });
 {% endhighlight %}
 
-Compatibility
--------------
 
-IST has been successfully tested with the following browsers:
-- Chrome 18
-- Epiphany 3.4
-- Firefox 13
-
-Feedback
---------
-
-Feedback is always welcome. Feel free to fork IST and send me pull requests, to
-report bugs using the [issue tracker][4] or to contact me on twitter as
-[@njoyard][5].
-
-License
--------
-
-IST is distributed under the MIT license. See the file [`LICENSE`][3] for more
-information.
-
-Copyright (c) 2012 Nicolas Joyard
-
-
-[1]: http://njoyard.github.com/ist
-[2]: http://handlebarsjs.com/block_helpers.html
-[3]: https://github.com/njoyard/ist/blob/master/LICENSE
-[4]: https://github.com/njoyard/ist/issues
-[5]: http://twitter.com/njoyard
-[6]: https://github.com/njoyard/ist/raw/master/dist/ist.js
-[7]: https://github.com/njoyard/ist/raw/master/dist/ist-min.js
-[8]: http://pegjs.majda.cz/
-
+[1]: http://handlebarsjs.com/block_helpers.html
