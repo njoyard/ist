@@ -1,5 +1,5 @@
 PEGJS=pegjs
-PEGJSFLAGS=--export-var parser --track-line-and-column
+PEGJSFLAGS=--export-var pegjsParser --track-line-and-column
 UGLIFYJS=uglifyjs
 
 all: ist ist-min

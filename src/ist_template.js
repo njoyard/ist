@@ -37,7 +37,192 @@
 				return Object.prototype.toString.call(a) === '[object Array]';
 			};
 		}
-	
+		
+			
+		parser = (function() {
+			var UNCHANGED = 'U', INDENT = 'I', DEDENT = 'D', UNDEF,
+				generateNodeTree, parseIndent, escapedCharacter,
+				createTextNode, createElement, createDirective,
+				pegjsParser;
+
+			
+			// Generate node tree
+			generateNodeTree = function(first, tail) {
+				var stack = [new ContainerNode()],
+					nodeCount = 0,
+					lines, peekNode, pushNode, popNode;
+					
+				if (!first) {
+					return stack[0];
+				}
+					
+				/* Node stack helpers */
+				
+				peekNode = function() {
+					return stack[stack.length - 1];
+				};
+			
+				pushNode = function(node) {
+					nodeCount++;
+					stack.push(node);
+				};
+			
+				popNode = function(lineNumber) {
+					var node;
+					if (stack.length < 2) {
+						throw new Error("Could not pop node from stack");
+					}
+				
+					node = stack.pop();
+					peekNode().appendChild(node);
+					
+					return node;
+				};
+				
+				// Remove newlines
+				lines = tail.map(function(item) { return item.pop(); });
+				lines.unshift(first);
+			
+				lines.forEach(function(line, index) {
+					var indent = line.indent,
+						item = line.item,
+						lineNumber = line.num,
+						err;
+						
+					if (indent[0] instanceof Error) {
+						throw indent[0];
+					}
+					
+					if (nodeCount > 0) {
+						if (indent[0] === UNCHANGED) {
+							// Same indent: previous node won't have any children
+							popNode();
+						} else if (indent[0] === DEDENT) {
+							// Pop nodes in their parent
+							popNode();
+						
+							while (indent.length > 0) {
+								indent.pop();
+								popNode();
+							}
+						} else if (indent[0] === INDENT && peekNode() instanceof TextNode) {
+							err = new Error("Cannot add children to text node");
+							err.line = lineNumber;
+							throw err;
+						}
+					}
+					
+					pushNode(item);
+				});
+				
+				// Collapse remaining stack
+				while (stack.length > 1) {
+					popNode();
+				}
+				
+				return peekNode();
+			};
+			
+
+			// Keep track of indent
+			parseIndent = function(depths, s, line) {
+				var depth = s.length,
+					dents = [],
+					err;
+
+				if (depth.length === 0) {
+					// First line, this is the reference indent
+					depths.push(depth);
+				}
+
+				if (depth == depths[0]) {
+					// Same indent as previous line
+					return [UNCHANGED];
+				}
+
+				if (depth > depths[0]) {
+					// Deeper indent, unshift it
+					depths.unshift(depth);
+					return [INDENT];
+				}
+				
+				while (depth < depths[0]) {
+					// Narrower indent, try to find it in previous indents
+					depths.shift();
+					dents.push(DEDENT);
+				}
+
+				if (depth != depths[0]) {
+					// No matching previous indent
+					err = new Error("Unexpected indent");
+					err.line = line;
+					err.column = 1;
+					return [err];
+				}
+
+				return dents;
+			};
+			
+			
+			// Text node helper
+			createTextNode = function(text, line) {
+				return new TextNode(text, line);
+			};
+			
+
+			// Element object helper
+			createElement = function(tagName, qualifiers, additions, line) {
+				var elem = new ElementNode(tagName, line);
+
+				qualifiers.forEach(function(q) {
+					if (typeof q.id !== 'undefined') {
+						elem.setId(q.id);
+					} else if (typeof q.className !== 'undefined') {
+						elem.setClass(q.className);
+					} else if (typeof q.attr !== 'undefined') {
+						elem.setAttribute(q.attr, q.value);
+					} else if (typeof q.prop !== 'undefined') {
+						elem.setProperty(q.prop, q.value);
+					}
+				});
+				
+				if (typeof additions !== 'undefined') {
+					if (additions.partial.length > 0) {
+						elem.setPartialName(additions.partial);
+					}
+					
+					if (additions.textnode instanceof TextNode) {
+						elem.appendChild(additions.textnode);
+					}
+				}
+
+				return elem;
+			};
+			
+			
+			// Directive object helper
+			createDirective = function(name, expr, line) {
+				return new BlockNode(name, expr, line);
+			};
+			
+			
+			escapedCharacter = function(char) {
+				if (char.length > 1) {
+					// 2 or 4 hex digits coming from \xNN or \uNNNN
+					return String.fromCharCode(parseInt(char, 16));
+				} else {
+					return { 'f': '\f', 'b': '\b', 't': '\t', 'n': '\n', 'r': '\r' }[char] || char;
+				}
+			};
+		
+
+// PEGjs parser start
+// PEGjs parser end
+
+			return pegjsParser;
+		}());
+		
+		
 		jsEscape = function (content) {
 			return content.replace(/(['\\])/g, '\\$1')
 				.replace(/[\f]/g, "\\f")
@@ -80,7 +265,8 @@
 	
 	
 		/**
-		 * Context object
+		 * Context object; holds the rendering context and target document,
+		 * and provides helper methods.
 		 */
 		Context = function(object, doc) {
 			this.value = object;
@@ -90,6 +276,8 @@
 	
 	
 		Context.prototype = {
+			/* Node creation aliases */
+			
 			createDocumentFragment: function() {
 				return this.doc.createDocumentFragment();
 			},
@@ -105,7 +293,12 @@
 			createTextNode: function(text) {
 				return this.doc.createTextNode(this.interpolate(text));
 			},
-		
+			
+			/**
+			 * Adds a variable to the evaluation scope used when interpolating
+			 * "{{ xxx }}" expressions and directive arguments.  Hides any
+			 * previous existing variable with the same name.
+			 */
 			pushEvalVar: function(name, value) {
 				if (typeof this.variables[name] === 'undefined') {
 					this.variables[name] = [];
@@ -114,6 +307,11 @@
 				this.variables[name].push(value);
 			},
 		
+			/**
+			 * Removes a variable from the evaluation scope used when interpolating
+			 * "{{ xxx }}" expressions and directive arguments.  Restores any
+			 * value previously hidden by pushEvalVar.
+			 */
 			popEvalVar: function(name) {
 				var ret = this.variables[name].pop();
 			
@@ -128,19 +326,21 @@
 			 * Evaluate `expr` in a scope where the current context is available
 			 * as `this`, all its own properties that are not reserved words are
 			 * available as locals, and the target document is available as `document`.
+			 * Variables defined with pushEvalVar ar also available as locals.
 			 */
 			evaluate: function(expr) {
 				var self = this,
 					ctxNames = typeof this.value === 'object' ? Object.keys(this.value) : [],
 					varNames = Object.keys(this.variables),
 					ctxValues, varValues, func;
-			
+				
+				// Expression is a more complex expression
 				ctxNames = ctxNames.filter(function(k) { return reservedWords.indexOf(k) === -1; });
 				ctxValues = ctxNames.map(function(k) { return self.value[k]; });
 				varValues = varNames.map(function(k) { return self.variables[k][0]; });
-			
-				func = new Function(ctxNames.concat(varNames).join(','), "return " + expr + ";");
 		
+				func = new Function(ctxNames.concat(varNames).join(','), "return " + expr + ";");
+	
 				return func.apply(this.value, ctxValues.concat(varValues));
 			},
 		
@@ -400,10 +600,7 @@
 				return ret;
 			}
 		});
-	
-	
-// PEGjs parser start
-// PEGjs parser end
+		
 	
 		/**
 		 * Template preprocessor; handle what the parser cannot handle
