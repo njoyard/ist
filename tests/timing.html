@@ -37,9 +37,11 @@
         require(
             ['ist', 'timings'],
             function(ist, timings){
+	        	var runs = 100,
+	        		tests = [];
+		        		
             	window.run = function() {
-		        	var runs = 100,
-		        		tests = [];
+            		tests = [];
 		        
 		        	Object.keys(timings).forEach(function(name) {
 		        		var test, i, time, start, end;
@@ -59,10 +61,13 @@
 		        	});
 		        	
 		        	console.log("All done.");
+		        };
+		        
+		        window.report = function() {
 		        	document.body.appendChild(ist.fromScriptTag("timingTemplate").render({ tests: tests, runs: runs }));
 		        };
 		        
-		        run();
+		        run(); report();
             }
         );
     </script>

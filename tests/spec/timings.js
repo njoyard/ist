@@ -24,6 +24,8 @@ define([
 			}
 		};
 
+	// 70% in Context.evaluate() with 0.5.4
+
 	return {
 		// 60 ops/sec on njoyards 1215n with 0.5.4
 		"basic rendering test": function() {
