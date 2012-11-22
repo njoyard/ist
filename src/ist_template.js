@@ -16,7 +16,7 @@
 	var definition = function(requirejs) {
 	
 		var ist, parser, fs, extend, jsEscape, preprocess, getXhr, fetchText,
-			findScriptTag,
+			findScriptTag, isValidIdentifier,
 			Context, Node, ContainerNode, BlockNode, TextNode, ElementNode,
 			reservedWords = [
 				'break', 'case', 'catch', 'class', 'continue', 'debugger',
@@ -26,6 +26,8 @@
 				'throw', 'true', 'try',	'typeof', 'undefined', 'var', 'void',
 				'while', 'with'
 			],
+			// Incomplete (a lot of unicode points are missing), but still reasonable
+			identifierRE = /[$_a-z][$_a-z0-9]/i,
 			helpers = {},
 			progIds = ['Msxml2.XMLHTTP', 'Microsoft.XMLHTTP', 'Msxml2.XMLHTTP.4.0'],
 			buildMap = [],
@@ -37,6 +39,10 @@
 				return Object.prototype.toString.call(a) === '[object Array]';
 			};
 		}
+		
+		isValidIdentifier = function(candidate) {
+			return identifierRE.test(candidate) && reservedWords.indexOf(candidate) === -1;
+		};
 		
 			
 		parser = (function() {
@@ -272,6 +278,13 @@
 			this.value = object;
 			this.doc = doc || document;
 			this.variables = { document: [ this.doc ] };
+			
+			this.contextNames = 
+				typeof object === 'object' && object !== null ?
+				Object.keys(object).filter(isValidIdentifier) :
+				[];
+				
+			this.contextValues = this.contextNames.map(function(n) { return object[n]; });
 		};
 	
 	
@@ -330,18 +343,17 @@
 			 */
 			evaluate: function(expr) {
 				var self = this,
-					ctxNames = typeof this.value === 'object' ? Object.keys(this.value) : [],
 					varNames = Object.keys(this.variables),
-					ctxValues, varValues, func;
+					varValues, func;
 				
-				// Expression is a more complex expression
-				ctxNames = ctxNames.filter(function(k) { return reservedWords.indexOf(k) === -1; });
-				ctxValues = ctxNames.map(function(k) { return self.value[k]; });
 				varValues = varNames.map(function(k) { return self.variables[k][0]; });
-		
-				func = new Function(ctxNames.concat(varNames).join(','), "return " + expr + ";");
+				
+				/* We concatenate context names and variable names. Duplicate argument
+				   names are allowed and only the last value will be kept, which is
+				   what we want (variables hide context properties) */
+				func = new Function(this.contextNames.concat(varNames).join(','), "return " + expr + ";");
 	
-				return func.apply(this.value, ctxValues.concat(varValues));
+				return func.apply(this.value, this.contextValues.concat(varValues));
 			},
 		
 			interpolate: function(text) {		
