@@ -1,3 +1,7 @@
+next version
+- Fixed a bug where pushEvalVar would not hide a previously pushed variable
+- Added new tests for push/popEvalVar behaviour
+
 v0.5.4 - 2012-11-19
 - Added support for inline text nodes (text nodes specified on the same line
   as an element node: div.class "text child")
