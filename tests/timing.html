@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>IST test runner</title>
+</head>
+<body>
+    <script src="lib/requirejs/require.js"></script>
+    
+    <script type="text/x-ist" id="timingTemplate">
+    	dl
+    		dt "Number of runs"
+    		dd "{{ runs }}"
+    		
+	    	@each tests
+		    	dt[style=font-weight: bold;] "{{ name }}"
+		    	dd
+		    		dl
+			    		dt "Total time"
+			    		dd "{{ time }} ms"
+			    		
+			    		dt "Time per run"
+			    		dd "{{ time / loop.outer.runs }} ms"
+			    		
+			    		dt "Runs per second"
+			    		dd "{{ 1000 * loop.outer.runs / time }}"
+    </script>
+    
+    <script>
+        require({
+            baseUrl: 'spec',
+            paths: {
+            	'ist': '../../dist/ist'
+            },
+            waitSeconds: 3600
+        });
+
+        require(
+            ['ist', 'timings'],
+            function(ist, timings){
+            	window.run = function() {
+		        	var runs = 100,
+		        		tests = [];
+		        
+		        	Object.keys(timings).forEach(function(name) {
+		        		var test, i, time, start, end;
+		        		
+		        		console.log("Running " + name + "...");
+		        		test = timings[name];
+		        		start = Date.now();
+		        		for (i = 0; i < runs; i++) {
+		        			test();
+		        		}
+		        		end = Date.now();
+		        		
+		        		tests.push({
+		        			name: name,
+		        			time: end - start
+		        		});
+		        	});
+		        	
+		        	console.log("All done.");
+		        	document.body.appendChild(ist.fromScriptTag("timingTemplate").render({ tests: tests, runs: runs }));
+		        };
+		        
+		        run();
+            }
+        );
+    </script>
+</body>
+</html>
