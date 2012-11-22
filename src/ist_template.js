@@ -304,16 +304,16 @@
 					this.variables[name] = [];
 				}
 			
-				this.variables[name].push(value);
+				this.variables[name].unshift(value);
 			},
 		
 			/**
 			 * Removes a variable from the evaluation scope used when interpolating
-			 * "{{ xxx }}" expressions and directive arguments.  Restores any
-			 * value previously hidden by pushEvalVar.
+			 * "{{ xxx }}" expressions and directive arguments, and returns its
+			 * value.  Restores any value previously hidden by pushEvalVar.
 			 */
 			popEvalVar: function(name) {
-				var ret = this.variables[name].pop();
+				var ret = this.variables[name].shift();
 			
 				if (this.variables[name].length === 0) {
 					delete this.variables[name];
