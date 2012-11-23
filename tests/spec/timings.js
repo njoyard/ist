@@ -1,7 +1,9 @@
 define([
+	'ist',
+	'text!timings/doubleeach.ist',
 	'ist!timings/basic',
 	'ist!timings/doubleeach'
-], function(basicTemplate, doubleeachTemplate) {
+], function(ist, doubleeachText, basicTemplate, doubleeachTemplate) {
 	var data = {
 			basic: {
 				header1: "header 1",
@@ -25,6 +27,10 @@ define([
 		};
 
 	return {
+		"parsing test": function() {
+			ist(doubleeachText);
+		},
+		
 		"basic rendering test": function() {
 			basicTemplate.render(data.basic);
 		},
