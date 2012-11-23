@@ -15,9 +15,16 @@
 	
 	var definition = function(requirejs) {
 	
-		var ist, parser, fs, extend, jsEscape, preprocess, getXhr, fetchText,
+		var ist, parser, fs,
+		
+			// Helper functions
+			extend, jsEscape, preprocess, getXhr, fetchText,
 			findScriptTag, isValidIdentifier,
+			
+			// Constructors
 			Context, Node, ContainerNode, BlockNode, TextNode, ElementNode,
+			
+			// Helper data
 			reservedWords = [
 				'break', 'case', 'catch', 'class', 'continue', 'debugger',
 				'default', 'delete', 'do', 'else', 'enum', 'export', 'extends',
@@ -28,10 +35,10 @@
 			],
 			// Incomplete (a lot of unicode points are missing), but still reasonable
 			identifierRE = /[$_a-z][$_a-z0-9]/i,
+			codeIndent = "  ",
 			helpers = {},
 			progIds = ['Msxml2.XMLHTTP', 'Microsoft.XMLHTTP', 'Msxml2.XMLHTTP.4.0'],
-			buildMap = [],
-			currentTemplate;
+			buildMap = [];
 		
 	
 		if (!Array.isArray) {
@@ -370,8 +377,8 @@
 		 * Base node, not renderable. Helps building context objects, exception
 		 * messages, and finding tagged subtemplates.
 		 */
-		Node = function() {
-			this.partialName = '';
+		Node = function(partialName) {
+			this.partialName = partialName || '';
 		};
 		
 		Node.prototype = {
@@ -415,6 +422,10 @@
 		
 			_render: function(context) {
 				throw new Error("Cannot render base Node");
+			},
+			
+			_getCode: function() {
+				throw new Error("Cannot get base Node code");
 			}
 		}
 	
@@ -422,11 +433,11 @@
 		/**
 		 * Text node
 		 */
-		TextNode = function(text, line) {
-			Node.call(this);
+		TextNode = function(text, line, partialName) {
+			Node.call(this, partialName);
 		
 			this.text = text;
-			this.sourceFile = currentTemplate;
+			this.sourceFile = ist.currentTemplate;
 			this.sourceLine = line;
 		};
 	
@@ -438,6 +449,13 @@
 					throw this.completeError(err);
 				}
 			},
+			
+			_getCode: function(indent) {
+				return indent + "new ist.TextNode("
+							+ JSON.stringify(this.text) + ", "
+							+ JSON.stringify(this.sourceLine) + ", "
+							+ JSON.stringify(this.partialName) + ")";
+			},
 		
 			appendChild: function(node) {
 				throw new Error("Cannot add children to TextNode");
@@ -448,10 +466,10 @@
 		/**
 		 * Container node
 		 */
-		ContainerNode = function() {
-			Node.call(this);
+		ContainerNode = function(partialName, children) {
+			Node.call(this, partialName);
 			
-			this.children = [];
+			this.children = children || [];
 			this.partialCache = {};
 		};
 	
@@ -491,6 +509,22 @@
 				});
 			
 				return fragment;
+			},
+			
+			_getChildrenCode: function(indent) {
+				if (this.children.length === 0) {
+					return "[]";
+				}
+				
+				return "[\n"
+						+ this.children.map(function(c) { return c._getCode(indent); }).join(",\n")
+						+ "\n" + indent + "]";
+			},
+			
+			_getCode: function(indent) {
+				return indent + "new ist.ContainerNode("
+							+ JSON.stringify(this.partialName) + ", "
+							+ this._getChildrenCode(indent + codeIndent) + ")";
 			}
 		});
 	
@@ -498,16 +532,16 @@
 		/**
 		 * Element node
 		 */
-		ElementNode = function(tagName, line) {
-			ContainerNode.call(this);
+		ElementNode = function(tagName, line, partialName, children, attributes, properties, classes, id) {
+			ContainerNode.call(this, partialName, children);
 		
 			this.tagName = tagName;
-			this.sourceFile = currentTemplate;
+			this.sourceFile = ist.currentTemplate;
 			this.sourceLine = line;
-			this.attributes = {};
-			this.properties = {};
-			this.classes = [];
-			this.id = undefined;
+			this.attributes = attributes || {};
+			this.properties = properties || {};
+			this.classes = classes || [];
+			this.id = id;
 		};
 	
 		extend(ContainerNode, ElementNode, {
@@ -562,6 +596,18 @@
 				}
 			
 				return node;
+			},
+			
+			_getCode: function(indent) {
+				return indent + "new ist.ElementNode("
+							+ JSON.stringify(this.tagName) + ", "
+							+ JSON.stringify(this.sourceLine) + ", "
+							+ JSON.stringify(this.partialName) + ", "
+							+ this._getChildrenCode(indent + codeIndent) + ", "
+							+ JSON.stringify(this.attributes) + ", "
+							+ JSON.stringify(this.properties) + ", "
+							+ JSON.stringify(this.classes) + ", "
+							+ JSON.stringify(this.id) + ")";
 			}
 		});
 	
@@ -569,12 +615,12 @@
 		/**
 		 * Block node
 		 */
-		BlockNode = function(name, expr, line) {
-			ContainerNode.call(this);
+		BlockNode = function(name, expr, line, partialName, children) {
+			ContainerNode.call(this, partialName, children);
 			
 			this.name = name;
 			this.expr = expr;
-			this.sourceFile = currentTemplate;
+			this.sourceFile = ist.currentTemplate;
 			this.sourceLine = line;
 		};
 	
@@ -610,6 +656,15 @@
 				}
 			
 				return ret;
+			},
+			
+			_getCode: function(indent) {
+				return indent + "new ist.BlockNode("
+							+ JSON.stringify(this.name) + ", "
+							+ JSON.stringify(this.expr) + ", "
+							+ JSON.stringify(this.sourceLine) + ", "
+							+ JSON.stringify(this.partialName) + ", "
+							+ this._getChildrenCode(indent + codeIndent) + ")";
 			}
 		});
 		
@@ -648,22 +703,27 @@
 		ist = function(template, name) {
 			var parsed;
 		
-			currentTemplate = name || '<unknown>';
+			ist.currentTemplate = name || '<unknown>';
 		
 			try {
 				parsed = parser.parse(preprocess(template));
 			} catch(e) {
-				e.message += " in '" + currentTemplate + "' on line " + e.line +
+				e.message += " in '" + ist.currentTemplate + "' on line " + e.line +
 					(typeof e.column !== 'undefined' ?  ", character " + e.column : '');
 						
-				currentTemplate = undefined;
+				ist.currentTemplate = undefined;
 				throw e;
 			}
 		
-			currentTemplate = undefined;
+			ist.currentTemplate = undefined;
 		
 			return parsed;
 		};
+		
+		ist.TextNode = TextNode;
+		ist.ContainerNode = ContainerNode;
+		ist.ElementNode = ElementNode;
+		ist.BlockNode = BlockNode;
 	
 	
 		/**
@@ -898,11 +958,18 @@
 			};
 
 			ist.load = function (name, parentRequire, load, config) {
-				var path = parentRequire.toUrl(name + '.ist'),
-					dirname = name.indexOf('/') === -1 ? '.' : name.replace(/\/[^\/]*$/, '');
+				var path, dirname, doParse = true;
+					
+				if (/!bare$/.test(name)) {
+					doParse = false;
+					name = name.replace(/!bare$/, '');
+				}
+					
+				path = parentRequire.toUrl(name + '.ist'),
+				dirname = name.indexOf('/') === -1 ? '.' : name.replace(/\/[^\/]*$/, '');
 		
 				fetchText(path, function (text) {
-					var i, m, deps = ['ist'];
+					var code, i, m, deps = ['ist'];
 			
 					/* Find @include calls and replace them with 'absolute' paths
 					   (ie @include 'inc/include' in 'path/to/template'
@@ -925,20 +992,29 @@
 								return m;
 							}
 						});
-			
-					if (config.isBuild) {
-						text = jsEscape(text);		
-						text = "define('ist!" + name + "'," + JSON.stringify(deps) + ",function(ist){" +
-							   "var template='" + text + "';" +
-							   	"return ist(template,'" + name + "');" +
-							   "});";
-					} else {
-						/* "Pretty-print" template text */
-						text = jsEscape(text).replace(/\\n/g, "\\n' +\n\t               '");
-						text = "define('ist!" + name + "'," + JSON.stringify(deps) + ", function(ist){ \n" +
-							   "\tvar template = '" + text + "';\n" +
-							   "\treturn ist(template, '" + name + "');\n" +
+						
+					if (doParse) {
+						/* Get parsed code */
+						code = ist(text)._getCode("  ");
+						text = "define('ist!" + name + "'," + JSON.stringify(deps) + ", function(ist) {\n" +
+							   "  ist.currentTemplate = '" + name + "';\n" +
+							   "  return " + code + ";\n" +
 							   "});\n";
+					} else {
+						if (config.isBuild) {
+							text = jsEscape(text);		
+							text = "define('ist!" + name + "'," + JSON.stringify(deps) + ",function(ist){" +
+								   "var template='" + text + "';" +
+								   	"return ist(template,'" + name + "');" +
+								   "});";
+						} else {
+							/* "Pretty-print" template text */
+							text = jsEscape(text).replace(/\\n/g, "\\n' +\n\t               '");
+							text = "define('ist!" + name + "'," + JSON.stringify(deps) + ", function(ist){ \n" +
+								   "\tvar template = '" + text + "';\n" +
+								   "\treturn ist(template, '" + name + "');\n" +
+								   "});\n";
+						}
 					}
 						   
 					//Hold on to the transformed text if a build.
