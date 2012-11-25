@@ -829,6 +829,39 @@
 		
 			return fragment;
 		});
+		
+		
+		/**
+		 * Built-in 'eachkey' helper
+		 */
+		ist.registerHelper('eachkey', function(ctx, tmpl) {
+			var fragment = this.createDocumentFragment(),
+				outer = this.value,
+				value = ctx.value,
+				keys;
+		
+			if (value) {
+				keys = Object.keys(value);
+				keys.forEach(function(key, index) {
+					var sctx = ctx.createContext({
+						key: key,
+						value: value[key],
+						loop: {
+							first: index == 0,
+							index: index,
+							last: index == keys.length - 1,
+							length: keys.length,
+							object: value,
+							outer: outer
+						}
+					});
+					
+					fragment.appendChild(tmpl.render(sctx));
+				});
+			}
+		
+			return fragment;
+		});
 	
 	
 		/**
