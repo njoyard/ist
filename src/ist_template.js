@@ -34,7 +34,7 @@
 				'while', 'with'
 			],
 			// Incomplete (a lot of unicode points are missing), but still reasonable
-			identifierRE = /[$_a-z][$_a-z0-9]/i,
+			identifierRE = /^[$_a-z][$_a-z0-9]*$/i,
 			codeIndent = "  ",
 			helpers = {},
 			progIds = ['Msxml2.XMLHTTP', 'Microsoft.XMLHTTP', 'Msxml2.XMLHTTP.4.0'],
