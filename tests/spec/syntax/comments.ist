@@ -7,3 +7,6 @@ lines */
 	div.class3/* Comments between parents
 and children */
 		div.class4
+div.class5
+	/* Comments with whitespace before
+	*/   div.class6

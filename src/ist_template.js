@@ -678,20 +678,21 @@
 			var newlines = /\r\n|\r|\n/,
 				whitespace = /^[ \t]*$/,
 				comment = /\/\*((?:\/(?!<\*)|[^\/])*?)\*\//g,
-				lines = text.split(newlines);
+				lines;
+		
+			// Remove block comments
+			text = text.replace(comment, function(m, p1) {
+				return p1.split(newlines).map(function(l) { return ''; }).join('\n');
+			}); 
 		
 			// Remove everthing from whitespace-only lines
+			lines = text.split(newlines);
 			lines.forEach(function(l, i) {
 				if (l.match(whitespace)) {
 					lines[i] = "";
 				}
 			});
 			text = lines.join('\n');
-		
-			// Remove block comments
-			text = text.replace(comment, function(m, p1) {
-				return p1.split(newlines).map(function(l) { return ''; }).join('\n');
-			}); 
 		
 			return text;
 		};

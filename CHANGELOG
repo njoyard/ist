@@ -10,6 +10,8 @@ next version
 - Templates loaded with the 'ist!' requirejs plugin are now pre-parsed.  This
   can be disabled by using the '!bare' suffix (eg. 'ist!templates/x!bare')
 - Added a built-in '@eachkey' helper to loop over object own properties
+- Fixed a bug with block comments following spaces on the same line, enhanced
+  comment tests
 
 v0.5.4 - 2012-11-19
 - Added support for inline text nodes (text nodes specified on the same line
