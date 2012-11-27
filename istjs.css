@@ -193,11 +193,15 @@ article .date {
 code {
 	border: 1px solid #ccc;
 	background-color: #fffffa;
+	padding: 0 2px;
+	border-radius: 4px;
 }
 
 .highlight code {
 	border: 0;
 	background: transparent;
+	padding: 0;
+	border-radius: 0;
 }
 
 /* Main page specifics */
@@ -296,11 +300,11 @@ span.button a {
 }
 
 .doc-desc {
-	width: 39%;
+	width: 49%;
 }
 
 .doc-code {
-	width: 59%;
+	width: 49%;
 }
 
 .doc-code > p {
