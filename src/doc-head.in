@@ -1,0 +1,13 @@
+---
+layout: default
+id: doc
+---
+
+{% assign opencurly = '{{' %}
+{% assign closecurly = '}}' %}
+
+Documentation
+=============
+
+## Table of contents
+

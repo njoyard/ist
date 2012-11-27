@@ -2,4 +2,6 @@ server: true
 auto: true
 pygments: true
 markdown: rdiscount
+exlude: [src]
 url: http://njoyard.github.com/ist
+

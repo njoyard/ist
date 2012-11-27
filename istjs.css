@@ -285,3 +285,24 @@ span.button a {
 	display: none;
 }
 
+/* Documentation specifics */
+
+.doc-item {
+}
+
+.doc-desc, .doc-code {
+	display: inline-block;
+	vertical-align: top;
+}
+
+.doc-desc {
+	width: 39%;
+}
+
+.doc-code {
+	width: 59%;
+}
+
+.doc-code > p {
+	display: none;
+}
