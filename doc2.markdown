@@ -11,6 +11,8 @@ Documentation
 
 ## Table of contents
 
+<section class="doc-toc">
+
 * <a href="#Getting started">Getting started</a>
 * <a href="#Usage">Usage</a>
     * <a href="#Standalone usage">Standalone usage</a>
@@ -26,11 +28,16 @@ Documentation
         * <a href="#Array iteration">Array iteration</a>
         * <a href="#Object property iteration">Object property iteration</a>
         * <a href="#External template inclusion">External template inclusion</a>
+* <a href="#Partials">Partials</a>
 * <a href="#Defining custom directives">Defining custom directives</a>
 * <a href="#Error reporting">Error reporting</a>
 * <a href="#Version">Version</a>
 
-## <a name="Getting started">Getting started</a>
+</section>
+<section class="doc">
+
+
+## <a class="nohover" name="Getting started">Getting started</a>
 
 <section class="doc-item">
 <section class="doc-desc">
@@ -75,8 +82,8 @@ You can then call `ist()` with the content of this tag, or you can use
 </section>
 <section class="doc-code">
 {% highlight js %}
-    var template = ist($("#example-template").html());
-    var template = ist.fromScriptTag("example-template");
+var template = ist($("#example-template").html());
+var template = ist.fromScriptTag("example-template");
 {% endhighlight %}
 </section>
 </section>
@@ -88,7 +95,7 @@ You can also directly use strings.
 </section>
 <section class="doc-code">
 {% highlight js %}
-    var template = ist('h1 "{{ opencurly }} title {{ closecurly }}"');
+var template = ist('h1 "{{ opencurly }} title {{ closecurly }}"');
 {% endhighlight %}
 </section>
 </section>
@@ -102,14 +109,14 @@ DOM node tree.
 </section>
 <section class="doc-code">
 {% highlight js %}
-    var context = {
-            title: "ist.js released",
-            text: "ist.js has just been released"
-        };
-        
-    var node = template.render(context);
+var context = {
+        title: "ist.js released",
+        text: "ist.js has just been released"
+    };
     
-    document.body.appendChild(node);
+var node = template.render(context);
+
+document.body.appendChild(node);
 {% endhighlight %}
 </section>
 </section>
@@ -141,16 +148,16 @@ The example above would be rendered with a context object similar to this one:
 </section>
 <section class="doc-code">
 {% highlight js %}
-    var context = {
-            isAdmin: true,
-            menuItems: [
-                { url: "home.html", label: "Home" },
-                { url: "news.html", label: "News" },
-                { url: "contact.html", label: "Contact" }
-            ]
-        };
-        
-    document.body.appendChild(menuTemplate.render(context));
+var context = {
+        isAdmin: true,
+        menuItems: [
+            { url: "home.html", label: "Home" },
+            { url: "news.html", label: "News" },
+            { url: "contact.html", label: "Contact" }
+        ]
+    };
+    
+document.body.appendChild(menuTemplate.render(context));
 {% endhighlight %}
 </section>
 </section>
@@ -176,9 +183,9 @@ ul.menu
 </section>
 </section>
 
-## <a name="Usage">Usage</a>
+## <a class="nohover" name="Usage">Usage</a>
 
-### <a name="Standalone usage">Standalone usage</a>
+### <a class="nohover" name="Standalone usage">Standalone usage</a>
 
 <section class="doc-item">
 <section class="doc-desc">
@@ -188,7 +195,7 @@ just `ist`).
 </section>
 <section class="doc-code">
 {% highlight js %}
-    var template = ist('h1 "{{ opencurly }} title {{ closecurly }}"');
+var template = ist('h1 "{{ opencurly }} title {{ closecurly }}"');
 {% endhighlight %}
 </section>
 </section>
@@ -201,14 +208,14 @@ ist.js provides a `noConflict()` method to restore the previous value of
 </section>
 <section class="doc-code">
 {% highlight js %}
-    var istjs = ist.noConflict();
-    
-    // window.ist is now back to its previous value
+var istjs = ist.noConflict();
+
+// window.ist is now back to its previous value
 {% endhighlight %}
 </section>
 </section>
 
-### <a name="AMD usage">AMD usage</a>
+### <a class="nohover" name="AMD usage">AMD usage</a>
 
 <section class="doc-item">
 <section class="doc-desc">
@@ -249,15 +256,15 @@ require(['ist!path/to/template'], function(template) {
 </section>
 </section>
 
-## <a name="Template Syntax">Template Syntax</a>
+## <a class="nohover" name="Template Syntax">Template Syntax</a>
 
-### <a name="Node tree">Node tree</a>
+### <a class="nohover" name="Node tree">Node tree</a>
 
 <section class="doc-item">
 <section class="doc-desc">
 ist.js uses indentation to specify node trees.  All children of a same node must
-have the same indentation.  You can use spaces or tabs, but ist.js will not see
-a tab as the equivalent of any number of spaces.
+have the same indent.  You can use spaces or tabs, but ist.js will not see a tab
+as the equivalent of any number of spaces.
 
 </section>
 <section class="doc-code">
@@ -333,7 +340,7 @@ div.parent
 </section>
 </section>
 
-### <a name="Element selectors">Element selectors</a>
+### <a class="nohover" name="Element selectors">Element selectors</a>
 
 <section class="doc-item">
 <section class="doc-desc">
@@ -424,7 +431,7 @@ selectors.  Of course you will need at least one qualifier.
 </section>
 </section>
 
-### <a name="Text nodes">Text nodes</a>
+### <a class="nohover" name="Text nodes">Text nodes</a>
 
 <section class="doc-item">
 <section class="doc-desc">
@@ -490,7 +497,7 @@ h2
 </section>
 </section>
 
-### <a name="Expressions">Expressions</a>
+### <a class="nohover" name="Expressions">Expressions</a>
 
 <section class="doc-item">
 <section class="doc-desc">
@@ -512,7 +519,7 @@ ul.links
 <section class="doc-desc">
 You can include any valid Javascript expression in an ist.js expression.  All
 rendering context properties are accessible as variables in expressions,
-provided they are a valid identifier.
+provided they are valid identifiers.
 
 </section>
 <section class="doc-code">
@@ -572,7 +579,7 @@ div[id={{ opencurly }} id {{ closecurly }}]
 </section>
 </section>
 
-### <a name="Directives">Directives</a>
+### <a class="nohover" name="Directives">Directives</a>
 
 <section class="doc-item">
 <section class="doc-desc">
@@ -591,7 +598,7 @@ div.parent
 </section>
 </section>
 
-#### <a name="Conditionals">Conditionals</a>
+#### <a class="nohover" name="Conditionals">Conditionals</a>
 
 <section class="doc-item">
 <section class="doc-desc">
@@ -620,7 +627,7 @@ The `@unless` directives has the same goal, just reversed.
 </section>
 </section>
 
-#### <a name="Context switching">Context switching</a>
+#### <a class="nohover" name="Context switching">Context switching</a>
 
 <section class="doc-item">
 <section class="doc-desc">
@@ -656,7 +663,7 @@ The `@with` directive can also be used to hard-code some parts of the template.
 </section>
 </section>
 
-#### <a name="Array iteration">Array iteration</a>
+#### <a class="nohover" name="Array iteration">Array iteration</a>
 
 <section class="doc-item">
 <section class="doc-desc">
@@ -681,15 +688,15 @@ The example above would be rendered with a context similar to this one.
 </section>
 <section class="doc-code">
 {% highlight js %}
-    var context = {
-            menuItems: [
-                { url: "home.html", label: "Home" },
-                { url: "news.html", label: "News" },
-                { url: "contact.html", label: "Contact" }
-            ]
-        };
-        
-    document.body.appendChild(menuTemplate.render(context));
+var context = {
+        menuItems: [
+            { url: "home.html", label: "Home" },
+            { url: "news.html", label: "News" },
+            { url: "contact.html", label: "Contact" }
+        ]
+    };
+    
+document.body.appendChild(menuTemplate.render(context));
 {% endhighlight %}
 </section>
 </section>
@@ -734,7 +741,7 @@ can still access it using `this`.
 </section>
 </section>
 
-#### <a name="Object property iteration">Object property iteration</a>
+#### <a class="nohover" name="Object property iteration">Object property iteration</a>
 
 <section class="doc-item">
 <section class="doc-desc">
@@ -765,18 +772,158 @@ about the iteration.
 
 </section>
 </section>
-#### <a name="External template inclusion">External template inclusion</a>
-
-## <a name="Defining custom directives">Defining custom directives</a>
-
-## <a name="Error reporting">Error reporting</a>
-
-## <a name="Version">Version</a>
+#### <a class="nohover" name="External template inclusion">External template inclusion</a>
 
 <section class="doc-item">
 <section class="doc-desc">
-This documentation was last updated for ist.js version 0.5.4.
+The `@include` directive enables including an other template that will be
+rendered using the current rendering context.  When using `<script>` tags, you
+can pass an ID as a string to the `@include` directive.  Note that the order of
+definition of `<script>` tags does not matter.
+
+</section>
+<section class="doc-code">
+{% highlight html %}
+<script type="text/x-ist" id="menu">
+	ul#menu
+		@each items
+			@include "menu-item"
+</script>
+
+<script type="text/x-ist" id="menu-item">
+	li
+		a[href={{ opencurly }} url {{ closecurly }}] "{{ opencurly }} label {{ closecurly }}"
+</script>
+
+<script type="text/javascript">
+	function renderMenu() {
+		ist.fromScriptTag("menu").render([
+			{ label: "Home", url: "index.html" },
+			{ label: "News", url: "news.html" },
+			{ label: "Contact", url: "contact.html" }
+		});
+	}
+</script>
+{% endhighlight %}
+</section>
+</section>
+
+<section class="doc-item">
+<section class="doc-desc">
+When using an AMD loader, you can also load modules from other files when your
+templates are loaded with the `ist!` plugin syntax.  Simply pass their relative
+path as a string parameter to `@include`.  You can omit the `.ist` extension.
+
+</section>
+<section class="doc-code">
+{% highlight css %}
+/* templates/main.ist */
+@include "common/header"
+
+section#main
+	"Main content, yay!"
+	
+@include "common/footer.ist" /* Extension is optional */
+
+
+/* templates/common/header.ist */
+header
+	h1 "My Website"
+
+
+/* templates/common/footer.ist */
+footer
+	"Copyright (c) 2012 My Company"
+{% endhighlight %}
+</section>
+</section>
+
+<section class="doc-item">
+<section class="doc-desc">
+When loading a template file with the `ist!` AMD plugin, `@include`d templates
+are automatically loaded as dependencies.
+
+</section>
+<section class="doc-code">
+{% highlight js %}
+require(['ist!templates/main'], function(mainTemplate) {
+	/* templates/common/{header,footer} are added as AMD
+	   dependencies to 'ist!templates/main', and thus
+	   are loaded automatically */
+	   
+	mainTemplate.render(/* ... */);
+});
+{% endhighlight %}
+</section>
+</section>
+
+<section class="doc-item">
+<section class="doc-desc">
+When a template is loaded from a string or a `<script>` tag however, any 
+`@include`d template must be either an other `<script>` tag ID, or an already
+loaded AMD module name.
+
+</section>
+<section class="doc-code">
+{% highlight html %}
+<script type="text/x-ist" id="main">
+	@include "included-template"
+</script>
+{% endhighlight %}
+</section>
+</section>
+
+<section class="doc-item">
+<section class="doc-desc">
+The "included-template" module name above may resolve to an ist.js compiled
+template:
+
+</section>
+<section class="doc-code">
+{% highlight js %}
+define("included-template", ["ist!some/template"], function(tmpl) {
+	return tmpl;
+});
+
+require(["ist", "included-template"], function(ist) {
+	ist.fromScriptTag("main").render(/* ... */);
+});
+{% endhighlight %}
+</section>
+</section>
+
+<section class="doc-item">
+<section class="doc-desc">
+It may also resolve to a template string:
+
+</section>
+<section class="doc-code">
+{% highlight js %}
+define("included-template", [], function() {
+	return "div\n  h1 'included content'";
+});
+
+require(["ist", "included-template"], function(ist) {
+	ist.fromScriptTag("main").render(/* ... */);
+});
+{% endhighlight %}
+</section>
+</section>
+
+## <a class="nohover" name="Partials">Partials</a>
+
+## <a class="nohover" name="Defining custom directives">Defining custom directives</a>
+
+## <a class="nohover" name="Error reporting">Error reporting</a>
+
+## <a class="nohover" name="Version">Version</a>
+
+<section class="doc-item">
+<section class="doc-desc">
+This documentation was last updated for ist.js version 0.5.5.
 
 </section>
 </section>
 
+
+</section>

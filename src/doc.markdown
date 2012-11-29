@@ -28,14 +28,14 @@ You can then call `ist()` with the content of this tag, or you can use
 `ist.fromScriptTag()`.
 
 ```js
-    var template = ist($("#example-template").html());
-    var template = ist.fromScriptTag("example-template");
+var template = ist($("#example-template").html());
+var template = ist.fromScriptTag("example-template");
 ```
 
 You can also directly use strings.
 
 ```js
-    var template = ist('h1 "{{ title }}"');
+var template = ist('h1 "{{ title }}"');
 ```
 
 The variable `template` in the examples above is a compiled template.  Passing a
@@ -43,14 +43,14 @@ context object to the `render()` method of a compiled template renders it into a
 DOM node tree.
 
 ```js
-    var context = {
-            title: "ist.js released",
-            text: "ist.js has just been released"
-        };
-        
-    var node = template.render(context);
+var context = {
+        title: "ist.js released",
+        text: "ist.js has just been released"
+    };
     
-    document.body.appendChild(node);
+var node = template.render(context);
+
+document.body.appendChild(node);
 ```
 
 Templates can include directives to change the way they are rendered depending
@@ -70,16 +70,16 @@ ul.menu
 The example above would be rendered with a context object similar to this one:
 
 ```js
-    var context = {
-            isAdmin: true,
-            menuItems: [
-                { url: "home.html", label: "Home" },
-                { url: "news.html", label: "News" },
-                { url: "contact.html", label: "Contact" }
-            ]
-        };
-        
-    document.body.appendChild(menuTemplate.render(context));
+var context = {
+        isAdmin: true,
+        menuItems: [
+            { url: "home.html", label: "Home" },
+            { url: "news.html", label: "News" },
+            { url: "contact.html", label: "Contact" }
+        ]
+    };
+    
+document.body.appendChild(menuTemplate.render(context));
 ```
 
 Templates can also include comments and blank lines for clarity.
@@ -105,16 +105,16 @@ When loaded as a standalone `<script>` tag, ist.js registers as `window.ist` (or
 just `ist`).
 
 ```js
-    var template = ist('h1 "{{ title }}"');
+var template = ist('h1 "{{ title }}"');
 ```
 
 ist.js provides a `noConflict()` method to restore the previous value of
 `window.ist` if necessary.
 
 ```js
-    var istjs = ist.noConflict();
-    
-    // window.ist is now back to its previous value
+var istjs = ist.noConflict();
+
+// window.ist is now back to its previous value
 ```
 
 ### AMD usage
@@ -151,8 +151,8 @@ require(['ist!path/to/template'], function(template) {
 ### Node tree
 
 ist.js uses indentation to specify node trees.  All children of a same node must
-have the same indentation.  You can use spaces or tabs, but ist.js will not see
-a tab as the equivalent of any number of spaces.
+have the same indent.  You can use spaces or tabs, but ist.js will not see a tab
+as the equivalent of any number of spaces.
 
 ```css
 div.parent
@@ -317,7 +317,7 @@ ul.links
 
 You can include any valid Javascript expression in an ist.js expression.  All
 rendering context properties are accessible as variables in expressions,
-provided they are a valid identifier.
+provided they are valid identifiers.
 
 ```css
 article[style=color: {{ read ? "blue" : "red" }}]
@@ -424,15 +424,15 @@ ul.menu
 The example above would be rendered with a context similar to this one.
 
 ```js
-    var context = {
-            menuItems: [
-                { url: "home.html", label: "Home" },
-                { url: "news.html", label: "News" },
-                { url: "contact.html", label: "Contact" }
-            ]
-        };
-        
-    document.body.appendChild(menuTemplate.render(context));
+var context = {
+        menuItems: [
+            { url: "home.html", label: "Home" },
+            { url: "news.html", label: "News" },
+            { url: "contact.html", label: "Contact" }
+        ]
+    };
+    
+document.body.appendChild(menuTemplate.render(context));
 ```
 
 When using an `@each` directive, the special `loop` variable is set to an object
@@ -486,11 +486,113 @@ about the iteration.
 
 #### External template inclusion
 
+The `@include` directive enables including an other template that will be
+rendered using the current rendering context.  When using `<script>` tags, you
+can pass an ID as a string to the `@include` directive.  Note that the order of
+definition of `<script>` tags does not matter.
+
+```html
+<script type="text/x-ist" id="menu">
+	ul#menu
+		@each items
+			@include "menu-item"
+</script>
+
+<script type="text/x-ist" id="menu-item">
+	li
+		a[href={{ url }}] "{{ label }}"
+</script>
+
+<script type="text/javascript">
+	function renderMenu() {
+		ist.fromScriptTag("menu").render([
+			{ label: "Home", url: "index.html" },
+			{ label: "News", url: "news.html" },
+			{ label: "Contact", url: "contact.html" }
+		});
+	}
+</script>
+```
+
+When using an AMD loader, you can also load modules from other files when your
+templates are loaded with the `ist!` plugin syntax.  Simply pass their relative
+path as a string parameter to `@include`.  You can omit the `.ist` extension.
+
+```css
+/* templates/main.ist */
+@include "common/header"
+
+section#main
+	"Main content, yay!"
+	
+@include "common/footer.ist" /* Extension is optional */
+
+
+/* templates/common/header.ist */
+header
+	h1 "My Website"
+
+
+/* templates/common/footer.ist */
+footer
+	"Copyright (c) 2012 My Company"
+```
+
+When loading a template file with the `ist!` AMD plugin, `@include`d templates
+are automatically loaded as dependencies.
+
+```js
+require(['ist!templates/main'], function(mainTemplate) {
+	/* templates/common/{header,footer} are added as AMD
+	   dependencies to 'ist!templates/main', and thus
+	   are loaded automatically */
+	   
+	mainTemplate.render(/* ... */);
+});
+```
+
+When a template is loaded from a string or a `<script>` tag however, any 
+`@include`d template must be either an other `<script>` tag ID, or an already
+loaded AMD module name.
+
+```html
+<script type="text/x-ist" id="main">
+	@include "included-template"
+</script>
+```
+
+The "included-template" module name above may resolve to an ist.js compiled
+template:
+
+```js
+define("included-template", ["ist!some/template"], function(tmpl) {
+	return tmpl;
+});
+
+require(["ist", "included-template"], function(ist) {
+	ist.fromScriptTag("main").render(/* ... */);
+});
+```
+
+It may also resolve to a template string:
+
+```js
+define("included-template", [], function() {
+	return "div\n  h1 'included content'";
+});
+
+require(["ist", "included-template"], function(ist) {
+	ist.fromScriptTag("main").render(/* ... */);
+});
+```
+
+## Partials
+
 ## Defining custom directives
 
 ## Error reporting
 
 ## Version
 
-This documentation was last updated for ist.js version 0.5.4.
+This documentation was last updated for ist.js version 0.5.5.
 

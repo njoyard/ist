@@ -40,6 +40,10 @@ a:hover {
 	color: #b00;
 }
 
+a.nohover:hover {
+	color: black;
+}
+
 textarea, .highlight {
 	font-size: 9pt;
 }
@@ -291,6 +295,21 @@ span.button a {
 
 /* Documentation specifics */
 
+.doc h2 {
+	border-bottom: 1px solid #ccc;
+}
+
+.doc-toc {	
+}
+
+.doc-toc ul {
+	padding-left: 1.5em;
+}
+
+.doc-toc li {
+	list-style-type: none;
+}
+
 .doc-item {
 }
 
@@ -301,10 +320,11 @@ span.button a {
 
 .doc-desc {
 	width: 49%;
+	padding: 1em 1em 1em 0;
 }
 
 .doc-code {
-	width: 49%;
+	width: 50%;
 }
 
 .doc-code > p {
