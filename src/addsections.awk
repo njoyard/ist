@@ -3,7 +3,7 @@ BEGIN {
 }
 
 {
-	if ($0 ~ /^#/) {	
+	if ($0 ~ /^#+ /) {	
 		if (state != "start" && state != "search") {
 			print "</section>";
 			print "</section>";
@@ -12,7 +12,7 @@ BEGIN {
 		state = "search";
 	}
 
-	if ($0 ~ /^[^#`]/) {
+	if ($0 !~ /^#+ / && $0 !~ /^```/ && $0 !~ /^\s*$/) {
 		if (state == "search") {
 			print "<section class=\"doc-item\">";
 			print "<section class=\"doc-desc\">";

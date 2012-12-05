@@ -19,6 +19,7 @@ Documentation
     * <a href="#AMD usage">AMD usage</a>
 * <a href="#Template Syntax">Template Syntax</a>
     * <a href="#Node tree">Node tree</a>
+    * <a href="#Comments">Comments</a>
     * <a href="#Element selectors">Element selectors</a>
     * <a href="#Text nodes">Text nodes</a>
     * <a href="#Expressions">Expressions</a>
@@ -28,9 +29,10 @@ Documentation
         * <a href="#Array iteration">Array iteration</a>
         * <a href="#Object property iteration">Object property iteration</a>
         * <a href="#External template inclusion">External template inclusion</a>
-* <a href="#Partials">Partials</a>
 * <a href="#Defining custom directives">Defining custom directives</a>
-* <a href="#Error reporting">Error reporting</a>
+    * <a href="#Context objects">Context objects</a>
+    * <a href="#Simple examples">Simple examples</a>
+* <a href="#TODO">TODO</a>
 * <a href="#Version">Version</a>
 
 </section>
@@ -41,8 +43,9 @@ Documentation
 
 <section class="doc-item">
 <section class="doc-desc">
-An ist.js template looks like a tree of CSS selectors and text nodes, with
-embedded expressions delimited by double curly braces.
+An ist.js template looks like a tree of [CSS selectors](#Element selectors) and
+[text nodes](#Text nodes), with embedded [expressions](#Expressions) delimited
+by double curly braces.
 
 </section>
 <section class="doc-code">
@@ -123,9 +126,26 @@ document.body.appendChild(node);
 
 <section class="doc-item">
 <section class="doc-desc">
-Templates can include directives to change the way they are rendered depending
-on context content. Directives start with an `@` symbol and take an expression
-as a parameter.
+Additionnaly, you can pass a DOMDocument as the second argument to `render()` to
+render nodes into an other document.  This is mainly useful when using multiple
+windows or frames.
+
+</section>
+<section class="doc-code">
+{% highlight js %}
+var popup = window.open();
+var node = template.render(context, popup.document);
+
+popup.document.body.appendChild(node);
+{% endhighlight %}
+</section>
+</section>
+
+<section class="doc-item">
+<section class="doc-desc">
+Templates can include [directives](#Directives) to change the way they are
+rendered depending on context content. Directives start with an `@` symbol and
+take an expression as a parameter.
 
 </section>
 <section class="doc-code">
@@ -164,7 +184,7 @@ document.body.appendChild(menuTemplate.render(context));
 
 <section class="doc-item">
 <section class="doc-desc">
-Templates can also include comments and blank lines for clarity.
+Templates can also include [comments](#Comments) and blank lines for clarity.
 
 </section>
 <section class="doc-code">
@@ -313,6 +333,8 @@ div.parent
 {% endhighlight %}
 </section>
 </section>
+
+### <a class="nohover" name="Comments">Comments</a>
 
 <section class="doc-item">
 <section class="doc-desc">
@@ -587,6 +609,8 @@ ist.js directives allow controlling the rendering of templates depending on
 context content. The general syntax is as follows, where `parameter` can be any
 ist.js expression.  Note that expressions don't need braces when used with
 directives.
+
+You can also [define your own directives](#Defining custom directives).
 
 </section>
 <section class="doc-code">
@@ -876,7 +900,7 @@ loaded AMD module name.
 <section class="doc-item">
 <section class="doc-desc">
 The "included-template" module name above may resolve to an ist.js compiled
-template:
+template.
 
 </section>
 <section class="doc-code">
@@ -894,7 +918,7 @@ require(["ist", "included-template"], function(ist) {
 
 <section class="doc-item">
 <section class="doc-desc">
-It may also resolve to a template string:
+It may also resolve to a template string.
 
 </section>
 <section class="doc-code">
@@ -910,18 +934,313 @@ require(["ist", "included-template"], function(ist) {
 </section>
 </section>
 
-## <a class="nohover" name="Partials">Partials</a>
-
 ## <a class="nohover" name="Defining custom directives">Defining custom directives</a>
 
-## <a class="nohover" name="Error reporting">Error reporting</a>
+<section class="doc-item">
+<section class="doc-desc">
+ist.js allows defining custom directives.  If you're used to
+[handlebars block helpers][1], you'll find out that ist.js directives work in a
+very similar way.
 
+A directive helper is registered by calling `ist.registerHelper()` and passing
+it a directive name (case-sensitive) and a helper function.
+
+</section>
+<section class="doc-code">
+{% highlight js %}
+/* Helper for '@foo' */
+ist.registerHelper('foo', function(subContext, subTemplate) {
+	/* Do stuff */
+});
+{% endhighlight %}
+</section>
+</section>
+
+<section class="doc-item">
+<section class="doc-desc">
+Directive helpers must return a DOM node or a DOM document fragment, which will
+be inserted in the DOM node tree where the directive is called. Returning
+`undefined` (ie. not returning anything) is also allowed and has the same result
+as returning an empty document fragment.
+
+Note that you should not use `document` or any of its methods directly in
+directive helpers as you don't know the target document the template is being
+rendered into.
+
+</section>
+<section class="doc-code">
+{% highlight js %}
+ist.registerHelper('foo', function(subContext, subTemplate) {
+	return this.createTextNode("foo");
+});
+
+ist.registerHelper('bar', function(subContext, subTemplate) {
+	var fragment = this.createDocumentFragment();
+	
+	fragment.appendChild(this.createTextNode("foo"));
+	fragment.appendChild(this.createTextNode("bar"));
+	
+	return fragment;
+});
+{% endhighlight %}
+</section>
+</section>
+
+<section class="doc-item">
+<section class="doc-desc">
+The first argument a helper receives gives access to the result of the
+expression parameter passed when the directive is called.  This result is
+wrapped in a [Context object](#Context objects).  For now, just note that the
+resulting value is accessible with its `value` property.
+
+</section>
+<section class="doc-code">
+{% highlight js %}
+/* '@echo' directive
+ * Outputs a text node containing its parameter value
+ * (usage example: @echo "foo")
+ */
+ist.registerHelper('echo', function(subContext, subTemplate) {
+	return this.createTextNode(subContext.value);
+});
+{% endhighlight %}
+</section>
+</section>
+
+<section class="doc-item">
+<section class="doc-desc">
+The second argument helpers are called with is the compiled subtemplate, ie.
+all nodes defined as children of the directive.  This example shows how the
+`@with` directive just renders its compiled subtemplate using the subcontext
+value.
+
+</section>
+<section class="doc-code">
+{% highlight js %}
+/* The actual '@with' directive helper is
+ * a little bit different, more on that later.
+ */
+ist.registerHelper('with', function(subContext, subTemplate) {
+	return subTemplate.render(subContext.value);
+});
+{% endhighlight %}
+</section>
+</section>
+
+<section class="doc-item">
+<section class="doc-desc">
+Finally, helpers are called with the current rendering context as `this`.  Like
+the first argument, `this` is actually a Context object.
+
+</section>
+</section>
+### <a class="nohover" name="Context objects">Context objects</a>
+
+<section class="doc-item">
+<section class="doc-desc">
+Directive helpers receive `Context` objects to encapsulate rendering contexts as
+well as the DOMDocument where templates are rendered.  The following members
+give access to the DOMDocument where the template is being rendered:
+
+* `Context.document` is a reference to the document where the template is being
+  rendered;
+* `Context#createDocumentFragment()` is an alias to the same method of the
+  rendering document;
+* `Context#createTextNode(text)` is an alias to the same method of the rendering
+  document;
+* `Context#createElement(tagName[, namespace])` is an alias to either
+  createElement or createElementNS on the rendering document.
+  
+</section>
+<section class="doc-code">
+{% highlight js %}
+ist.registerHelper("divtext", function(subContext, subTemplate) {
+	var fragment = this.createDocumentFragment();
+	var div = this.createElement("div");
+	var text = this.createTextNode(subContext.value);
+	
+	div.appendChild(text);
+	fragment.appendChild(div);
+	return fragment;
+});
+{% endhighlight %}
+</section>
+</section>
+
+<section class="doc-item">
+<section class="doc-desc">
+`Context` objects can be passed directly to any compiled template `render()`
+method.
+
+</section>
+<section class="doc-code">
+{% highlight js %}
+ist.registerHelper('test', function(subContext, subTemplate) {
+	return subTemplate.render(subContext);
+	
+	/* Would be the same as :
+		return subTemplate.render(
+			subContext.value,
+			subContext.document
+		);
+	*/
+});
+{% endhighlight %}
+</section>
+</section>
+
+<section class="doc-item">
+<section class="doc-desc">
+The following members can be used to create new contexts and access their value:
+
+* `Context.value` contains the value of the rendering context.
+* `Context#createContext(newValue)` returns a new `Context` object with the same
+  target document but a new value.
+
+</section>
+<section class="doc-code">
+{% highlight js %}
+ist.registerHelper('test', function(subContext, subTemplate) {
+	var testValue = { foo: "bar" },
+		testCtx = this.createContext(testValue);
+	
+	console.log(testValue === testCtx.value); // true
+});
+{% endhighlight %}
+</section>
+</section>
+
+<section class="doc-item">
+<section class="doc-desc">
+The following members can be used to help evaluate expressions:
+
+* `Context#interpolate(string)` replaces expressions in double curly braces
+  inside `string` by their value in the rendering context.
+* `Context#evaluate(string)` returns the result of evaluating `string` in the
+  rendering context.  This method is called by `Context#interpolate()` for each
+  double curly braces expression.
+  
+</section>
+<section class="doc-code">
+{% highlight js %}
+ist.registerHelper('test', function(subContext, subTemplate) {
+	var testCtx = this.createContext({ foo: "bar" });
+	
+	console.log(testCtx.evaluate("foo.toUpperCase()")); // "BAR"
+	console.log(testCtx.interpolate("foo={{ opencurly }} foo {{ closecurly }}")); // "foo=bar"
+});
+{% endhighlight %}
+</section>
+</section>
+
+<section class="doc-item">
+<section class="doc-desc">
+And finally, the following members can be used to change the way expressions are
+evaluated:
+
+* `Context#pushEvalVar(name, value)` adds a variable named `name` with value
+  `value` to the expression evaluation context.  Variable values are stacked,
+  every new definition hiding any previously defined variable or context
+  property with the same name.  This is what is used to set the `loop` variable
+  in the `@each` directive helper.
+* `Context#popEvalVar(name)` undoes what `pushEvalVar` did, popping the last
+  value set for `name` and restoring any previously defined value.
+  
+</section>
+<section class="doc-code">
+{% highlight js %}
+ist.registerHelper('test', function(subContext, subTemplate) {
+	var testCtx = this.createContext({ foo: "bar" });
+	
+	console.log(testCtx.evaluate("foo.toUpperCase()")); // "BAR"
+	
+	testCtx.pushEvalVar("foo", "baz");
+	console.log(testCtx.evaluate("foo.toUpperCase()")); // "BAZ"
+	
+	testCtx.pushEvalVar("foo", "ding");
+	console.log(testCtx.evaluate("foo.toUpperCase()")); // "DING"
+	
+	testCtx.popEvalVar("foo");
+	console.log(testCtx.evaluate("foo.toUpperCase()")); // "BAZ"
+	
+	testCtx.popEvalVar("foo");
+	console.log(testCtx.evaluate("foo.toUpperCase()")); // "BAR"
+});
+{% endhighlight %}
+</section>
+</section>
+
+### <a class="nohover" name="Simple examples">Simple examples</a>
+
+<section class="doc-item">
+<section class="doc-desc">
+You can define a `@noop` directive that simply renders the inner template
+without any context switching as follows:
+
+</section>
+<section class="doc-code">
+{% highlight js %}
+ist.registerHelper('noop', function(subContext, subTemplate) {
+	// Render inner template with
+});
+{% endhighlight %}
+</section>
+</section>
+
+<section class="doc-item">
+<section class="doc-desc">
+XXX
+
+</section>
+<section class="doc-code">
+{% highlight js %}
+ist.registerHelper('disabled', function() {
+	return this.createDocumentFragment();
+});
+{% endhighlight %}
+</section>
+</section>
+
+<section class="doc-item">
+<section class="doc-desc">
+Say you have a markdown library that sets a `parseMarkdown()` method to turn
+markdown code into HTML code.  You could define a `@markdown` directive to
+
+</section>
+<section class="doc-code">
+{% highlight js %}
+/*
+ * Syntax: @markdown markdownString
+ */
+ist.registerHelper('markdown', function(subContext) {
+	var container = this.createElement('section');
+	
+	section.innerHTML = parseMarkdown(subContext.value);
+	
+	return container;
+});
+{% endhighlight %}
+</section>
+</section>
+
+## <a class="nohover" name="TODO">TODO</a>
+
+<section class="doc-item">
+<section class="doc-desc">
+* simple examples (+ markdown)
+* builtin
+* error handling
+* partials
+
+</section>
+</section>
 ## <a class="nohover" name="Version">Version</a>
 
 <section class="doc-item">
 <section class="doc-desc">
 This documentation was last updated for ist.js version 0.5.5.
 
+[1]: http://handlebarsjs.com/block_helpers.html
 </section>
 </section>
 
