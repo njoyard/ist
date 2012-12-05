@@ -40,3 +40,6 @@ clean:
 	rm -f src/doc-toc.markdown
 	rm -f src/doc-parsed.markdown
 
+git-clean: clean
+	rm -rf _site
+
