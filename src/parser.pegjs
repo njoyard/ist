@@ -42,16 +42,24 @@ elemClass
 = "." cls:identifier
 { return { 'className': cls }; }
 
+squareBracketsValue
+= value:[^\n\]]*
+{ return value.join(''); }
+
 elemAttribute
-= "[" attr:identifier "=" value:[^\n\]]* "]"
-{ return { 'attr': attr, 'value': value.join('') }; }
+= "[" attr:identifier "=" value:squareBracketsValue "]"
+{ return { 'attr': attr, 'value': value }; }
 
 elemProperty
-= "[" "." prop:identifier "=" value:[^\n\]]* "]"
-{ return { 'prop': prop, 'value': value.join('') }; }
+= "[" "." prop:identifier "=" value:squareBracketsValue "]"
+{ return { 'prop': prop, 'value': value }; }
+
+elemEventHandler
+= "[" "!" event:identifier "=" value:squareBracketsValue "]"
+{ return { 'event': event, 'value': value }; }
 
 elemQualifier "element qualifier"
-= elemId / elemClass / elemAttribute / elemProperty
+= elemId / elemClass / elemAttribute / elemProperty / elemEventHandler
 
 element "element"
 = implicitElement / explicitElement

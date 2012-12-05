@@ -196,6 +196,8 @@
 						elem.setAttribute(q.attr, q.value);
 					} else if (typeof q.prop !== 'undefined') {
 						elem.setProperty(q.prop, q.value);
+					} else if (typeof q.event !== 'undefined') {
+						elem.setEventHandler(q.event, q.value);
 					}
 				});
 				
@@ -532,7 +534,7 @@
 		/**
 		 * Element node
 		 */
-		ElementNode = function(tagName, line, partialName, children, attributes, properties, classes, id) {
+		ElementNode = function(tagName, line, partialName, children, attributes, properties, eventHandlers, classes, id) {
 			ContainerNode.call(this, partialName, children);
 		
 			this.tagName = tagName;
@@ -540,11 +542,20 @@
 			this.sourceLine = line;
 			this.attributes = attributes || {};
 			this.properties = properties || {};
+			this.eventHandlers = eventHandlers || {};
 			this.classes = classes || [];
 			this.id = id;
 		};
 	
 		extend(ContainerNode, ElementNode, {
+			setEventHandler: function(event, value) {
+				if (typeof this.eventHandlers[event] === 'undefined') {
+					this.eventHandlers[event] = [value];
+				} else {
+					this.eventHandlers[event].push(value);
+				}
+			},
+			
 			setAttribute: function(attr, value) {
 				this.attributes[attr] = value;
 			},
@@ -565,8 +576,10 @@
 				var self = this,
 					node = context.createElement(this.tagName);
 			
+				// Append rendered children
 				node.appendChild(ContainerNode.prototype._render.call(this, context));
 			
+				// Set attrs, properties, events, classes and ID
 				Object.keys(this.attributes).forEach(function(attr) {
 					try {
 						var value = context.interpolate(self.attributes[attr]);
@@ -585,6 +598,18 @@
 					}
 				
 					node[prop] = value;
+				});
+				
+				Object.keys(this.eventHandlers).forEach(function(event) {
+					self.eventHandlers[event].forEach(function(expr) {
+						try {
+							var handler = context.evaluate(expr);
+						} catch(err) {
+							throw self.completeError(err);
+						}
+					
+						node.addEventListener(event, handler, false);
+					});
 				});
 			
 				this.classes.forEach(function(cls) {
@@ -606,6 +631,7 @@
 							+ this._getChildrenCode(indent + codeIndent) + ", "
 							+ JSON.stringify(this.attributes) + ", "
 							+ JSON.stringify(this.properties) + ", "
+							+ JSON.stringify(this.eventHandlers) + ", "
 							+ JSON.stringify(this.classes) + ", "
 							+ JSON.stringify(this.id) + ")";
 			}

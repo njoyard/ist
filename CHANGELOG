@@ -12,6 +12,7 @@ next version
 - Added a built-in '@eachkey' helper to loop over object own properties
 - Fixed a bug with block comments following spaces on the same line, enhanced
   comment tests
+- Added event handler qualifiers, defined as [!click=function(e) { ... }]
 
 v0.5.4 - 2012-11-19
 - Added support for inline text nodes (text nodes specified on the same line
