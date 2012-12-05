@@ -35,16 +35,16 @@ div#content
 @include "common/footer"
 ```
 
-IST tries to reuse many syntax elements from CSS so that, in most cases, setting
-your editor to highlight CSS syntax will give nice results.
+ist.js tries to reuse many syntax elements from CSS so that, in most cases,
+setting your editor to highlight CSS syntax will give nice results.
 
-IST can be used either as a standalone script, as an AMD module or as a
+ist.js can be used either as a standalone script, as an AMD module or as a
 RequireJS plugin.
 
 Compatibility
 -------------
 
-IST has been successfully tested with the following browsers:
+ist.js has been successfully tested with the following browsers:
 - Chrome 18
 - Epiphany 3.4
 - Firefox 13
@@ -52,15 +52,15 @@ IST has been successfully tested with the following browsers:
 Feedback
 --------
 
-Feedback is always welcome. Feel free to fork IST and send me pull requests, to
-report bugs using the [issue tracker][4] or to contact me on twitter as
+Feedback is always welcome. Feel free to fork ist.js and send me pull requests,
+to report bugs using the [issue tracker][4] or to contact me on twitter as
 [@njoyard][5].
 
 License
 -------
 
-IST is distributed under the MIT license. See the file [`LICENSE`][3] for more
-information.
+ist.js is distributed under the MIT license. See the file [`LICENSE`][3] for
+more information.
 
 Copyright (c) 2012 Nicolas Joyard
 
