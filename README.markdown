@@ -8,8 +8,8 @@ ist.js is a javascript DOM templating engine using a CSS selector-like syntax.
 Templates are text files, which are first parsed and compiled into a template
 object, and then rendered into a DOM document using a context object.
 
-Head to the [ist.js website][1] for more information, including the
-[complete documentation][2].
+Head to the [ist.js website][1] for downloads and more information, including
+the [complete documentation][2].
 
 Here is a brief overview of an ist.js template:
 
