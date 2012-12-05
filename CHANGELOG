@@ -13,6 +13,8 @@ next version
 - Fixed a bug with block comments following spaces on the same line, enhanced
   comment tests
 - Added event handler qualifiers, defined as [!click=function(e) { ... }]
+- Enabled escaped characters inside bracket-based qualifiers (properties,
+  attributes, events), mainly to allow using square brackets inside them.
 
 v0.5.4 - 2012-11-19
 - Added support for inline text nodes (text nodes specified on the same line

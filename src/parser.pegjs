@@ -43,8 +43,8 @@ elemClass
 { return { 'className': cls }; }
 
 squareBracketsValue
-= value:[^\n\]]*
-{ return value.join(''); }
+= chars:(escapedCharacter / [^\\\n\]])*
+{ return chars.join(''); }
 
 elemAttribute
 = "[" attr:identifier "=" value:squareBracketsValue "]"

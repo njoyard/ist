@@ -1,3 +1,4 @@
 div[anAttribute=a value]
 div[class=a_class][id=an_id][style=color: red;]
-div[anAttribute="{./;}\/:!*%<>]
+div[anAttribute="{./;}:!*%<>]
+div[anAttribute=\\\"\a\u00e9\xe9\n\]]

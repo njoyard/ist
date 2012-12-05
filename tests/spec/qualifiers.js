@@ -46,7 +46,13 @@ define([
 		});
 		
 		it("should accept special characters in attribute values", function() {		
-			expect( attrNodes[2].getAttribute('anAttribute') ).toBe( "\"{./;}\\/:!*%<>" );
+			expect( attrNodes[2].getAttribute('anAttribute') ).toBe( "\"{./;}:!*%<>" );
+		});
+		
+		it("should accept escaped characters in attribute values", function() {
+			expect( attrNodes[3].getAttribute('anAttribute') ).toBe( "\\\"aéé\n]" );
+	//	\\\"\a\u03a9\xe9\n\]]
+		
 		});
 
 		it("should be able to set random properties on elements", function() {
@@ -60,7 +66,13 @@ define([
 		});
 		
 		it("should accept special characters in property values", function() {		
-			expect( propNodes[2].aProperty ).toBe( "\"{./;}\\/:!*%<>" );
+			expect( propNodes[2].aProperty ).toBe( "\"{./;}:!*%<>" );
+		});
+		
+		it("should accept escaped characters in property values", function() {
+			expect( propNodes[3].aProperty ).toBe( "\\\"aéé\n]" );
+	//	\\\"\a\u03a9\xe9\n\]]
+		
 		});
 		
 		it("should be able to set event handlers on elements", function() {
