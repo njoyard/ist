@@ -818,10 +818,13 @@ ist.registerHelper('with', function(subContext, subTemplate) {
 });
 ```
 
-Finally, helpers are called with the current rendering context as `this`.  Like
-the first argument, `this` is a Context object.  The first argument to helpers
-can be `undefined` when a directive is used without any argument, thus you might
-prefer always calling Context object utilities on `this`.
+Helpers are called with the current rendering context as `this`.  Like the first
+argument, `this` is a Context object.  The first argument to helpers can be
+`undefined` when a directive is used without any argument, thus you might prefer
+always calling Context object utilities on `this`.
+
+Finally, you can throw exceptions in directive helpers.  Those will be reported
+with added context data (such as the current template and line number).
 
 ### Context objects
 
@@ -987,16 +990,153 @@ ist.fromScriptTag("template")
 
 ### Built-in directives
 
-The `@if` directive is very easy to define.
+Here is how the `@if` directive is defined.
 
+```js
+ist.registerHelper('if', function(ctx, tmpl) {
+	if (ctx.value) {
+		return tmpl.render(this);
+	}
+});
+```
 
+Of course the `@unless` directive is very similar.
 
+```js
+ist.registerHelper('unless', function(ctx, tmpl) {
+	if (!ctx.value) {
+		return tmpl.render(this);
+	}
+});
+```
 
+Examples for a `@with` directive have been shown above, here is the actual code.
 
-## TODO
+```js
+ist.registerHelper('with', function(ctx, tmpl) {
+	return tmpl.render(ctx);
+});
+```
 
-* simple examples (+ markdown)
-* builtin code
+The code for `@each` is still quite simple.  Note the use of `pushEvalVar()` to
+define the `loop` variable.  Calling `popEvalVar()` is not really necessary, as
+`sctx` is destroyed immediately.  Additionnaly, the directive could throw an
+exception when its argument is not an array.
+
+```js
+ist.registerHelper('each', function(ctx, tmpl) {
+	var fragment = this.createDocumentFragment(),
+		outer = this.value,
+		value = ctx.value;
+
+	if (value && Array.isArray(value)) {
+		value.forEach(function(item, index) {
+			var sctx = ctx.createContext(item);
+		
+			sctx.pushEvalVar('loop', {
+				first: index == 0,
+				index: index,
+				last: index == value.length - 1,
+				length: value.length,
+				outer: outer
+			});
+			fragment.appendChild(tmpl.render(sctx));
+			sctx.popEvalVar('loop');
+		});
+	}
+
+	return fragment;
+});
+```
+
+The code for `@eachkey` is also very similar.  `pushEvalVar()` is not used here
+as we create a new context object that has nothing to do with the original
+rendering context.  As with the `@each` directive, it would be possible to add
+more checks and throw exceptions when the directive argument is not what we
+expect.
+
+```js
+ist.registerHelper('eachkey', function(ctx, tmpl) {
+	var fragment = this.createDocumentFragment(),
+		outer = this.value,
+		value = ctx.value,
+		keys;
+
+	if (value) {
+		keys = Object.keys(value);
+		keys.forEach(function(key, index) {
+			var sctx = ctx.createContext({
+				key: key,
+				value: value[key],
+				loop: {
+					first: index == 0,
+					index: index,
+					last: index == keys.length - 1,
+					length: keys.length,
+					object: value,
+					outer: outer
+				}
+			});
+			
+			fragment.appendChild(tmpl.render(sctx));
+		});
+	}
+
+	return fragment;
+});
+```
+
+Finally, here is the code for the `@include` directive.  It looks for `<script>`
+tags and already loaded AMD modules, and renders what it finds.  Note that
+the `ist!` requireJS plugin code also looks for `@include` directives in
+templates in order to set included templates as dependencies.
+
+Also note that `isAMD` is the result of looking for a global `define` function
+and checking whether `define.amd` is true.
+
+```js
+ist.registerHelper('include', function(ctx, tmpl) {
+	var what = ctx.value.replace(/\.ist$/, ''),
+		scripts, found, tryReq;
+	
+	found = findScriptTag(what);
+	
+	if (isAMD)
+	{
+		// Try to find a previously require()-d template or string
+		tryReq = [
+			what,
+			what + '.ist',
+			'ist!' + what,
+			'text!' + what + '.ist'
+		];
+
+		while (!found && tryReq.length) {
+			try {
+				found = requirejs(tryReq.shift());
+			} catch(e) {
+				// Pass
+			}
+		}
+	}
+	
+	if (!found) {
+		throw new Error("Cannot find included template '" + what + "'");
+	}
+
+	if (typeof found === 'string') {
+		// Compile template
+		found = ist(found, what);
+	}
+
+	if (typeof found.render === 'function') {
+		// Render included template
+		return found.render(this, tmpl.document);
+	} else {
+		throw new Error("Invalid included template '" + what + "'");
+	}
+});
+```
 
 ## Version
 

@@ -35,7 +35,7 @@ Documentation
 * <a href="#Custom directives">Custom directives</a>
     * <a href="#Context objects">Context objects</a>
     * <a href="#Simple examples">Simple examples</a>
-* <a href="#TODO">TODO</a>
+    * <a href="#Built-in directives">Built-in directives</a>
 * <a href="#Version">Version</a>
 
 </section>
@@ -208,7 +208,7 @@ ul.menu
 
 <section class="doc-item">
 <section class="doc-desc">
-ist.js also allows easy [simple node creation](#Single node creation) using
+ist.js also allows easy [single node creation](#Single node creation) using
 `ist.createNode()`.
 
 </section>
@@ -1239,8 +1239,13 @@ ist.registerHelper('with', function(subContext, subTemplate) {
 
 <section class="doc-item">
 <section class="doc-desc">
-Finally, helpers are called with the current rendering context as `this`.  Like
-the first argument, `this` is actually a Context object.
+Helpers are called with the current rendering context as `this`.  Like the first
+argument, `this` is a Context object.  The first argument to helpers can be
+`undefined` when a directive is used without any argument, thus you might prefer
+always calling Context object utilities on `this`.
+
+Finally, you can throw exceptions in directive helpers.  Those will be reported
+with added context data (such as the current template and line number).
 
 </section>
 </section>
@@ -1400,7 +1405,9 @@ ist.registerHelper('noop', function(subContext, subTemplate) {
 
 <section class="doc-item">
 <section class="doc-desc">
-XXX
+The following example allows disabling part of a tree with a `@disable`
+directive.  It returns an empty document fragment, but could as well return
+nothing.
 
 </section>
 <section class="doc-code">
@@ -1416,13 +1423,11 @@ ist.registerHelper('disabled', function() {
 <section class="doc-desc">
 Say you have a markdown library that sets a `parseMarkdown()` method to turn
 markdown code into HTML code.  You could define a `@markdown` directive to
+insert rendered markdown in your tree.
 
 </section>
 <section class="doc-code">
 {% highlight js %}
-/*
- * Syntax: @markdown markdownString
- */
 ist.registerHelper('markdown', function(subContext) {
 	var container = this.createElement('section');
 	
@@ -1434,17 +1439,218 @@ ist.registerHelper('markdown', function(subContext) {
 </section>
 </section>
 
-## <a class="nohover" name="TODO">TODO</a>
+<section class="doc-item">
+<section class="doc-desc">
+You could then use it as follows:
+
+</section>
+<section class="doc-code">
+{% highlight html %}
+<script type="text/x-ist" id="template">
+	@each articles
+		article
+			@markdown content
+</script>
+
+<script type="text/javascript">
+ist.fromScriptTag("template")
+   .render({
+   	articles: [
+   		{ content: "# <a class="nohover" name="Title\n## Subtitle" },">Title\n## Subtitle" },</a>
+   		/* ... */
+   	]
+   });
+</script>
+{% endhighlight %}
+</section>
+</section>
+
+### <a class="nohover" name="Built-in directives">Built-in directives</a>
 
 <section class="doc-item">
 <section class="doc-desc">
-* createnode
-* simple examples (+ markdown)
-* builtin code
-* error handling
+Here is how the `@if` directive is defined.
 
 </section>
+<section class="doc-code">
+{% highlight js %}
+ist.registerHelper('if', function(ctx, tmpl) {
+	if (ctx.value) {
+		return tmpl.render(this);
+	}
+});
+{% endhighlight %}
 </section>
+</section>
+
+<section class="doc-item">
+<section class="doc-desc">
+Of course the `@unless` directive is very similar.
+
+</section>
+<section class="doc-code">
+{% highlight js %}
+ist.registerHelper('unless', function(ctx, tmpl) {
+	if (!ctx.value) {
+		return tmpl.render(this);
+	}
+});
+{% endhighlight %}
+</section>
+</section>
+
+<section class="doc-item">
+<section class="doc-desc">
+Examples for a `@with` directive have been shown above, here is the actual code.
+
+</section>
+<section class="doc-code">
+{% highlight js %}
+ist.registerHelper('with', function(ctx, tmpl) {
+	return tmpl.render(ctx);
+});
+{% endhighlight %}
+</section>
+</section>
+
+<section class="doc-item">
+<section class="doc-desc">
+The code for `@each` is still quite simple.  Note the use of `pushEvalVar()` to
+define the `loop` variable.  Calling `popEvalVar()` is not really necessary, as
+`sctx` is destroyed immediately.  Additionnaly, the directive could throw an
+exception when its argument is not an array.
+
+</section>
+<section class="doc-code">
+{% highlight js %}
+ist.registerHelper('each', function(ctx, tmpl) {
+	var fragment = this.createDocumentFragment(),
+		outer = this.value,
+		value = ctx.value;
+
+	if (value && Array.isArray(value)) {
+		value.forEach(function(item, index) {
+			var sctx = ctx.createContext(item);
+		
+			sctx.pushEvalVar('loop', {
+				first: index == 0,
+				index: index,
+				last: index == value.length - 1,
+				length: value.length,
+				outer: outer
+			});
+			fragment.appendChild(tmpl.render(sctx));
+			sctx.popEvalVar('loop');
+		});
+	}
+
+	return fragment;
+});
+{% endhighlight %}
+</section>
+</section>
+
+<section class="doc-item">
+<section class="doc-desc">
+The code for `@eachkey` is also very similar.  `pushEvalVar()` is not used here
+as we create a new context object that has nothing to do with the original
+rendering context.  As with the `@each` directive, it would be possible to add
+more checks and throw exceptions when the directive argument is not what we
+expect.
+
+</section>
+<section class="doc-code">
+{% highlight js %}
+ist.registerHelper('eachkey', function(ctx, tmpl) {
+	var fragment = this.createDocumentFragment(),
+		outer = this.value,
+		value = ctx.value,
+		keys;
+
+	if (value) {
+		keys = Object.keys(value);
+		keys.forEach(function(key, index) {
+			var sctx = ctx.createContext({
+				key: key,
+				value: value[key],
+				loop: {
+					first: index == 0,
+					index: index,
+					last: index == keys.length - 1,
+					length: keys.length,
+					object: value,
+					outer: outer
+				}
+			});
+			
+			fragment.appendChild(tmpl.render(sctx));
+		});
+	}
+
+	return fragment;
+});
+{% endhighlight %}
+</section>
+</section>
+
+<section class="doc-item">
+<section class="doc-desc">
+Finally, here is the code for the `@include` directive.  It looks for `<script>`
+tags and already loaded AMD modules, and renders what it finds.  Note that
+the `ist!` requireJS plugin code also looks for `@include` directives in
+templates in order to set included templates as dependencies.
+
+Also note that `isAMD` is the result of looking for a global `define` function
+and checking whether `define.amd` is true.
+
+</section>
+<section class="doc-code">
+{% highlight js %}
+ist.registerHelper('include', function(ctx, tmpl) {
+	var what = ctx.value.replace(/\.ist$/, ''),
+		scripts, found, tryReq;
+	
+	found = findScriptTag(what);
+	
+	if (isAMD)
+	{
+		// Try to find a previously require()-d template or string
+		tryReq = [
+			what,
+			what + '.ist',
+			'ist!' + what,
+			'text!' + what + '.ist'
+		];
+
+		while (!found && tryReq.length) {
+			try {
+				found = requirejs(tryReq.shift());
+			} catch(e) {
+				// Pass
+			}
+		}
+	}
+	
+	if (!found) {
+		throw new Error("Cannot find included template '" + what + "'");
+	}
+
+	if (typeof found === 'string') {
+		// Compile template
+		found = ist(found, what);
+	}
+
+	if (typeof found.render === 'function') {
+		// Render included template
+		return found.render(this, tmpl.document);
+	} else {
+		throw new Error("Invalid included template '" + what + "'");
+	}
+});
+{% endhighlight %}
+</section>
+</section>
+
 ## <a class="nohover" name="Version">Version</a>
 
 <section class="doc-item">
