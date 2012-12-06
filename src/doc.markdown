@@ -67,7 +67,7 @@ popup.document.body.appendChild(node);
 
 Templates can include [directives](#Directives) to change the way they are
 rendered depending on context content. Directives start with an `@` symbol and
-take an expression as a parameter.
+take an expression as parameter.
 
 ```css
 ul.menu
@@ -107,6 +107,13 @@ ul.menu
     @each menuItems
         li
             a[href={{ url }}] "{{ label }}"
+```
+
+ist.js also allows easy [single node creation](#Single node creation) using
+`ist.createNode()`.
+
+```js
+var myLink = ist.createNode("a.link[href=#]");
 ```
 
 ## Usage
@@ -162,9 +169,9 @@ require(['ist!path/to/template'], function(template) {
 
 ### Node tree
 
-ist.js uses indentation to specify node trees.  All children of a same node must
-have the same indent.  You can use spaces or tabs, but ist.js will not see a tab
-as the equivalent of any number of spaces.
+ist.js uses indentation to specify node trees, not unlike YAML and Python.  All
+children of a same node must have the same indent.  You can use spaces or tabs,
+but ist.js will not see a tab as the equivalent of any number of spaces.
 
 ```css
 div.parent
@@ -367,6 +374,40 @@ attribute qualifiers instead.
 div[class={{ cssClass }}]
 div[.className={{ cssClass }}]
 div[id={{ id }}]
+```
+
+### Event handlers
+
+ist.js can associate event handlers to elements, using a similar syntax to
+attribute/property qualifiers, but prefixed with an exclamation mark.
+
+```css
+ul#menu
+	@each menu
+		li[!click=action]
+			"{{ label }}"
+```
+
+The value after the equal sign must be an ist.js expression, without any curly
+braces, and of course it should return a function.
+
+```js
+myTemplate.render({
+	menu: [
+		{
+			label: "about",
+			action: function() {
+				alert("About this application");
+			}
+		},
+		{
+			label: "quit",
+			action: function() {
+				location.href = "/";
+			}
+		}
+	]
+});
 ```
 
 ### Directives
@@ -602,11 +643,117 @@ require(["ist", "included-template"], function(ist) {
 });
 ```
 
-## Defining custom directives
+### Partials
 
-ist.js allows defining custom directives.  If you're used to
-[handlebars block helpers][1], you'll find out that ist.js directives work in a
-very similar way.
+Partials enable you to access part of a template as if it were an other
+template.  This is often useful for arrays rendered using and `@each` directive
+that you need to update.
+
+Partials are declared with the `!name` notation next to an element.
+
+```css
+div.liveTweets
+    @each tweets
+        /* Tweet partial */
+        div.tweet !tweet
+            span.author
+                "@{{ author }}"
+            span.text
+                "{{ text }}"
+```
+
+Partial names must be specified last on an element line, and must be preceded by
+at least one space or tab character.  If an inline text node is present, the
+partial name must be placed after it.
+
+They can be accessed using the `findPartial()` method of a compiled template,
+which takes the partial name as argument.  It returns the first matching
+partial, which can be manipulated as any other compiled template.
+
+```js
+var myTemplate = ist(...);
+
+function initialRender(tweets) {
+    document.body.appendChild(
+        myTemplate.render({ tweets: tweets });
+    );
+}
+
+function addNewTweet(author, text) {
+    var container = document.querySelector(".liveTweets"),
+        partial = myTemplate.findPartial("tweet");
+        
+    container.appendChild(
+        partial.render({ author: author, text: text })
+    );
+}
+```
+
+## Single node creation
+
+ist.js provides a shortcut "single node" creation interface that support the
+same syntax as full template files.  Just call `ist.createNode()` and pass it
+an element selector.
+
+```js
+var myDiv = ist.createNode(
+		"div.class#id[attribute=Value]"
+	);
+```
+    
+It also supports rendering with context.
+
+```js
+var myDiv = ist.createNode(
+		"div[class={{ cls }}]",
+		{ cls: 'myclass' }
+	);
+```
+    
+Actually `ist.createNode()` is able to create several nodes at once using a
+CSS-like angle-bracket syntax.
+
+```js
+var myParentDiv = ist.createNode(
+		'div.parent > div.child > "{{ text }}"',
+		{ text: "Text node content" }
+	);
+```
+
+And you can even use directives.
+
+Please note however that `createNode` has a quite naive angle-bracket parser,
+and as such does not support angle brackets anywhere else than between nodes.
+Therefore you should only use it for trivial node tree creation.
+
+```js
+var myParentDiv = ist.createNode(
+		'div.parent > @each children > "{{ name }}"',
+		{
+			children: [
+				{ name: 'alice' },
+				{ name: 'bob' }
+			]
+		}
+	);
+```
+
+Finally, you can create nodes in an alternate document by passing it as third
+argument.
+
+```js
+var popupDiv = ist.createNode(
+		'div.inPopup', 
+		{},
+		popup.document
+	);
+```
+
+## Custom directives
+
+ist.js allows defining custom directives, and built-in directives are actually
+defined the same way.  If you're used to [handlebars block helpers][1], you'll
+find that ist.js directives work in a very similar way.
 
 A directive helper is registered by calling `ist.registerHelper()` and passing
 it a directive name (case-sensitive) and a helper function.
@@ -672,7 +819,9 @@ ist.registerHelper('with', function(subContext, subTemplate) {
 ```
 
 Finally, helpers are called with the current rendering context as `this`.  Like
-the first argument, `this` is actually a Context object.
+the first argument, `this` is a Context object.  The first argument to helpers
+can be `undefined` when a directive is used without any argument, thus you might
+prefer always calling Context object utilities on `this`.
 
 ### Context objects
 
@@ -705,7 +854,7 @@ ist.registerHelper("divtext", function(subContext, subTemplate) {
 method.
 
 ```js
-ist.registerHelper('test', function(subContext, subTemplate) {
+ist.registerHelper('with', function(subContext, subTemplate) {
 	return subTemplate.render(subContext);
 	
 	/* Would be the same as :
@@ -787,11 +936,14 @@ without any context switching as follows:
 
 ```js
 ist.registerHelper('noop', function(subContext, subTemplate) {
-	// Render inner template with
+	// Render inner template with the current context
+	return subTemplate.render(this);
 });
 ```
 
-XXX
+The following example allows disabling part of a tree with a `@disable`
+directive.  It returns an empty document fragment, but could as well return
+nothing.
 
 ```js
 ist.registerHelper('disabled', function() {
@@ -801,11 +953,9 @@ ist.registerHelper('disabled', function() {
 
 Say you have a markdown library that sets a `parseMarkdown()` method to turn
 markdown code into HTML code.  You could define a `@markdown` directive to
+insert rendered markdown in your tree.
 
 ```js
-/*
- * Syntax: @markdown markdownString
- */
 ist.registerHelper('markdown', function(subContext) {
 	var container = this.createElement('section');
 	
@@ -815,12 +965,38 @@ ist.registerHelper('markdown', function(subContext) {
 });
 ```
 
+You could then use it as follows:
+
+```html
+<script type="text/x-ist" id="template">
+	@each articles
+		article
+			@markdown content
+</script>
+
+<script type="text/javascript">
+ist.fromScriptTag("template")
+   .render({
+   	articles: [
+   		{ content: "# Title\n## Subtitle" },
+   		/* ... */
+   	]
+   });
+</script>
+```
+
+### Built-in directives
+
+The `@if` directive is very easy to define.
+
+
+
+
+
 ## TODO
 
 * simple examples (+ markdown)
-* builtin
-* error handling
-* partials
+* builtin code
 
 ## Version
 

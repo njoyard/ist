@@ -23,13 +23,16 @@ Documentation
     * <a href="#Element selectors">Element selectors</a>
     * <a href="#Text nodes">Text nodes</a>
     * <a href="#Expressions">Expressions</a>
+    * <a href="#Event handlers">Event handlers</a>
     * <a href="#Directives">Directives</a>
         * <a href="#Conditionals">Conditionals</a>
         * <a href="#Context switching">Context switching</a>
         * <a href="#Array iteration">Array iteration</a>
         * <a href="#Object property iteration">Object property iteration</a>
         * <a href="#External template inclusion">External template inclusion</a>
-* <a href="#Defining custom directives">Defining custom directives</a>
+    * <a href="#Partials">Partials</a>
+* <a href="#Single node creation">Single node creation</a>
+* <a href="#Custom directives">Custom directives</a>
     * <a href="#Context objects">Context objects</a>
     * <a href="#Simple examples">Simple examples</a>
 * <a href="#TODO">TODO</a>
@@ -145,7 +148,7 @@ popup.document.body.appendChild(node);
 <section class="doc-desc">
 Templates can include [directives](#Directives) to change the way they are
 rendered depending on context content. Directives start with an `@` symbol and
-take an expression as a parameter.
+take an expression as parameter.
 
 </section>
 <section class="doc-code">
@@ -199,6 +202,19 @@ ul.menu
     @each menuItems
         li
             a[href={{ opencurly }} url {{ closecurly }}] "{{ opencurly }} label {{ closecurly }}"
+{% endhighlight %}
+</section>
+</section>
+
+<section class="doc-item">
+<section class="doc-desc">
+ist.js also allows easy [simple node creation](#Single node creation) using
+`ist.createNode()`.
+
+</section>
+<section class="doc-code">
+{% highlight js %}
+var myLink = ist.createNode("a.link[href=#]");
 {% endhighlight %}
 </section>
 </section>
@@ -282,9 +298,9 @@ require(['ist!path/to/template'], function(template) {
 
 <section class="doc-item">
 <section class="doc-desc">
-ist.js uses indentation to specify node trees.  All children of a same node must
-have the same indent.  You can use spaces or tabs, but ist.js will not see a tab
-as the equivalent of any number of spaces.
+ist.js uses indentation to specify node trees, not unlike YAML and Python.  All
+children of a same node must have the same indent.  You can use spaces or tabs,
+but ist.js will not see a tab as the equivalent of any number of spaces.
 
 </section>
 <section class="doc-code">
@@ -597,6 +613,52 @@ attribute qualifiers instead.
 div[class={{ opencurly }} cssClass {{ closecurly }}]
 div[.className={{ opencurly }} cssClass {{ closecurly }}]
 div[id={{ opencurly }} id {{ closecurly }}]
+{% endhighlight %}
+</section>
+</section>
+
+### <a class="nohover" name="Event handlers">Event handlers</a>
+
+<section class="doc-item">
+<section class="doc-desc">
+ist.js can associate event handlers to elements, using a similar syntax to
+attribute/property qualifiers, but prefixed with an exclamation mark.
+
+</section>
+<section class="doc-code">
+{% highlight css %}
+ul#menu
+	@each menu
+		li[!click=action]
+			"{{ opencurly }} label {{ closecurly }}"
+{% endhighlight %}
+</section>
+</section>
+
+<section class="doc-item">
+<section class="doc-desc">
+The value after the equal sign must be an ist.js expression, without any curly
+braces, and of course it should return a function.
+
+</section>
+<section class="doc-code">
+{% highlight js %}
+myTemplate.render({
+	menu: [
+		{
+			label: "about",
+			action: function() {
+				alert("About this application");
+			}
+		},
+		{
+			label: "quit",
+			action: function() {
+				location.href = "/";
+			}
+		}
+	]
+});
 {% endhighlight %}
 </section>
 </section>
@@ -934,13 +996,161 @@ require(["ist", "included-template"], function(ist) {
 </section>
 </section>
 
-## <a class="nohover" name="Defining custom directives">Defining custom directives</a>
+### <a class="nohover" name="Partials">Partials</a>
 
 <section class="doc-item">
 <section class="doc-desc">
-ist.js allows defining custom directives.  If you're used to
-[handlebars block helpers][1], you'll find out that ist.js directives work in a
-very similar way.
+Partials enable you to access part of a template as if it were an other
+template.  This is often useful for arrays rendered using and `@each` directive
+that you need to update.
+
+Partials are declared with the `!name` notation next to an element.
+
+</section>
+<section class="doc-code">
+{% highlight css %}
+div.liveTweets
+    @each tweets
+        /* Tweet partial */
+        div.tweet !tweet
+            span.author
+                "@{{ opencurly }} author {{ closecurly }}"
+            span.text
+                "{{ opencurly }} text {{ closecurly }}"
+{% endhighlight %}
+</section>
+</section>
+
+<section class="doc-item">
+<section class="doc-desc">
+Partial names must be specified last on an element line, and must be preceded by
+at least one space or tab character.  If an inline text node is present, the
+partial name must be placed after it.
+
+They can be accessed using the `findPartial()` method of a compiled template,
+which takes the partial name as argument.  It returns the first matching
+partial, which can be manipulated as any other compiled template.
+
+</section>
+<section class="doc-code">
+{% highlight js %}
+var myTemplate = ist(...);
+
+function initialRender(tweets) {
+    document.body.appendChild(
+        myTemplate.render({ tweets: tweets });
+    );
+}
+
+function addNewTweet(author, text) {
+    var container = document.querySelector(".liveTweets"),
+        partial = myTemplate.findPartial("tweet");
+        
+    container.appendChild(
+        partial.render({ author: author, text: text })
+    );
+}
+{% endhighlight %}
+</section>
+</section>
+
+## <a class="nohover" name="Single node creation">Single node creation</a>
+
+<section class="doc-item">
+<section class="doc-desc">
+ist.js provides a shortcut "single node" creation interface that support the
+same syntax as full template files.  Just call `ist.createNode()` and pass it
+an element selector.
+
+</section>
+<section class="doc-code">
+{% highlight js %}
+var myDiv = ist.createNode(
+		"div.class#id[attribute=Value]"
+	);
+{% endhighlight %}
+</section>
+</section>
+<section class="doc-item">
+<section class="doc-desc">
+    
+It also supports rendering with context.
+
+</section>
+<section class="doc-code">
+{% highlight js %}
+var myDiv = ist.createNode(
+		"div[class={{ opencurly }} cls {{ closecurly }}]",
+		{ cls: 'myclass' }
+	);
+{% endhighlight %}
+</section>
+</section>
+<section class="doc-item">
+<section class="doc-desc">
+    
+Actually `ist.createNode()` is able to create several nodes at once using a
+CSS-like angle-bracket syntax.
+
+</section>
+<section class="doc-code">
+{% highlight js %}
+var myParentDiv = ist.createNode(
+		'div.parent > div.child > "{{ opencurly }} text {{ closecurly }}"',
+		{ text: "Text node content" }
+	);
+{% endhighlight %}
+</section>
+</section>
+
+<section class="doc-item">
+<section class="doc-desc">
+And you can even use directives.
+
+Please note however that `createNode` has a quite naive angle-bracket parser,
+and as such does not support angle brackets anywhere else than between nodes.
+Therefore you should only use it for trivial node tree creation.
+
+</section>
+<section class="doc-code">
+{% highlight js %}
+var myParentDiv = ist.createNode(
+		'div.parent > @each children > "{{ opencurly }} name {{ closecurly }}"',
+		{
+			children: [
+				{ name: 'alice' },
+				{ name: 'bob' }
+			]
+		}
+	);
+{% endhighlight %}
+</section>
+</section>
+
+<section class="doc-item">
+<section class="doc-desc">
+Finally, you can create nodes in an alternate document by passing it as third
+argument.
+
+</section>
+<section class="doc-code">
+{% highlight js %}
+var popupDiv = ist.createNode(
+		'div.inPopup', 
+		{},
+		popup.document
+	);
+{% endhighlight %}
+</section>
+</section>
+
+## <a class="nohover" name="Custom directives">Custom directives</a>
+
+<section class="doc-item">
+<section class="doc-desc">
+ist.js allows defining custom directives, and built-in directives are actually
+defined the same way.  If you're used to [handlebars block helpers][1], you'll
+find that ist.js directives work in a very similar way.
 
 A directive helper is registered by calling `ist.registerHelper()` and passing
 it a directive name (case-sensitive) and a helper function.
@@ -1075,7 +1285,7 @@ method.
 </section>
 <section class="doc-code">
 {% highlight js %}
-ist.registerHelper('test', function(subContext, subTemplate) {
+ist.registerHelper('with', function(subContext, subTemplate) {
 	return subTemplate.render(subContext);
 	
 	/* Would be the same as :
@@ -1181,7 +1391,8 @@ without any context switching as follows:
 <section class="doc-code">
 {% highlight js %}
 ist.registerHelper('noop', function(subContext, subTemplate) {
-	// Render inner template with
+	// Render inner template with the current context
+	return subTemplate.render(this);
 });
 {% endhighlight %}
 </section>
@@ -1227,10 +1438,10 @@ ist.registerHelper('markdown', function(subContext) {
 
 <section class="doc-item">
 <section class="doc-desc">
+* createnode
 * simple examples (+ markdown)
-* builtin
+* builtin code
 * error handling
-* partials
 
 </section>
 </section>
