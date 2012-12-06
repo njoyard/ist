@@ -1091,8 +1091,7 @@ tags and already loaded AMD modules, and renders what it finds.  Note that
 the `ist!` requireJS plugin code also looks for `@include` directives in
 templates in order to set included templates as dependencies.
 
-Also note that `isAMD` is the result of looking for a global `define` function
-and checking whether `define.amd` is true.
+Also note that the subtemplate `tmpl` is ignored.
 
 ```js
 ist.registerHelper('include', function(ctx, tmpl) {

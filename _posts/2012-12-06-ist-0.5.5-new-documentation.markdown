@@ -1,0 +1,47 @@
+---
+layout: post
+title: ist.js v0.5.5 released - new documentation online
+---
+
+{% assign opencurly = '{{' %}
+{% assign closecurly = '}}' %}
+
+I've been rewriting the documentation for a while and it is finally [online][2].
+I think it is a lot clearer now, but do not hesitate to contact me if you have
+any remark or question.
+
+Additionnaly, ist.js version 0.5.5 has just been released.  Several bugs have
+been fixed (see the [changelog][1] for more details), rendering performance has
+been improved a bit and two new features are available.  First, a new built-in
+`@eachkey` directive is available to enumerate objects.  Here is an example of
+how to use it; more information is available in the documentation.
+
+{% highlight css %}
+dl
+	@eachkey myObject
+		dt "{{ opencurly }} key {{ closecurly }}"
+		dd "{{ opencurly }} value {{ closecurly }}"
+{% endhighlight %}
+
+The other new feature enables setting event handlers directly in templates.  The
+syntax is close to attribute/property qualifiers; the main difference is that
+the value after the equal sign must be a valid ist.js expression (without curly
+braces), which should of course return a function.  Say you have an array named
+`menu` in your rendering context object, where each item has a `label` property
+and an associated handler function named `handler`, you could use a template
+like this one:
+
+{% highlight css %}
+ul#menu
+	@each menu
+		li[!click=handler] "{{ opencurly }} label {{ closecurly }}"
+{% endhighlight %}
+
+I'm not entirely satisfied with this syntax; I could as well have used a new
+built-in directive but I still find the square brackets less clumsy.  Naturally
+I'm open to feedback on this point.
+
+[1]: https://raw.github.com/njoyard/ist/master/CHANGELOG
+[2]: doc.html
+[3]: doc.html#Object property iteration
+

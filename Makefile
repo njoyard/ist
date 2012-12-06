@@ -1,4 +1,4 @@
-all: doc2.markdown
+all: doc.markdown
 
 src/doc-parsed.markdown: src/doc.markdown
 	echo "<section class=\"doc\">" > src/doc-parsed.markdown
@@ -32,11 +32,11 @@ src/doc-toc.markdown: src/doc-parsed.markdown
 	echo "" >> src/doc-toc.markdown
 	echo "</section>" >> src/doc-toc.markdown
 
-doc2.markdown: src/doc-head.in src/doc-toc.markdown src/doc-parsed.markdown
-	cat src/doc-head.in src/doc-toc.markdown src/doc-parsed.markdown > doc2.markdown
+doc.markdown: src/doc-head.in src/doc-toc.markdown src/doc-parsed.markdown
+	cat src/doc-head.in src/doc-toc.markdown src/doc-parsed.markdown > doc.markdown
 		
 clean:
-	rm -f doc2.markdown
+	rm -f doc.markdown
 	rm -f src/doc-toc.markdown
 	rm -f src/doc-parsed.markdown
 

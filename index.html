@@ -12,7 +12,7 @@ id: home
 	<section>ist.js tries to re-use as many syntax elements from CSS as possible, thus setting your editor to CSS should give nice results in most cases.</section>
 
 	<section class="buttons">
-		<span class="button"><a href="https://raw.github.com/njoyard/ist/master/dist/ist.js">Download ist.js v0.5.4</a></span>
+		<span class="button"><a href="https://raw.github.com/njoyard/ist/master/dist/ist.js">Download ist.js v0.5.5</a></span>
 		<span class="button"><a href="https://raw.github.com/njoyard/ist/master/dist/ist-min.js">Minified version</a></span>
 	</section>
 	
@@ -21,7 +21,7 @@ id: home
 
 <section class="news">
 	<h1>Latest news</h1>
-	{% for post in site.posts limit:3 %}
+	{% for post in site.posts limit:1 %}
 	<article>
 		<header>
 			<h2>{{ post.title }}</h2>
