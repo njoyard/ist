@@ -86,7 +86,12 @@ define([
 		});
 		
 		it("should support /* block comments */", function() {
-			
+			expect( cmtNodes[0].className ).toBe( 'class1' );
+			expect( cmtNodes[1].className ).toBe( 'class2' );
+			expect( cmtNodes[1].childNodes[0].className ).toBe( 'class3' );
+			expect( cmtNodes[1].childNodes[0].childNodes[0].className ).toBe( 'class4' );
+			expect( cmtNodes[2].className ).toBe( 'class5' );
+			expect( cmtNodes[2].childNodes[0].className ).toBe( 'class6' );
 		});
 	};
 });

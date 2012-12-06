@@ -1,3 +1,21 @@
+v0.5.5 - 2012-12-06
+- Fixed a bug where pushEvalVar would not hide a previously pushed variable
+- Added new tests for push/popEvalVar behaviour
+- Fixed a bug where rendering with context properties names that are not valid
+  identifiers would cause an error
+- Optimized rendering by reading context properties when the Context object is
+  created, instead of doing it once for each "{{  }}" evaluation
+- Template nodes now have a _getCode() method that outputs JS code to regenerate
+  themselves 
+- Templates loaded with the 'ist!' requirejs plugin are now pre-parsed.  This
+  can be disabled by using the '!bare' suffix (eg. 'ist!templates/x!bare')
+- Added a built-in '@eachkey' helper to loop over object own properties
+- Fixed a bug with block comments following spaces on the same line, enhanced
+  comment tests
+- Added event handler qualifiers, defined as [!click=function(e) { ... }]
+- Enabled escaped characters inside bracket-based qualifiers (properties,
+  attributes, events), mainly to allow using square brackets inside them.
+
 v0.5.4 - 2012-11-19
 - Added support for inline text nodes (text nodes specified on the same line
   as an element node: div.class "text child")

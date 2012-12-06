@@ -1,3 +1,4 @@
 div[.aProperty=a value]
 div[.className=a_class][.id=an_id][.prop=val]
-div[.aProperty="{./;}\/:!*%<>]
+div[.aProperty="{./;}:!*%<>]
+div[.aProperty=\\\"\a\u00e9\xe9\n\]]

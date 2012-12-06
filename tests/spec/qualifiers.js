@@ -3,11 +3,12 @@ define([
 	'ist!qualifiers/class',
 	'ist!qualifiers/attributes',
 	'ist!qualifiers/properties',
+	'ist!qualifiers/eventHandlers',
 	'ist!qualifiers/mixed',
 	'ist!qualifiers/implicit',
 	'ist!qualifiers/partials',
 	'ist!qualifiers/inlineText'
-], function(tId, tClass, tAttributes, tProperties, tMixed, tImplicit, tPartial, tInlineText) {
+], function(tId, tClass, tAttributes, tProperties, tEventHandlers, tMixed, tImplicit, tPartial, tInlineText) {
 	var idNodes = tId.render().childNodes,
 		classNodes = tClass.render().childNodes,
 		attrNodes = tAttributes.render().childNodes,
@@ -45,7 +46,13 @@ define([
 		});
 		
 		it("should accept special characters in attribute values", function() {		
-			expect( attrNodes[2].getAttribute('anAttribute') ).toBe( "\"{./;}\\/:!*%<>" );
+			expect( attrNodes[2].getAttribute('anAttribute') ).toBe( "\"{./;}:!*%<>" );
+		});
+		
+		it("should accept escaped characters in attribute values", function() {
+			expect( attrNodes[3].getAttribute('anAttribute') ).toBe( "\\\"aéé\n]" );
+	//	\\\"\a\u03a9\xe9\n\]]
+		
 		});
 
 		it("should be able to set random properties on elements", function() {
@@ -59,7 +66,21 @@ define([
 		});
 		
 		it("should accept special characters in property values", function() {		
-			expect( propNodes[2].aProperty ).toBe( "\"{./;}\\/:!*%<>" );
+			expect( propNodes[2].aProperty ).toBe( "\"{./;}:!*%<>" );
+		});
+		
+		it("should accept escaped characters in property values", function() {
+			expect( propNodes[3].aProperty ).toBe( "\\\"aéé\n]" );
+	//	\\\"\a\u03a9\xe9\n\]]
+		
+		});
+		
+		it("should be able to set event handlers on elements", function() {
+			var called = false;
+			
+			tEventHandlers.render({ handler: function() { called = true; } });	
+		
+			expect( called ).toBe( true );
 		});
 		
 		it("should handle qualifiers in any order", function() {

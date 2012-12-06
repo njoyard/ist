@@ -1,6 +1,6 @@
 /** @license
  * IST: Indented Selector Templating
- * version 0.5.4
+ * version 0.5.5
  *
  * Copyright (c) 2012 Nicolas Joyard
  * Released under the MIT license.
@@ -15,9 +15,16 @@
 	
 	var definition = function(requirejs) {
 	
-		var ist, parser, fs, extend, jsEscape, preprocess, getXhr, fetchText,
-			findScriptTag,
+		var ist, parser, fs,
+		
+			// Helper functions
+			extend, jsEscape, preprocess, getXhr, fetchText,
+			findScriptTag, isValidIdentifier,
+			
+			// Constructors
 			Context, Node, ContainerNode, BlockNode, TextNode, ElementNode,
+			
+			// Helper data
 			reservedWords = [
 				'break', 'case', 'catch', 'class', 'continue', 'debugger',
 				'default', 'delete', 'do', 'else', 'enum', 'export', 'extends',
@@ -26,10 +33,12 @@
 				'throw', 'true', 'try',	'typeof', 'undefined', 'var', 'void',
 				'while', 'with'
 			],
+			// Incomplete (a lot of unicode points are missing), but still reasonable
+			identifierRE = /^[$_a-z][$_a-z0-9]*$/i,
+			codeIndent = "  ",
 			helpers = {},
 			progIds = ['Msxml2.XMLHTTP', 'Microsoft.XMLHTTP', 'Msxml2.XMLHTTP.4.0'],
-			buildMap = [],
-			currentTemplate;
+			buildMap = [];
 		
 	
 		if (!Array.isArray) {
@@ -37,7 +46,198 @@
 				return Object.prototype.toString.call(a) === '[object Array]';
 			};
 		}
-	
+		
+		isValidIdentifier = function(candidate) {
+			return identifierRE.test(candidate) && reservedWords.indexOf(candidate) === -1;
+		};
+		
+			
+		parser = (function() {
+			var UNCHANGED = 'U', INDENT = 'I', DEDENT = 'D', UNDEF,
+				generateNodeTree, parseIndent, escapedCharacter,
+				createTextNode, createElement, createDirective,
+				pegjsParser;
+
+			
+			// Generate node tree
+			generateNodeTree = function(first, tail) {
+				var stack = [new ContainerNode()],
+					nodeCount = 0,
+					lines, peekNode, pushNode, popNode;
+					
+				if (!first) {
+					return stack[0];
+				}
+					
+				/* Node stack helpers */
+				
+				peekNode = function() {
+					return stack[stack.length - 1];
+				};
+			
+				pushNode = function(node) {
+					nodeCount++;
+					stack.push(node);
+				};
+			
+				popNode = function(lineNumber) {
+					var node;
+					if (stack.length < 2) {
+						throw new Error("Could not pop node from stack");
+					}
+				
+					node = stack.pop();
+					peekNode().appendChild(node);
+					
+					return node;
+				};
+				
+				// Remove newlines
+				lines = tail.map(function(item) { return item.pop(); });
+				lines.unshift(first);
+			
+				lines.forEach(function(line, index) {
+					var indent = line.indent,
+						item = line.item,
+						lineNumber = line.num,
+						err;
+						
+					if (indent[0] instanceof Error) {
+						throw indent[0];
+					}
+					
+					if (nodeCount > 0) {
+						if (indent[0] === UNCHANGED) {
+							// Same indent: previous node won't have any children
+							popNode();
+						} else if (indent[0] === DEDENT) {
+							// Pop nodes in their parent
+							popNode();
+						
+							while (indent.length > 0) {
+								indent.pop();
+								popNode();
+							}
+						} else if (indent[0] === INDENT && peekNode() instanceof TextNode) {
+							err = new Error("Cannot add children to text node");
+							err.line = lineNumber;
+							throw err;
+						}
+					}
+					
+					pushNode(item);
+				});
+				
+				// Collapse remaining stack
+				while (stack.length > 1) {
+					popNode();
+				}
+				
+				return peekNode();
+			};
+			
+
+			// Keep track of indent
+			parseIndent = function(depths, s, line) {
+				var depth = s.length,
+					dents = [],
+					err;
+
+				if (depth.length === 0) {
+					// First line, this is the reference indent
+					depths.push(depth);
+				}
+
+				if (depth == depths[0]) {
+					// Same indent as previous line
+					return [UNCHANGED];
+				}
+
+				if (depth > depths[0]) {
+					// Deeper indent, unshift it
+					depths.unshift(depth);
+					return [INDENT];
+				}
+				
+				while (depth < depths[0]) {
+					// Narrower indent, try to find it in previous indents
+					depths.shift();
+					dents.push(DEDENT);
+				}
+
+				if (depth != depths[0]) {
+					// No matching previous indent
+					err = new Error("Unexpected indent");
+					err.line = line;
+					err.column = 1;
+					return [err];
+				}
+
+				return dents;
+			};
+			
+			
+			// Text node helper
+			createTextNode = function(text, line) {
+				return new TextNode(text, line);
+			};
+			
+
+			// Element object helper
+			createElement = function(tagName, qualifiers, additions, line) {
+				var elem = new ElementNode(tagName, line);
+
+				qualifiers.forEach(function(q) {
+					if (typeof q.id !== 'undefined') {
+						elem.setId(q.id);
+					} else if (typeof q.className !== 'undefined') {
+						elem.setClass(q.className);
+					} else if (typeof q.attr !== 'undefined') {
+						elem.setAttribute(q.attr, q.value);
+					} else if (typeof q.prop !== 'undefined') {
+						elem.setProperty(q.prop, q.value);
+					} else if (typeof q.event !== 'undefined') {
+						elem.setEventHandler(q.event, q.value);
+					}
+				});
+				
+				if (typeof additions !== 'undefined') {
+					if (additions.partial.length > 0) {
+						elem.setPartialName(additions.partial);
+					}
+					
+					if (additions.textnode instanceof TextNode) {
+						elem.appendChild(additions.textnode);
+					}
+				}
+
+				return elem;
+			};
+			
+			
+			// Directive object helper
+			createDirective = function(name, expr, line) {
+				return new BlockNode(name, expr, line);
+			};
+			
+			
+			escapedCharacter = function(char) {
+				if (char.length > 1) {
+					// 2 or 4 hex digits coming from \xNN or \uNNNN
+					return String.fromCharCode(parseInt(char, 16));
+				} else {
+					return { 'f': '\f', 'b': '\b', 't': '\t', 'n': '\n', 'r': '\r' }[char] || char;
+				}
+			};
+		
+
+// PEGjs parser start
+// PEGjs parser end
+
+			return pegjsParser;
+		}());
+		
+		
 		jsEscape = function (content) {
 			return content.replace(/(['\\])/g, '\\$1')
 				.replace(/[\f]/g, "\\f")
@@ -80,16 +280,26 @@
 	
 	
 		/**
-		 * Context object
+		 * Context object; holds the rendering context and target document,
+		 * and provides helper methods.
 		 */
 		Context = function(object, doc) {
 			this.value = object;
 			this.doc = doc || document;
 			this.variables = { document: [ this.doc ] };
+			
+			this.contextNames = 
+				typeof object === 'object' && object !== null ?
+				Object.keys(object).filter(isValidIdentifier) :
+				[];
+				
+			this.contextValues = this.contextNames.map(function(n) { return object[n]; });
 		};
 	
 	
 		Context.prototype = {
+			/* Node creation aliases */
+			
 			createDocumentFragment: function() {
 				return this.doc.createDocumentFragment();
 			},
@@ -105,17 +315,27 @@
 			createTextNode: function(text) {
 				return this.doc.createTextNode(this.interpolate(text));
 			},
-		
+			
+			/**
+			 * Adds a variable to the evaluation scope used when interpolating
+			 * "{{ xxx }}" expressions and directive arguments.  Hides any
+			 * previous existing variable with the same name.
+			 */
 			pushEvalVar: function(name, value) {
 				if (typeof this.variables[name] === 'undefined') {
 					this.variables[name] = [];
 				}
 			
-				this.variables[name].push(value);
+				this.variables[name].unshift(value);
 			},
 		
+			/**
+			 * Removes a variable from the evaluation scope used when interpolating
+			 * "{{ xxx }}" expressions and directive arguments, and returns its
+			 * value.  Restores any value previously hidden by pushEvalVar.
+			 */
 			popEvalVar: function(name) {
-				var ret = this.variables[name].pop();
+				var ret = this.variables[name].shift();
 			
 				if (this.variables[name].length === 0) {
 					delete this.variables[name];
@@ -128,20 +348,21 @@
 			 * Evaluate `expr` in a scope where the current context is available
 			 * as `this`, all its own properties that are not reserved words are
 			 * available as locals, and the target document is available as `document`.
+			 * Variables defined with pushEvalVar ar also available as locals.
 			 */
 			evaluate: function(expr) {
 				var self = this,
-					ctxNames = typeof this.value === 'object' ? Object.keys(this.value) : [],
 					varNames = Object.keys(this.variables),
-					ctxValues, varValues, func;
-			
-				ctxNames = ctxNames.filter(function(k) { return reservedWords.indexOf(k) === -1; });
-				ctxValues = ctxNames.map(function(k) { return self.value[k]; });
+					varValues, func;
+				
 				varValues = varNames.map(function(k) { return self.variables[k][0]; });
-			
-				func = new Function(ctxNames.concat(varNames).join(','), "return " + expr + ";");
-		
-				return func.apply(this.value, ctxValues.concat(varValues));
+				
+				/* We concatenate context names and variable names. Duplicate argument
+				   names are allowed and only the last value will be kept, which is
+				   what we want (variables hide context properties) */
+				func = new Function(this.contextNames.concat(varNames).join(','), "return " + expr + ";");
+	
+				return func.apply(this.value, this.contextValues.concat(varValues));
 			},
 		
 			interpolate: function(text) {		
@@ -158,8 +379,8 @@
 		 * Base node, not renderable. Helps building context objects, exception
 		 * messages, and finding tagged subtemplates.
 		 */
-		Node = function() {
-			this.partialName = '';
+		Node = function(partialName) {
+			this.partialName = partialName || '';
 		};
 		
 		Node.prototype = {
@@ -203,6 +424,10 @@
 		
 			_render: function(context) {
 				throw new Error("Cannot render base Node");
+			},
+			
+			_getCode: function() {
+				throw new Error("Cannot get base Node code");
 			}
 		}
 	
@@ -210,11 +435,11 @@
 		/**
 		 * Text node
 		 */
-		TextNode = function(text, line) {
-			Node.call(this);
+		TextNode = function(text, line, partialName) {
+			Node.call(this, partialName);
 		
 			this.text = text;
-			this.sourceFile = currentTemplate;
+			this.sourceFile = ist.currentTemplate;
 			this.sourceLine = line;
 		};
 	
@@ -226,6 +451,13 @@
 					throw this.completeError(err);
 				}
 			},
+			
+			_getCode: function(indent) {
+				return indent + "new ist.TextNode("
+							+ JSON.stringify(this.text) + ", "
+							+ JSON.stringify(this.sourceLine) + ", "
+							+ JSON.stringify(this.partialName) + ")";
+			},
 		
 			appendChild: function(node) {
 				throw new Error("Cannot add children to TextNode");
@@ -236,10 +468,10 @@
 		/**
 		 * Container node
 		 */
-		ContainerNode = function() {
-			Node.call(this);
+		ContainerNode = function(partialName, children) {
+			Node.call(this, partialName);
 			
-			this.children = [];
+			this.children = children || [];
 			this.partialCache = {};
 		};
 	
@@ -279,6 +511,22 @@
 				});
 			
 				return fragment;
+			},
+			
+			_getChildrenCode: function(indent) {
+				if (this.children.length === 0) {
+					return "[]";
+				}
+				
+				return "[\n"
+						+ this.children.map(function(c) { return c._getCode(indent); }).join(",\n")
+						+ "\n" + indent + "]";
+			},
+			
+			_getCode: function(indent) {
+				return indent + "new ist.ContainerNode("
+							+ JSON.stringify(this.partialName) + ", "
+							+ this._getChildrenCode(indent + codeIndent) + ")";
 			}
 		});
 	
@@ -286,19 +534,28 @@
 		/**
 		 * Element node
 		 */
-		ElementNode = function(tagName, line) {
-			ContainerNode.call(this);
+		ElementNode = function(tagName, line, partialName, children, attributes, properties, eventHandlers, classes, id) {
+			ContainerNode.call(this, partialName, children);
 		
 			this.tagName = tagName;
-			this.sourceFile = currentTemplate;
+			this.sourceFile = ist.currentTemplate;
 			this.sourceLine = line;
-			this.attributes = {};
-			this.properties = {};
-			this.classes = [];
-			this.id = undefined;
+			this.attributes = attributes || {};
+			this.properties = properties || {};
+			this.eventHandlers = eventHandlers || {};
+			this.classes = classes || [];
+			this.id = id;
 		};
 	
 		extend(ContainerNode, ElementNode, {
+			setEventHandler: function(event, value) {
+				if (typeof this.eventHandlers[event] === 'undefined') {
+					this.eventHandlers[event] = [value];
+				} else {
+					this.eventHandlers[event].push(value);
+				}
+			},
+			
 			setAttribute: function(attr, value) {
 				this.attributes[attr] = value;
 			},
@@ -319,8 +576,10 @@
 				var self = this,
 					node = context.createElement(this.tagName);
 			
+				// Append rendered children
 				node.appendChild(ContainerNode.prototype._render.call(this, context));
 			
+				// Set attrs, properties, events, classes and ID
 				Object.keys(this.attributes).forEach(function(attr) {
 					try {
 						var value = context.interpolate(self.attributes[attr]);
@@ -340,6 +599,18 @@
 				
 					node[prop] = value;
 				});
+				
+				Object.keys(this.eventHandlers).forEach(function(event) {
+					self.eventHandlers[event].forEach(function(expr) {
+						try {
+							var handler = context.evaluate(expr);
+						} catch(err) {
+							throw self.completeError(err);
+						}
+					
+						node.addEventListener(event, handler, false);
+					});
+				});
 			
 				this.classes.forEach(function(cls) {
 					node.classList.add(cls);
@@ -350,6 +621,19 @@
 				}
 			
 				return node;
+			},
+			
+			_getCode: function(indent) {
+				return indent + "new ist.ElementNode("
+							+ JSON.stringify(this.tagName) + ", "
+							+ JSON.stringify(this.sourceLine) + ", "
+							+ JSON.stringify(this.partialName) + ", "
+							+ this._getChildrenCode(indent + codeIndent) + ", "
+							+ JSON.stringify(this.attributes) + ", "
+							+ JSON.stringify(this.properties) + ", "
+							+ JSON.stringify(this.eventHandlers) + ", "
+							+ JSON.stringify(this.classes) + ", "
+							+ JSON.stringify(this.id) + ")";
 			}
 		});
 	
@@ -357,12 +641,12 @@
 		/**
 		 * Block node
 		 */
-		BlockNode = function(name, expr, line) {
-			ContainerNode.call(this);
+		BlockNode = function(name, expr, line, partialName, children) {
+			ContainerNode.call(this, partialName, children);
 			
 			this.name = name;
 			this.expr = expr;
-			this.sourceFile = currentTemplate;
+			this.sourceFile = ist.currentTemplate;
 			this.sourceLine = line;
 		};
 	
@@ -398,12 +682,18 @@
 				}
 			
 				return ret;
+			},
+			
+			_getCode: function(indent) {
+				return indent + "new ist.BlockNode("
+							+ JSON.stringify(this.name) + ", "
+							+ JSON.stringify(this.expr) + ", "
+							+ JSON.stringify(this.sourceLine) + ", "
+							+ JSON.stringify(this.partialName) + ", "
+							+ this._getChildrenCode(indent + codeIndent) + ")";
 			}
 		});
-	
-	
-// PEGjs parser start
-// PEGjs parser end
+		
 	
 		/**
 		 * Template preprocessor; handle what the parser cannot handle
@@ -414,20 +704,21 @@
 			var newlines = /\r\n|\r|\n/,
 				whitespace = /^[ \t]*$/,
 				comment = /\/\*((?:\/(?!<\*)|[^\/])*?)\*\//g,
-				lines = text.split(newlines);
+				lines;
+		
+			// Remove block comments
+			text = text.replace(comment, function(m, p1) {
+				return p1.split(newlines).map(function(l) { return ''; }).join('\n');
+			}); 
 		
 			// Remove everthing from whitespace-only lines
+			lines = text.split(newlines);
 			lines.forEach(function(l, i) {
 				if (l.match(whitespace)) {
 					lines[i] = "";
 				}
 			});
 			text = lines.join('\n');
-		
-			// Remove block comments
-			text = text.replace(comment, function(m, p1) {
-				return p1.split(newlines).map(function(l) { return ''; }).join('\n');
-			}); 
 		
 			return text;
 		};
@@ -439,22 +730,27 @@
 		ist = function(template, name) {
 			var parsed;
 		
-			currentTemplate = name || '<unknown>';
+			ist.currentTemplate = name || '<unknown>';
 		
 			try {
 				parsed = parser.parse(preprocess(template));
 			} catch(e) {
-				e.message += " in '" + currentTemplate + "' on line " + e.line +
+				e.message += " in '" + ist.currentTemplate + "' on line " + e.line +
 					(typeof e.column !== 'undefined' ?  ", character " + e.column : '');
 						
-				currentTemplate = undefined;
+				ist.currentTemplate = undefined;
 				throw e;
 			}
 		
-			currentTemplate = undefined;
+			ist.currentTemplate = undefined;
 		
 			return parsed;
 		};
+		
+		ist.TextNode = TextNode;
+		ist.ContainerNode = ContainerNode;
+		ist.ElementNode = ElementNode;
+		ist.BlockNode = BlockNode;
 	
 	
 		/**
@@ -555,6 +851,39 @@
 					});
 					fragment.appendChild(tmpl.render(sctx));
 					sctx.popEvalVar('loop');
+				});
+			}
+		
+			return fragment;
+		});
+		
+		
+		/**
+		 * Built-in 'eachkey' helper
+		 */
+		ist.registerHelper('eachkey', function(ctx, tmpl) {
+			var fragment = this.createDocumentFragment(),
+				outer = this.value,
+				value = ctx.value,
+				keys;
+		
+			if (value) {
+				keys = Object.keys(value);
+				keys.forEach(function(key, index) {
+					var sctx = ctx.createContext({
+						key: key,
+						value: value[key],
+						loop: {
+							first: index == 0,
+							index: index,
+							last: index == keys.length - 1,
+							length: keys.length,
+							object: value,
+							outer: outer
+						}
+					});
+					
+					fragment.appendChild(tmpl.render(sctx));
 				});
 			}
 		
@@ -689,11 +1018,18 @@
 			};
 
 			ist.load = function (name, parentRequire, load, config) {
-				var path = parentRequire.toUrl(name + '.ist'),
-					dirname = name.indexOf('/') === -1 ? '.' : name.replace(/\/[^\/]*$/, '');
+				var path, dirname, doParse = true;
+					
+				if (/!bare$/.test(name)) {
+					doParse = false;
+					name = name.replace(/!bare$/, '');
+				}
+					
+				path = parentRequire.toUrl(name + '.ist'),
+				dirname = name.indexOf('/') === -1 ? '.' : name.replace(/\/[^\/]*$/, '');
 		
 				fetchText(path, function (text) {
-					var i, m, deps = ['ist'];
+					var code, i, m, deps = ['ist'];
 			
 					/* Find @include calls and replace them with 'absolute' paths
 					   (ie @include 'inc/include' in 'path/to/template'
@@ -716,20 +1052,29 @@
 								return m;
 							}
 						});
-			
-					if (config.isBuild) {
-						text = jsEscape(text);		
-						text = "define('ist!" + name + "'," + JSON.stringify(deps) + ",function(ist){" +
-							   "var template='" + text + "';" +
-							   	"return ist(template,'" + name + "');" +
-							   "});";
-					} else {
-						/* "Pretty-print" template text */
-						text = jsEscape(text).replace(/\\n/g, "\\n' +\n\t               '");
-						text = "define('ist!" + name + "'," + JSON.stringify(deps) + ", function(ist){ \n" +
-							   "\tvar template = '" + text + "';\n" +
-							   "\treturn ist(template, '" + name + "');\n" +
+						
+					if (doParse) {
+						/* Get parsed code */
+						code = ist(text)._getCode("  ");
+						text = "define('ist!" + name + "'," + JSON.stringify(deps) + ", function(ist) {\n" +
+							   "  ist.currentTemplate = '" + name + "';\n" +
+							   "  return " + code + ";\n" +
 							   "});\n";
+					} else {
+						if (config.isBuild) {
+							text = jsEscape(text);		
+							text = "define('ist!" + name + "'," + JSON.stringify(deps) + ",function(ist){" +
+								   "var template='" + text + "';" +
+								   	"return ist(template,'" + name + "');" +
+								   "});";
+						} else {
+							/* "Pretty-print" template text */
+							text = jsEscape(text).replace(/\\n/g, "\\n' +\n\t               '");
+							text = "define('ist!" + name + "'," + JSON.stringify(deps) + ", function(ist){ \n" +
+								   "\tvar template = '" + text + "';\n" +
+								   "\treturn ist(template, '" + name + "');\n" +
+								   "});\n";
+						}
 					}
 						   
 					//Hold on to the transformed text if a build.

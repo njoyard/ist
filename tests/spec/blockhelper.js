@@ -156,5 +156,55 @@ define([
 			
 			expect( typeof arg ).toBe( 'undefined' );
 		});
+		
+		it("should allow pushing variables to a rendering context", function() {
+			ist.registerHelper('pushBlock', function(subcontext, subtemplate) {
+				subcontext.pushEvalVar("variable", "value");
+				return subtemplate.render(subcontext);
+			});
+			expect(
+				ist("@pushBlock this\n '{{ variable }}'").render({}).childNodes[0]
+			).toHaveTextContent( "value" );
+		});
+		
+		it("should allow overwriting existing rendering context properties when pushing variables", function() {
+			ist.registerHelper('pushBlock', function(subcontext, subtemplate) {
+				subcontext.pushEvalVar("variable", "new value");
+				return subtemplate.render(subcontext);
+			});
+			expect(
+				ist("@pushBlock this\n '{{ variable }}'").render({ variable: "value" }).childNodes[0]
+			).toHaveTextContent( "new value" );
+		});
+		
+		it("should allow stacking pushed variables in rendering contexts", function() {
+			var fragment;
+			
+			ist.registerHelper('pushBlock1', function(subcontext, subtemplate) {
+				subcontext.pushEvalVar("variable", "value 1");
+				return subtemplate.render(subcontext);
+			});
+			ist.registerHelper('pushBlock2', function(subcontext, subtemplate) {
+				subcontext.pushEvalVar("variable", "value 2");
+				return subtemplate.render(subcontext);
+			});
+			
+			fragment = ist("@pushBlock1 this\n '0 {{ variable }}'\n @pushBlock2 this\n  '1 {{ variable }}'\n '2 {{ variable }}'").render({});
+			
+			expect( fragment.childNodes[0] ).toHaveTextContent( "0 value 1" );
+			expect( fragment.childNodes[1] ).toHaveTextContent( "1 value 2" );
+			expect( fragment.childNodes[2] ).toHaveTextContent( "2 value 1" );
+		});
+		
+		it("should allow popping pushed variables from rendering contexts", function() {
+			ist.registerHelper('pushBlock', function(subcontext, subtemplate) {
+				subcontext.pushEvalVar("variable", "new value");
+				subcontext.popEvalVar("variable");
+				return subtemplate.render(subcontext);
+			});
+			expect(
+				ist("@pushBlock this\n '{{ variable }}'").render({ variable: "value" }).childNodes[0]
+			).toHaveTextContent( "value" );
+		});
 	};
 });
