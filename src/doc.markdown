@@ -1121,7 +1121,9 @@ ist.registerHelper('include', function(ctx, tmpl) {
 	}
 	
 	if (!found) {
-		throw new Error("Cannot find included template '" + what + "'");
+		throw new Error(
+			"Cannot find included template '" + what + "'"
+		);
 	}
 
 	if (typeof found === 'string') {
@@ -1133,7 +1135,9 @@ ist.registerHelper('include', function(ctx, tmpl) {
 		// Render included template
 		return found.render(this, tmpl.document);
 	} else {
-		throw new Error("Invalid included template '" + what + "'");
+		throw new Error(
+			"Invalid included template '" + what + "'"
+		);
 	}
 });
 ```
