@@ -1,4 +1,4 @@
-next version
+v0.5.5 - 2012-12-06
 - Fixed a bug where pushEvalVar would not hide a previously pushed variable
 - Added new tests for push/popEvalVar behaviour
 - Fixed a bug where rendering with context properties names that are not valid
