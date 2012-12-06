@@ -42,6 +42,5 @@ built-in directive but I still find the square brackets less clumsy.  Naturally
 I'm open to feedback on this point.
 
 [1]: https://raw.github.com/njoyard/ist/master/CHANGELOG
-[2]: doc.html
-[3]: doc.html#Object property iteration
+[2]: {{ site.url }}/doc.html
 
