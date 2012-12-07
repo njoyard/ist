@@ -10,6 +10,8 @@ body {
 	font-family: 'Open Sans', 'Helvetica Neue', sans-serif;
 
 	font-size: 10pt;
+	
+	margin: 0;
 }
 
 h1, h2, h3, h4, h5, h6 {
@@ -180,6 +182,7 @@ article .date {
 
 .highlight pre {
 	margin: 0;
+	white-space: pre-wrap;
 }
 
 .highlight, textarea {
@@ -333,4 +336,77 @@ span.button a {
 
 .doc-code > p {
 	display: none;
+}
+
+@media screen and (max-width: 1000px) {
+	/* Remove left and right borders */
+	body > * {
+		width: auto;
+		margin-left: 0;
+		margin-right: 0;
+	}
+	
+	body > header {
+		margin-left: 0;
+		margin-right: 0;
+	}
+	
+
+	nav {
+		border-top-left-radius: 0;
+		border-top-right-radius: 0;	
+	}
+
+	footer {
+		border-bottom-left-radius: 0;
+		border-bottom-right-radius: 0;
+	}
+	
+	/* Change online demo layout */
+	.left, .right {
+		display: block;
+		width: auto;
+		margin: auto;
+	}
+	
+	/* Change documentation layout */
+	.doc-desc, .doc-code {
+		display: block;
+		width: auto;
+	}
+}
+
+@media screen and (max-width: 800px) {
+	/* Reduce menu separators */
+	nav li {
+		margin: 0 1em;
+	}
+}
+
+@media screen and (max-width: 600px) {
+	/* Remove some vertical margins */
+	body > header, body > footer {
+		margin: auto;
+	}
+	
+	/* Reduce menu separators again */
+	nav li {
+		margin: 0 .5em;
+	}
+}
+
+
+@media screen and (max-width: 480px) {
+	/* Change homepage layout a bit */
+	.about .highlight {
+		float: none;
+		margin: auto;
+		width: auto;
+	}
+	
+	span.button {
+		display: block;
+		width: 240px;
+		margin: .5em auto;
+	}
 }
