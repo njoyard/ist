@@ -1456,7 +1456,7 @@ You could then use it as follows:
 ist.fromScriptTag("template")
    .render({
    	articles: [
-   		{ content: "# <a class="nohover" name="Title\n## Subtitle" },">Title\n## Subtitle" },</a>
+   		{ content: "# Title\n## Subtitle" },
    		/* ... */
    	]
    });

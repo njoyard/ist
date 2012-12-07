@@ -9,9 +9,9 @@ src/doc-parsed.markdown: src/doc.markdown
 			-e 's:}}:}_}:g' \
 			-e 's:\{\{:{{ opencurly }}:g' \
 			-e 's:}_}:{{ closecurly }}:g' \
-			-e 's:```(.+):{% highlight \1 %}:' \
-			-e 's:```:{% endhighlight %}:' \
-			-e 's:(#+) (.*):\1 <a class="nohover" name="\2">\2</a>:' \
+			-e 's:^```(.+):{% highlight \1 %}:' \
+			-e 's:^```:{% endhighlight %}:' \
+			-e 's:^(#+) (.*):\1 <a class="nohover" name="\2">\2</a>:' \
 		>> src/doc-parsed.markdown
 	echo "" >> src/doc-parsed.markdown
 	echo "</section>" >> src/doc-parsed.markdown
