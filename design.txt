@@ -26,7 +26,8 @@ Goal => Updateable node tree
 		- Keep the last render() only ? And add a way to "save" the last render()
 		  to enable new render()s with separate updates
 	- Think about how to update only part of a template (maybe using partials ?)
-	- Should 
+	- Should provide a way for directives to give an update helper (additional
+	  arguments ?)
 
 
 - Need to keep a ref on the rendering object. Should not be linked to nodes !
