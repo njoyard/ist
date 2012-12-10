@@ -286,14 +286,7 @@
 		Context = function(object, doc) {
 			this.value = object;
 			this.doc = doc || document;
-			this.variables = { document: [ this.doc ] };
-			
-			this.contextNames = 
-				typeof object === 'object' && object !== null ?
-				Object.keys(object).filter(isValidIdentifier) :
-				[];
-				
-			this.contextValues = this.contextNames.map(function(n) { return object[n]; });
+			this.scopes = [ object, { document: this.doc } ];
 		};
 	
 	
@@ -316,32 +309,12 @@
 				return this.doc.createTextNode(this.interpolate(text));
 			},
 			
-			/**
-			 * Adds a variable to the evaluation scope used when interpolating
-			 * "{{ xxx }}" expressions and directive arguments.  Hides any
-			 * previous existing variable with the same name.
-			 */
-			pushEvalVar: function(name, value) {
-				if (typeof this.variables[name] === 'undefined') {
-					this.variables[name] = [];
-				}
-			
-				this.variables[name].unshift(value);
+			pushScope: function(scope) {
+				this.scopes.push(scope);
 			},
-		
-			/**
-			 * Removes a variable from the evaluation scope used when interpolating
-			 * "{{ xxx }}" expressions and directive arguments, and returns its
-			 * value.  Restores any value previously hidden by pushEvalVar.
-			 */
-			popEvalVar: function(name) {
-				var ret = this.variables[name].shift();
 			
-				if (this.variables[name].length === 0) {
-					delete this.variables[name];
-				}
-			
-				return ret;
+			popScope: function() {
+				return this.scopes.pop();
 			},
 		
 			/**
@@ -351,18 +324,18 @@
 			 * Variables defined with pushEvalVar ar also available as locals.
 			 */
 			evaluate: function(expr) {
-				var self = this,
-					varNames = Object.keys(this.variables),
-					varValues, func;
+				var fexpr = "return " + expr + ";",
+					scopeNames = [],
+					func;
+
+				this.scopes.forEach(function(scope, index) {
+					scopeNames.push("scope" + index);
+					fexpr = "with(scope" + index + "){\n" + fexpr + "\n}";
+				});
 				
-				varValues = varNames.map(function(k) { return self.variables[k][0]; });
+				func = new Function(scopeNames.join(','), fexpr);
 				
-				/* We concatenate context names and variable names. Duplicate argument
-				   names are allowed and only the last value will be kept, which is
-				   what we want (variables hide context properties) */
-				func = new Function(this.contextNames.concat(varNames).join(','), "return " + expr + ";");
-	
-				return func.apply(this.value, this.contextValues.concat(varValues));
+				return func.apply(this.value, this.scopes);
 			},
 		
 			interpolate: function(text) {		
@@ -842,15 +815,17 @@
 				value.forEach(function(item, index) {
 					var sctx = ctx.createContext(item);
 				
-					sctx.pushEvalVar('loop', {
-						first: index == 0,
-						index: index,
-						last: index == value.length - 1,
-						length: value.length,
-						outer: outer
+					sctx.pushScope({
+						loop: {
+							first: index == 0,
+							index: index,
+							last: index == value.length - 1,
+							length: value.length,
+							outer: outer
+						}
 					});
 					fragment.appendChild(tmpl.render(sctx));
-					sctx.popEvalVar('loop');
+					sctx.popScope();
 				});
 			}
 		

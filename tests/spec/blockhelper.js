@@ -159,7 +159,7 @@ define([
 		
 		it("should allow pushing variables to a rendering context", function() {
 			ist.registerHelper('pushBlock', function(subcontext, subtemplate) {
-				subcontext.pushEvalVar("variable", "value");
+				subcontext.pushScope({ variable: "value" });
 				return subtemplate.render(subcontext);
 			});
 			expect(
@@ -169,7 +169,7 @@ define([
 		
 		it("should allow overwriting existing rendering context properties when pushing variables", function() {
 			ist.registerHelper('pushBlock', function(subcontext, subtemplate) {
-				subcontext.pushEvalVar("variable", "new value");
+				subcontext.pushScope({ variable: "new value" });
 				return subtemplate.render(subcontext);
 			});
 			expect(
@@ -181,11 +181,11 @@ define([
 			var fragment;
 			
 			ist.registerHelper('pushBlock1', function(subcontext, subtemplate) {
-				subcontext.pushEvalVar("variable", "value 1");
+				subcontext.pushScope({ variable: "value 1" });
 				return subtemplate.render(subcontext);
 			});
 			ist.registerHelper('pushBlock2', function(subcontext, subtemplate) {
-				subcontext.pushEvalVar("variable", "value 2");
+				subcontext.pushScope({ variable: "value 2" });
 				return subtemplate.render(subcontext);
 			});
 			
@@ -198,8 +198,8 @@ define([
 		
 		it("should allow popping pushed variables from rendering contexts", function() {
 			ist.registerHelper('pushBlock', function(subcontext, subtemplate) {
-				subcontext.pushEvalVar("variable", "new value");
-				subcontext.popEvalVar("variable");
+				subcontext.pushScope({ variable: "new value" });
+				subcontext.popScope();
 				return subtemplate.render(subcontext);
 			});
 			expect(
