@@ -286,7 +286,11 @@
 		Context = function(object, doc) {
 			this.value = object;
 			this.doc = doc || document;
-			this.scopes = [ { document: this.doc }, object ];
+			this.scopes = [ { document: this.doc } ];
+			
+			if (typeof object !== 'undefined') {
+				this.scopes.push(object);
+			}
 		};
 	
 	
@@ -309,10 +313,14 @@
 				return this.doc.createTextNode(this.interpolate(text));
 			},
 			
+			/* Push an object on the scope stack. All its properties will be
+			   usable inside expressions and hide any previously available
+			   property with the same name */
 			pushScope: function(scope) {
 				this.scopes.unshift(scope);
 			},
 			
+			/* Pop the last object pushed on the scope stack  */
 			popScope: function() {
 				if (this.scopes.length < 3) {
 					throw new Error("No scope left to pop out");
@@ -325,7 +333,6 @@
 			 * Evaluate `expr` in a scope where the current context is available
 			 * as `this`, all its own properties that are not reserved words are
 			 * available as locals, and the target document is available as `document`.
-			 * Variables defined with pushEvalVar ar also available as locals.
 			 */
 			evaluate: function(expr) {
 				var fexpr = "return " + expr + ";",
