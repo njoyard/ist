@@ -286,7 +286,7 @@
 		Context = function(object, doc) {
 			this.value = object;
 			this.doc = doc || document;
-			this.scopes = [ object, { document: this.doc } ];
+			this.scopes = [ { document: this.doc }, object ];
 		};
 	
 	
@@ -310,11 +310,15 @@
 			},
 			
 			pushScope: function(scope) {
-				this.scopes.push(scope);
+				this.scopes.unshift(scope);
 			},
 			
 			popScope: function() {
-				return this.scopes.pop();
+				if (this.scopes.length < 3) {
+					throw new Error("No scope left to pop out");
+				}
+				
+				return this.scopes.shift();
 			},
 		
 			/**
