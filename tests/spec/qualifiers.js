@@ -114,7 +114,7 @@ define([
 		
 		it("should allow accessing partials", function() {
 			expect( typeof tPartial.findPartial ).toBe( 'function' );
-			expect( tPartial.findPartial('unknown') ).toBe( null );
+			expect( typeof tPartial.findPartial('unknown') ).toBe( 'undefined' );
 			
 			var level1 = tPartial.findPartial('level_1_partial');
 			var level2 = tPartial.findPartial('level_2_partial');
@@ -124,9 +124,9 @@ define([
 			expect( typeof level2.render ).toBe( 'function' );
 			expect( typeof level3.render ).toBe( 'function' );
 			
-			var node1 = level1.render()
-			var node2 = level2.render();
-			var node3 = level3.render();
+			var node1 = level1.render().childNodes[0];
+			var node2 = level2.render().childNodes[0];
+			var node3 = level3.render().childNodes[0];
 			
 			expect( node1.tagName.toLowerCase() ).toBe( 'div' );
 			expect( node1.classList.contains('level1') ).toBe( true );

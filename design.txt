@@ -1,3 +1,10 @@
+Misc ideas:
+- Use with() in evaluation functions to handle scopes
+- Replace *Nodes classes with bare JSON and a single Template object
+- Pre-render fixed things (classes, ID, attrs without exprs) in elements and
+  call cloneNode afterwards
+
+
 Goal => Updateable node tree
 
 2 alternatives
