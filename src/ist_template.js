@@ -355,12 +355,12 @@
 				this.pushScope(scope);
 			},
 			
-			/* Deprecated, use pushScope */
+			/* Deprecated, use popScope */
 			popEvalVar: function(name) {
 				var scope = scopes[0];
 				
 				if (typeof scope[name] === 'undefined' || Object.keys(scope).length > 1) {
-					throw new Error("Cannot pop variable, does not match top scope");
+					throw new Error("Cannot pop variable, does not match topmost scope");
 				}
 				
 				return this.popScope()[name];
