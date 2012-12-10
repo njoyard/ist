@@ -347,6 +347,24 @@
 				
 				return this.scopes.shift();
 			},
+			
+			/* Deprecated, use pushScope */
+			pushEvalVar: function(name, value) {
+				var scope = {};
+				scope[name] = value;
+				this.pushScope(scope);
+			},
+			
+			/* Deprecated, use pushScope */
+			popEvalVar: function(name) {
+				var scope = scopes[0];
+				
+				if (typeof scope[name] === 'undefined' || Object.keys(scope).length > 1) {
+					throw new Error("Cannot pop variable, does not match top scope");
+				}
+				
+				return this.popScope()[name];
+			},
 		
 			/**
 			 * Evaluate `expr` in a scope where the current context is available
