@@ -564,7 +564,7 @@
 							return elem;
 							break;
 					}
-				};
+				};				
 					
 				fragment = context.createDocumentFragment();
 			
@@ -573,6 +573,10 @@
 				});
 			
 				return fragment;
+			},
+			
+			renderInto: function(parent, context) {
+				parent.appendChild(this.render(context, parent.ownerDocument));
 			},
 			
 			/* Return code to regenerate this template */
