@@ -1,10 +1,10 @@
 next version
 - Rewrote rendering to use less class-like patterns (boosted rendering
-  performance by 50-100%); additionnaly the "internal" representation of
+  performance by ~30%); additionnaly the "internal" representation of
   templates is now full JSON.
 - Rewrote expression evaluation to use with statements; pushScope and popScope
   now replace pushEvalVar and popEvalVar, which are now deprecated
-- Added node prerendering (boosts rendering performance by 10-20%)
+- Added node prerendering (boosts rendering performance by ~10%)
 
 v0.5.5 - 2012-12-06
 - Fixed a bug where pushEvalVar would not hide a previously pushed variable

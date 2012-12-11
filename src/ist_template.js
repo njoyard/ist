@@ -308,7 +308,7 @@
 		
 		
 		findScriptTag = function(id) {
-			var i, len, found, scripts; 
+			var i, len, s, found, scripts; 
 
 			try {
 				scripts = document.querySelectorAll('script#' + id);
@@ -319,6 +319,7 @@
 				
 			if (scripts) {
 				for (i = 0, len = scripts.length; i < len; i++) {
+					s = scripts[i];
 					if (s.getAttribute('type') === 'text/x-ist') {
 						return s.innerHTML
 					}
