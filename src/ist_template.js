@@ -56,7 +56,7 @@
 			var UNCHANGED = 'U', INDENT = 'I', DEDENT = 'D', UNDEF,
 				generateNodeTree, parseIndent, escapedCharacter,
 				createTextNode, createElement, createDirective,
-				pegjsParser;
+				pegjsParser, textToJSON, elemToJSON, directiveToJSON;
 
 			
 			// Generate node tree
@@ -178,13 +178,43 @@
 			};
 			
 			
-			// Text node helper
+			// Text node helpers
+			textToJSON = function() {
+				return { text: this.text, line: this.line };
+			};
+			
 			createTextNode = function(text, line) {
-				return { text: text, line: line };
+				return {
+					text: text,
+					line: line,
+					toJSON: textToJSON
+				};
 			};
 			
 
 			// Element object helper
+			elemToJSON =  function() {
+				var o = {
+						tagName: this.tagName,
+						line: this.line,
+						classes: this.classes,
+						attributes: this.attributes,
+						properties: this.properties,
+						events: this.events,
+						children: this.children
+					};
+					
+				if (typeof this.id !== 'undefined') {
+					o.id = this.id;
+				}
+				
+				if (typeof this.partial !== 'undefined') {
+					o.partial = this.partial;
+				}
+				
+				return o;
+			};
+			
 			createElement = function(tagName, qualifiers, additions, line) {
 				var elem = {
 					tagName: tagName,
@@ -193,7 +223,8 @@
 					attributes: {},
 					properties: {},
 					events: {},
-					children: []
+					children: [],
+					toJSON: elemToJSON
 				};
 
 				qualifiers.forEach(function(q) {
@@ -230,12 +261,22 @@
 			
 			
 			// Directive object helper
+			directiveToJSON = function() {
+				return {
+					directive: this.directive,
+					expr: this.expr,
+					line: this.line,
+					children: this.children
+				};
+			};
+			
 			createDirective = function(name, expr, line) {
 				return {
 					directive: name,
 					expr: expr,
 					line: line,
-					children: []
+					children: [],
+					toJSON: directiveToJSON
 				};
 			};
 			
@@ -315,6 +356,9 @@
 	
 		Context.prototype = {
 			/* Node creation aliases */
+			importNode: function(node, deep) {
+				return this.doc.importNode(node, deep);
+			},
 			
 			createDocumentFragment: function() {
 				return this.doc.createDocumentFragment();
@@ -402,12 +446,56 @@
 		var Template = function(name, nodes) {
 			this.name = name || '<unknown>';
 			this.nodes = nodes;
+			this.prerendered = false;
+			
+			this._preRender();
 		};
 		
 		Template.prototype = {
+			_preRender: function(doc) {
+				var rec,
+					expRE = /{{((?:}(?!})|[^}])*)}}/;
+				
+				/* Ensure we have a document, or postpone prerender */
+				doc = doc || document;
+				if (!doc) {
+					return;
+				}
+				
+				rec = function(node) {
+					var pr;
+					
+					/* Constant text node */
+					if (typeof node.text !== 'undefined'
+							&& !expRE.test(node.text)) {
+						node.pr = doc.createTextNode(node.text);
+					}
+					
+					/* Element node */
+					if (typeof node.tagName !== 'undefined') {
+						node.pr = pr = doc.createElement(node.tagName);
+						
+						node.classes.forEach(function(cls) {
+							pr.classList.add(cls);
+						});
+			
+						if (typeof node.id !== 'undefined') {
+							pr.id = node.id;
+						}
+					}
+				
+					if (typeof node.children !== 'undefined') {
+						node.children.forEach(rec);
+					}
+				};
+				
+				this.nodes.forEach(rec);
+				this.prerendered = true;
+			},
+		
 			/* Complete an Error object with information about the current
 			   node and template */
-			completeError: function(err, node) {
+			_completeError: function(err, node) {
 				var current = "in '" + this.name + "' on line "
 					+ (node.line || '<unknown>');
 				
@@ -463,6 +551,10 @@
 					context = new Context(context, doc);
 				}
 				
+				if (!this.prerendered) {
+					this._preRender(context.document);
+				}
+				
 				rec = function(ctx, node) {
 					switch (true) {
 						case typeof node.text !== 'undefined':
@@ -502,23 +594,41 @@
 			
 			/* Text node rendering helper */
 			_renderTextNode: function(ctx, node) {
+				if (typeof node.pr !== 'undefined') {
+					return ctx.importNode(node.pr, false);
+				}
+			
 				try {
 					return ctx.createTextNode(node.text);
 				} catch (err) {
-					throw this.completeError(err, node);
+					throw this._completeError(err, node);
 				}
 			},
 			
 			/* Element rendering helper */
 			_renderElement: function(ctx, node) {
-				var elem = ctx.createElement(node.tagName);
+				var elem;
+				
+				if (typeof node.pr !== 'undefined') {
+					elem = ctx.importNode(node.pr, false);
+				} else {
+					elem = ctx.createElement(node.tagName);
+			
+					node.classes.forEach(function(cls) {
+						elem.classList.add(cls);
+					});
+			
+					if (typeof node.id !== 'undefined') {
+						elem.id = node.id;
+					}
+				}
 			
 				// Set attrs, properties, events, classes and ID
 				Object.keys(node.attributes).forEach(function(attr) {
 					try {
 						var value = ctx.interpolate(node.attributes[attr]);
 					} catch (err) {
-						throw this.completeError(err, node);
+						throw this._completeError(err, node);
 					}
 				
 					elem.setAttribute(attr, value);
@@ -528,7 +638,7 @@
 					try {
 						var value = ctx.interpolate(node.properties[prop]);
 					} catch (err) {
-						throw this.completeError(err, node);
+						throw this._completeError(err, node);
 					}
 				
 					elem[prop] = value;
@@ -539,20 +649,12 @@
 						try {
 							var handler = ctx.evaluate(expr);
 						} catch(err) {
-							throw this.completeError(err, node);
+							throw this._completeError(err, node);
 						}
 					
 						elem.addEventListener(event, handler, false);
 					}, this);
 				}, this);
-			
-				node.classes.forEach(function(cls) {
-					elem.classList.add(cls);
-				});
-			
-				if (typeof node.id !== 'undefined') {
-					elem.id = node.id;
-				}
 			
 				return elem;
 			},
@@ -572,14 +674,14 @@
 					try {
 						subCtx = ctx.createContext(ctx.evaluate(node.expr));
 					} catch(err) {
-						throw this.completeError(err, node);
+						throw this._completeError(err, node);
 					}
 				}
 			
 				try {
 					ret = helper.call(ctx, subCtx, subTemplate);
 				} catch (err) {
-					throw this.completeError(err, node);
+					throw this._completeError(err, node);
 				}
 			
 				if (typeof ret === 'undefined') {
