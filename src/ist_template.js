@@ -35,7 +35,6 @@
 			],
 			// Incomplete (a lot of unicode points are missing), but still reasonable
 			identifierRE = /^[$_a-z][$_a-z0-9]*$/i,
-			codeIndent = "  ",
 			helpers = {},
 			progIds = ['Msxml2.XMLHTTP', 'Microsoft.XMLHTTP', 'Msxml2.XMLHTTP.4.0'],
 			buildMap = [];
@@ -192,7 +191,7 @@
 			};
 			
 
-			// Element object helper
+			// Element object helpers
 			elemToJSON =  function() {
 				var o = {
 						tagName: this.tagName,
@@ -260,7 +259,7 @@
 			};
 			
 			
-			// Directive object helper
+			// Directive object helpers
 			directiveToJSON = function() {
 				return {
 					directive: this.directive,
@@ -309,7 +308,7 @@
 		
 		
 		findScriptTag = function(id) {
-			var found, scripts; 
+			var i, len, found, scripts; 
 
 			try {
 				scripts = document.querySelectorAll('script#' + id);
@@ -319,11 +318,11 @@
 			}
 				
 			if (scripts) {
-				Array.prototype.slice.call(scripts).forEach(function(s) {
-					if (!found && s.getAttribute('type') === 'text/x-ist') {
-						found = s.innerHTML;
+				for (i = 0, len = scripts.length; i < len; i++) {
+					if (s.getAttribute('type') === 'text/x-ist') {
+						return s.innerHTML
 					}
-				});
+				}
 			}
 			
 			return found;
