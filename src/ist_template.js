@@ -18,7 +18,7 @@
 		var ist, parser, fs,
 		
 			// Helper functions
-			extend, jsEscape, preprocess, getXhr, fetchText,
+			jsEscape, preprocess, getXhr, fetchText,
 			findScriptTag, isValidIdentifier,
 			
 			// Constructors
@@ -327,15 +327,6 @@
 			}
 			
 			return found;
-		};
-	
-	
-		/* Extend helper (child.prototype = new Parent() + set prototype properties) */
-		extend = function(Parent, Child, prototype) {
-			Child.prototype = new Parent();
-			Object.keys(prototype).forEach(function(k) {
-				Child.prototype[k] = prototype[k];
-			});
 		};
 	
 	
