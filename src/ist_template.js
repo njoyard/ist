@@ -367,6 +367,11 @@
 				return this.doc.createTextNode(text);
 			},
 			
+			istData: function(node) {
+				node._ist_data = node._ist_data || {};
+				return node._ist_data;
+			},
+			
 			/* Push an object on the scope stack. All its properties will be
 			   usable inside expressions and hide any previously available
 			   property with the same name */
@@ -522,7 +527,7 @@
 					}
 				}
 				
-				tnode._ist_index = index;
+				ctx.istData(tnode).index = index;
 				
 				return tnode;
 			},
@@ -590,7 +595,7 @@
 				}
 				
 				this._updateElement(ctx, node, elem);
-				elem._ist_index = index;
+				ctx.istData(elem).index = index;
 				return elem;
 			},
 			
@@ -626,10 +631,10 @@
 				
 				if (ret.nodeType === ctx.doc.DOCUMENT_FRAGMENT_NODE) {
 					for (i = 0, len = ret.childNodes.length; i < len; i++) {
-						ret.childNodes[i]._ist_index = index;
+						ctx.istData(ret.childNodes[i]).index = index;
 					}
 				} else {
-					ret._ist_index = index;
+					ctx.istData(ret).index = index;
 				}
 			
 				return ret;
@@ -748,7 +753,7 @@
 					var i, len;
 					
 					for (i = 0, len = nodes.length; i < len; i++) {
-						if (nodes[i]._ist_index === index) {
+						if (ctx.istData(nodes[i]).index === index) {
 							return nodes[i];
 						}
 					}
