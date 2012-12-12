@@ -445,6 +445,7 @@
 		};
 		
 		Template.prototype = {
+			/* Prerender constant part of nodes */
 			_preRender: function(doc) {
 				var rec,
 					expRE = /{{((?:}(?!})|[^}])*)}}/;
@@ -486,6 +487,7 @@
 				this.prerendered = true;
 			},
 		
+		
 			/* Complete an Error object with information about the current
 			   node and template */
 			_completeError: function(err, node) {
@@ -500,16 +502,138 @@
 				err.istStack.push(current);
 				return err;
 			},
+			
+			
+			/* Text node rendering helper */
+			_renderTextNode: function(ctx, node, index) {
+				var tnode;
+				
+				if (typeof node.pr !== 'undefined') {
+					tnode = ctx.importNode(node.pr, false);
+				} else {
+					try {
+						tnode = ctx.createTextNode(node.text);
+					} catch (err) {
+						throw this._completeError(err, node);
+					}
+				}
+				
+				tnode._ist_index = index;
+				
+				return tnode;
+			},
+			
+			
+			/* Element rendering helper */
+			_renderElement: function(ctx, node, index) {
+				var elem;
+				
+				if (typeof node.pr !== 'undefined') {
+					elem = ctx.importNode(node.pr, false);
+				} else {
+					elem = ctx.createElement(node.tagName);
+			
+					node.classes.forEach(function(cls) {
+						elem.classList.add(cls);
+					});
+			
+					if (typeof node.id !== 'undefined') {
+						elem.id = node.id;
+					}
+				}
+			
+				// Set attrs, properties, events, classes and ID
+				Object.keys(node.attributes).forEach(function(attr) {
+					try {
+						var value = ctx.interpolate(node.attributes[attr]);
+					} catch (err) {
+						throw this._completeError(err, node);
+					}
+				
+					elem.setAttribute(attr, value);
+				}, this);
+			
+				Object.keys(node.properties).forEach(function(prop) {
+					try {
+						var value = ctx.interpolate(node.properties[prop]);
+					} catch (err) {
+						throw this._completeError(err, node);
+					}
+				
+					elem[prop] = value;
+				}, this);
+				
+				Object.keys(node.events).forEach(function(event) {
+					node.events[event].forEach(function(expr) {
+						try {
+							var handler = ctx.evaluate(expr);
+						} catch(err) {
+							throw this._completeError(err, node);
+						}
+					
+						elem.addEventListener(event, handler, false);
+					}, this);
+				}, this);
+				
+				elem._ist_index = index;
+			
+				return elem;
+			},
+			
+			
+			/* Directive rendering helper */
+			_renderDirective: function(ctx, node, index) {
+				var self = this,
+					subTemplate = new Template(this.name, node.children),
+					helper = helpers[node.directive],
+					subCtx, ret, i, len;
+			
+				if (typeof helper !== 'function') {
+					throw new Error('No block helper for @' + node.directive + ' has been registered');
+				}
+			
+				if (typeof node.expr !== 'undefined') {
+					try {
+						subCtx = ctx.createContext(ctx.evaluate(node.expr));
+					} catch(err) {
+						throw this._completeError(err, node);
+					}
+				}
+			
+				try {
+					ret = helper.call(ctx, subCtx, subTemplate);
+				} catch (err) {
+					throw this._completeError(err, node);
+				}
+			
+				if (typeof ret === 'undefined') {
+					return ctx.createDocumentFragment();
+				}
+				
+				if (ret.nodeType === ctx.doc.DOCUMENT_FRAGMENT_NODE) {
+					for (i = 0, len = ret.childNodes.length; i < len; i++) {
+						ret.childNodes[i]._ist_index = index;
+					}
+				} else {
+					ret._ist_index = index;
+				}
+			
+				return ret;
+			},
+			
 
 			/* Look for a node with the given partial name and return a new
 			   Template object if found */
 			findPartial: function(name) {
 				var result, rec;
 				
+				if (typeof name === "undefined") {
+					return;
+				}
+				
 				rec = function(name, nodes) {
 					var found, i, len,
 						results = nodes.filter(function(n) {
-							if (n.partial) console.log("found partial " + n.partial);
 							return n.partial === name;
 						});
 						
@@ -583,11 +707,15 @@
 				return fragment;
 			},
 			
+			
+			/**/
 			renderInto: function(parent, context) {
 				parent.appendChild(this.render(context, parent.ownerDocument));
 				return this.lastRender;
 			},
 			
+			
+			/**/
 			update: function(context, rnodes) {
 				if (typeof this.lastRender === 'undefined') {
 					throw new Error("Cannot update not yet rendered template");
@@ -605,127 +733,13 @@
 				throw new Error("TODO");
 			},
 			
+			
 			/* Return code to regenerate this template */
 			getCode: function(pretty) {
 				return "new ist.Template("
 					+ JSON.stringify(this.name) + ", "
 					+ JSON.stringify(this.nodes, null, pretty ? 1 : 0)
 					+ ");";
-			},
-			
-			/* Text node rendering helper */
-			_renderTextNode: function(ctx, node, index) {
-				var tnode;
-				
-				if (typeof node.pr !== 'undefined') {
-					tnode = ctx.importNode(node.pr, false);
-				} else {
-					try {
-						tnode = ctx.createTextNode(node.text);
-					} catch (err) {
-						throw this._completeError(err, node);
-					}
-				}
-				
-				tnode._ist_index = index;
-				
-				return tnode;
-			},
-			
-			/* Element rendering helper */
-			_renderElement: function(ctx, node, index) {
-				var elem;
-				
-				if (typeof node.pr !== 'undefined') {
-					elem = ctx.importNode(node.pr, false);
-				} else {
-					elem = ctx.createElement(node.tagName);
-			
-					node.classes.forEach(function(cls) {
-						elem.classList.add(cls);
-					});
-			
-					if (typeof node.id !== 'undefined') {
-						elem.id = node.id;
-					}
-				}
-			
-				// Set attrs, properties, events, classes and ID
-				Object.keys(node.attributes).forEach(function(attr) {
-					try {
-						var value = ctx.interpolate(node.attributes[attr]);
-					} catch (err) {
-						throw this._completeError(err, node);
-					}
-				
-					elem.setAttribute(attr, value);
-				}, this);
-			
-				Object.keys(node.properties).forEach(function(prop) {
-					try {
-						var value = ctx.interpolate(node.properties[prop]);
-					} catch (err) {
-						throw this._completeError(err, node);
-					}
-				
-					elem[prop] = value;
-				}, this);
-				
-				Object.keys(node.events).forEach(function(event) {
-					node.events[event].forEach(function(expr) {
-						try {
-							var handler = ctx.evaluate(expr);
-						} catch(err) {
-							throw this._completeError(err, node);
-						}
-					
-						elem.addEventListener(event, handler, false);
-					}, this);
-				}, this);
-				
-				elem._ist_index = index;
-			
-				return elem;
-			},
-			
-			/* Directive rendering helper */
-			_renderDirective: function(ctx, node, index) {
-				var self = this,
-					subTemplate = new Template(this.name, node.children),
-					helper = helpers[node.directive],
-					subCtx, ret, i, len;
-			
-				if (typeof helper !== 'function') {
-					throw new Error('No block helper for @' + node.directive + ' has been registered');
-				}
-			
-				if (typeof node.expr !== 'undefined') {
-					try {
-						subCtx = ctx.createContext(ctx.evaluate(node.expr));
-					} catch(err) {
-						throw this._completeError(err, node);
-					}
-				}
-			
-				try {
-					ret = helper.call(ctx, subCtx, subTemplate);
-				} catch (err) {
-					throw this._completeError(err, node);
-				}
-			
-				if (typeof ret === 'undefined') {
-					return ctx.createDocumentFragment();
-				}
-				
-				if (ret.nodeType === ctx.doc.DOCUMENT_FRAGMENT_NODE) {
-					for (i = 0, len = ret.childNodes.length; i < len; i++) {
-						ret.childNodes[i]._ist_index = index;
-					}
-				} else {
-					ret._ist_index = index;
-				}
-			
-				return ret;
 			}
 		};
 		
@@ -735,6 +749,7 @@
 			this.context = context;
 			this.nodes = nodes;
 		};
+		
 		
 		RenderedTemplate.prototype = {
 			update: function(context) {
@@ -791,10 +806,12 @@
 			return new Template(name, parsed);
 		};
 		
+		
 		/* Export constructors */
 		ist.Context = Context;
 		ist.Template = Template;
 		ist.RenderedTemplate = RenderedTemplate;
+		
 	
 		/**
 		 * Node creation interface
