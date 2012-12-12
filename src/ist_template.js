@@ -22,7 +22,7 @@
 			findScriptTag, isValidIdentifier,
 			
 			// Constructors
-			Context, Template, RenderedTemplate,
+			LiveFragment, Context, Template, RenderedTemplate,
 			
 			// Helper data
 			reservedWords = [
@@ -328,6 +328,118 @@
 			
 			return found;
 		};
+		
+		
+		/*
+		 * LiveFragment object; used to represent a "live"-DocumentFragment.
+		 * It is created from an existing an continuous set of sibling nodes.
+		 * Operations on a LiveFragment are propagated to its parent.
+		 */
+		LiveFragment = function(parent, nodes, prev, next) {
+			this.parentNode = parent;
+			this.childNodes = nodes;
+			this.previousSibling = prev;
+			this.nextSibling = next;
+		};
+
+		LiveFragment.prototype = {
+			appendChild: function(node) {
+				var cn, i, len;
+				if (node.nodeType === node.DOCUMENT_FRAGMENT_NODE) {
+					cn = node.childNodes;
+					for (i = 0, len = cn.length; i < len; i++) {
+						this.appendChild(cn[i]);
+					}
+				
+					return;
+				}
+			
+				// Remove child from its parent first
+				if (node.parentNode) {
+					node.parentNode.removeChild(node);
+				}
+				
+				try {
+					this.removeChild(node);
+				} catch (e) {
+				}
+			
+				if (this.nextSibling) {
+					this.parentNode.insertBefore(node, this.nextSibling);
+				} else {
+					this.parentNode.appendChild(node);
+				}
+				
+				this.childNodes.push(node);
+				
+				return node;
+			},
+			
+			insertBefore: function(newNode, refNode) {
+				var index, cn, i, len;
+				
+				if (!refNode) {
+					return this.appendChild(newNode);
+				}
+				
+				if (newNode.nodeType === newNode.DOCUMENT_FRAGMENT_NODE) {
+					cn = newNode.childNodes;
+					for (i = 0, len = cn.length; i < len; i++) {
+						this.appendChild(cn[i]);
+					}
+				
+					return;
+				}
+				
+				// Remove child from its parent first
+				if (newNode.parentNode) {
+					newNode.parentNode.removeChild(newNode);
+				}
+				
+				try {
+					this.removeChild(newNode);
+				} catch (e) {
+				}
+				
+				index = this.childNodes.indexOf(refNode);
+				
+				if (index === -1) {
+					throw new Error("Cannot find reference node");
+				}
+				
+				this.parentNode.insertBefore(newNode, refNode);
+				this.childNodes.splice(index, 0, newNode);
+				
+				return newNode;
+			},
+			
+			removeChild: function(node) {
+				var index = this.childNodes.indexOf(node);
+				
+				if (index === -1) {
+					throw new Error("Cannot remove node");
+				}
+				
+				this.parentNode.removeChild(node);
+				this.childNodes.splice(index, 1);
+				
+				return node;
+			},
+			
+			replaceChild: function(newNode, oldNode) {
+				var index = this.childNodes.indexOf(newNode);
+				
+				if (index === -1) {
+					throw new Error("Cannot replace node");
+				}
+				
+				this.parentNode.replaceChild(newNode, oldNode);
+				this.childNodes.splice(index, 1, newNode);
+				
+				return oldNode;
+			}
+		};
+		
 	
 	
 		/**
@@ -600,7 +712,11 @@
 			},
 			
 			
-			/* Directive rendering helper */
+			/* Directive rendering helpers */
+			_updateDirective: function(ctx, node, domnodes) {
+				
+			},
+			
 			_renderDirective: function(ctx, node, index) {
 				var self = this,
 					subTemplate = new Template(this.name, node.children),
@@ -750,33 +866,38 @@
 				}
 				
 				findIndex = function(nodes, index) {
-					var i, len;
+					var i, len, idx, result = [];
 					
 					for (i = 0, len = nodes.length; i < len; i++) {
-						if (ctx.istData(nodes[i]).index === index) {
-							return nodes[i];
+						idx = ctx.istData(nodes[i]).index;
+						if (idx === index) {
+							result.push(nodes[i]);
+						}
+						
+						if (idx > index) {
+							break;
 						}
 					}
 					
-					throw new Error("Could not find index " + index);
+					return result;
 				};
 				
-				rec = function(ctx, node, rnode) {
+				rec = function(ctx, node, rnodes) {
 					switch (true) {
 						case typeof node.text !== 'undefined':
-							self._updateTextNode(ctx, node, rnode);
+							self._updateTextNode(ctx, node, rnodes[0]);
 							break;
 							
 						case typeof node.tagName !== 'undefined':
-							self._updateElement(ctx, node, rnode);
+							self._updateElement(ctx, node, rnodes[0]);
 							
 							node.children.forEach(function(child, index) {
-								rec(ctx, child, findIndex(rnode.childNodes, index));
+								rec(ctx, child, findIndex(rnodes[0].childNodes, index));
 							});
 							break;
 							
 						case typeof node.directive !== 'undefined':
-							throw new Error("TODO: support update for directives");
+							self._updateDirective(ctx, node, rnodes);
 							break;
 					}
 				};
@@ -863,6 +984,7 @@
 		
 		
 		/* Export constructors */
+		ist.LiveFragment = LiveFragment;
 		ist.Context = Context;
 		ist.Template = Template;
 		ist.RenderedTemplate = RenderedTemplate;
