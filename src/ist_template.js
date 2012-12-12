@@ -364,7 +364,7 @@
 			},
 		
 			createTextNode: function(text) {
-				return this.doc.createTextNode(this.interpolate(text));
+				return this.doc.createTextNode(text);
 			},
 			
 			/* Push an object on the scope stack. All its properties will be
@@ -504,7 +504,11 @@
 			},
 			
 			
-			/* Text node rendering helper */
+			/* Text node rendering helpers */
+			_updateTextNode: function(ctx, node, domnode) {
+				domnode.data = ctx.interpolate(node.text);
+			},
+			
 			_renderTextNode: function(ctx, node, index) {
 				var tnode;
 				
@@ -512,7 +516,7 @@
 					tnode = ctx.importNode(node.pr, false);
 				} else {
 					try {
-						tnode = ctx.createTextNode(node.text);
+						tnode = ctx.createTextNode(ctx.interpolate(node.text));
 					} catch (err) {
 						throw this._completeError(err, node);
 					}
@@ -524,7 +528,50 @@
 			},
 			
 			
-			/* Element rendering helper */
+			/* Element rendering helpers */
+			_updateElement: function(ctx, node, domnode) {
+				// Set attrs, properties, events, classes and ID
+				Object.keys(node.attributes).forEach(function(attr) {
+					try {
+						var value = ctx.interpolate(node.attributes[attr]);
+					} catch (err) {
+						throw this._completeError(err, node);
+					}
+				
+					domnode.setAttribute(attr, value);
+				}, this);
+			
+				Object.keys(node.properties).forEach(function(prop) {
+					try {
+						var value = ctx.interpolate(node.properties[prop]);
+					} catch (err) {
+						throw this._completeError(err, node);
+					}
+				
+					domnode[prop] = value;
+				}, this);
+				
+				if (typeof domnode._ist_detach !== 'undefined') {
+					domnode._ist_detach.forEach(function(detach) {
+						domnode.removeEventListener(detach.event, detach.handler, false);
+					});
+				}
+				domnode._ist_detach = [];
+				
+				Object.keys(node.events).forEach(function(event) {
+					node.events[event].forEach(function(expr) {
+						try {
+							var handler = ctx.evaluate(expr);
+						} catch(err) {
+							throw this._completeError(err, node);
+						}
+					
+						domnode._ist_detach.push({ event: event, handler: handler });
+						domnode.addEventListener(event, handler, false);
+					}, this);
+				}, this);
+			},
+			
 			_renderElement: function(ctx, node, index) {
 				var elem;
 				
@@ -541,42 +588,9 @@
 						elem.id = node.id;
 					}
 				}
-			
-				// Set attrs, properties, events, classes and ID
-				Object.keys(node.attributes).forEach(function(attr) {
-					try {
-						var value = ctx.interpolate(node.attributes[attr]);
-					} catch (err) {
-						throw this._completeError(err, node);
-					}
 				
-					elem.setAttribute(attr, value);
-				}, this);
-			
-				Object.keys(node.properties).forEach(function(prop) {
-					try {
-						var value = ctx.interpolate(node.properties[prop]);
-					} catch (err) {
-						throw this._completeError(err, node);
-					}
-				
-					elem[prop] = value;
-				}, this);
-				
-				Object.keys(node.events).forEach(function(event) {
-					node.events[event].forEach(function(expr) {
-						try {
-							var handler = ctx.evaluate(expr);
-						} catch(err) {
-							throw this._completeError(err, node);
-						}
-					
-						elem.addEventListener(event, handler, false);
-					}, this);
-				}, this);
-				
+				this._updateElement(ctx, node, elem);
 				elem._ist_index = index;
-			
 				return elem;
 			},
 			
@@ -678,16 +692,16 @@
 							return self._renderTextNode(ctx, node, index);
 							break;
 							
-						case typeof node.directive !== 'undefined':
-							return self._renderDirective(ctx, node, index);
-							break;
-							
 						case typeof node.tagName !== 'undefined':
 							var elem = self._renderElement(ctx, node, index);
 							node.children.forEach(function(child, index) {
-								elem.appendChild(rec(ctx, child));
+								elem.appendChild(rec(ctx, child, index));
 							});
 							return elem;
+							break;
+							
+						case typeof node.directive !== 'undefined':
+							return self._renderDirective(ctx, node, index);
 							break;
 					}
 				};				
@@ -717,6 +731,8 @@
 			
 			/**/
 			update: function(context, rnodes) {
+				var rec, findIndex, self = this;
+				
 				if (typeof this.lastRender === 'undefined') {
 					throw new Error("Cannot update not yet rendered template");
 				}
@@ -728,9 +744,43 @@
 					context = new Context(context, this.lastRender.context.doc);
 				}
 				
+				findIndex = function(nodes, index) {
+					var i, len;
+					
+					for (i = 0, len = nodes.length; i < len; i++) {
+						if (nodes[i]._ist_index === index) {
+							return nodes[i];
+						}
+					}
+					
+					throw new Error("Could not find index " + index);
+				};
 				
+				rec = function(ctx, node, rnode) {
+					switch (true) {
+						case typeof node.text !== 'undefined':
+							self._updateTextNode(ctx, node, rnode);
+							break;
+							
+						case typeof node.tagName !== 'undefined':
+							self._updateElement(ctx, node, rnode);
+							
+							node.children.forEach(function(child, index) {
+								rec(ctx, child, findIndex(rnode.childNodes, index));
+							});
+							break;
+							
+						case typeof node.directive !== 'undefined':
+							throw new Error("TODO: support update for directives");
+							break;
+					}
+				};
 				
-				throw new Error("TODO");
+				this.nodes.forEach(function(node, index) {
+					rec(context, node, findIndex(rnodes, index));
+				});
+				
+				this.lastRender.context = context;
 			},
 			
 			
@@ -753,7 +803,7 @@
 		
 		RenderedTemplate.prototype = {
 			update: function(context) {
-				return this.template.update(context || this.context, this.nodes);
+				this.template.update(context || this.context, this.nodes);
 			}
 		};
 	
