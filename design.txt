@@ -42,4 +42,6 @@ Goal => Updateable node tree
   TemplateNode to host new methods.  Make findPartial return a TemplateNode.
 - Find a way to avoid re-rendering everything ?  Notably keeping node state if
   it changed after being rendered...
-  
+
+
+
