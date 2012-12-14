@@ -1,0 +1,2 @@
+define(['parser/parsehelpers'], function(helpers) {
+	var pegjsParser;

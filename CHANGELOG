@@ -5,6 +5,7 @@ next version
 - Rewrote expression evaluation to use with statements; pushScope and popScope
   now replace pushEvalVar and popEvalVar, which are now deprecated
 - Added node prerendering (boosts rendering performance by ~10%)
+- Split code into modules, switched to building using r.js
 
 v0.5.5 - 2012-12-06
 - Fixed a bug where pushEvalVar would not hide a previously pushed variable

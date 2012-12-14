@@ -2,4 +2,5 @@
 dist
 
 # Do not track compiled parser
-src/parser.js
+src/parser/parser.compiled.js
+src/parser/parser.js

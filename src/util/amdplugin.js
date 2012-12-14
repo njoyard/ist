@@ -1,0 +1,164 @@
+/**
+ * IST: Indented Selector Templating
+ *
+ * Copyright (c) 2012 Nicolas Joyard
+ * Released under the MIT license.
+ *
+ * Author: Nicolas Joyard <joyard.nicolas@gmail.com>
+ * http://njoyard.github.com/ist
+ */
+define(['require', 'util/findscript'], function(require, findScriptTag) {
+	var pluginify = function(ist) {
+		var getXhr, fetchText,
+			progIds = ['Msxml2.XMLHTTP', 'Microsoft.XMLHTTP', 'Msxml2.XMLHTTP.4.0'],
+			buildMap = {};
+
+		if (typeof window !== "undefined" && window.navigator && window.document) {
+			getXhr = function() {
+				var xhr, i, progId;
+				if (typeof XMLHttpRequest !== "undefined") {
+					return new XMLHttpRequest();
+				} else {
+					for (i = 0; i < 3; i++) {
+						progId = progIds[i];
+						try {
+							xhr = new ActiveXObject(progId);
+						} catch (e) {}
+
+						if (xhr) {
+							progIds = [progId];  // faster next time
+							break;
+						}
+					}
+				}
+
+				if (!xhr) {
+					throw new Error("getXhr(): XMLHttpRequest not available");
+				}
+
+				return xhr;
+			};
+
+			fetchText = function(url, callback) {
+				var xhr = getXhr();
+				xhr.open('GET', url, true);
+				xhr.onreadystatechange = function (evt) {
+					//Do not explicitly handle errors, those should be
+					//visible via console output in the browser.
+					if (xhr.readyState === 4) {
+						if (xhr.status !== 200) {
+							throw new Error("HTTP status "  + xhr.status + " when loading " + url);
+						}
+	
+						callback(xhr.responseText);
+					}
+				};
+				xhr.send(null);
+			};
+		} else if (typeof process !== "undefined" && process.versions && !!process.versions.node) {
+			fs = require.nodeRequire('fs');
+
+			fetchText = function(url, callback) {
+				var file = fs.readFileSync(url, 'utf8');
+				//Remove BOM (Byte Mark Order) from utf8 files if it is there.
+				if (file.indexOf('\uFEFF') === 0) {
+				    file = file.substring(1);
+				}
+				callback(file);
+			};
+		}
+
+		ist.write = function (pluginName, name, write) {
+			var bmName = 'ist!' + name;
+
+			if (buildMap.hasOwnProperty(bmName)) {
+				var text = buildMap[bmName];
+				write(text);
+			}
+		};
+
+		ist.load = function (name, parentRequire, load, config) {
+			var path, dirname, doParse = true;
+			
+			if (/!bare$/.test(name)) {
+				doParse = false;
+				name = name.replace(/!bare$/, '');
+			}
+			
+			path = parentRequire.toUrl(name + '.ist'),
+			dirname = name.indexOf('/') === -1 ? '.' : name.replace(/\/[^\/]*$/, '');
+
+			fetchText(path, function (text) {
+				var code, i, m, deps = ['ist'];
+	
+				/* Find @include calls and replace them with 'absolute' paths
+				   (ie @include 'inc/include' in 'path/to/template'
+					 becomes @include 'path/to/inc/include')
+				   while recording all distinct include paths
+				 */
+					 
+				text = text.replace(/^(\s*)@include\s+(?:text=)?(['"])((?:(?=(\\?))\4.)*?)\2/gm,
+					function(m, p1, p2, p3) {
+						if (!findScriptTag(p3)) {
+							var dpath = dirname + '/' + p3.replace(/\.ist$/, '');
+			
+							if (deps.indexOf('ist!' + dpath) === -1) {
+								deps.push('ist!' + dpath);
+							}
+			
+							return p1 + '@include "' + dpath + '"';
+						} else {
+							// Script tag found, do not change directive
+							return m;
+						}
+					});
+				
+				if (doParse) {
+					/* Get parsed code */
+					code = ist(text, name).getCode(true);
+					text = "define('ist!" + name + "'," + JSON.stringify(deps) + ", function(ist) {\n" +
+						   "  return " + code + ";\n" +
+						   "});\n";
+				} else {
+					if (config.isBuild) {
+						text = jsEscape(text);		
+						text = "define('ist!" + name + "'," + JSON.stringify(deps) + ",function(ist){" +
+							   "var template='" + text + "';" +
+							   	"return ist(template,'" + name + "');" +
+							   "});";
+					} else {
+						/* "Pretty-print" template text */
+						text = jsEscape(text).replace(/\\n/g, "\\n' +\n\t               '");
+						text = "define('ist!" + name + "'," + JSON.stringify(deps) + ", function(ist){ \n" +
+							   "\tvar template = '" + text + "';\n" +
+							   "\treturn ist(template, '" + name + "');\n" +
+							   "});\n";
+					}
+				}
+					   
+				//Hold on to the transformed text if a build.
+				if (config.isBuild) {
+					buildMap['ist!' + name] = text;
+				}
+
+				//IE with conditional comments on cannot handle the
+				//sourceURL trick, so skip it if enabled.
+				/*@if (@_jscript) @else @*/
+				if (!config.isBuild) {
+					text += "\r\n//@ sourceURL=" + path;
+				}
+				/*@end@*/
+	
+				load.fromText('ist!' + name, text);
+
+				// Finish loading and give result to load()
+				parentRequire(['ist!' + name], function (value) {
+					load(value);
+				});
+			});
+		};
+	};
+	
+	return pluginify
+	
+});
