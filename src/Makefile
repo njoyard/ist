@@ -22,10 +22,10 @@ parser/parser.compiled.js: parser/parser.pegjs
 parser/parser.js: parts/parser.header.part parser/parser.compiled.js parts/parser.footer.part
 	cat $^ > $@
 
-$(BUILDDIR)/ist.js: $(BUILDDIR) $(RJSCONFIG) $(SOURCE)
+$(BUILDDIR)/ist.js: $(RJSCONFIG) $(SOURCE) | $(BUILDDIR)
 	$(RJS) -o $(RJSCONFIG) out=$@ optimize=none
 	
-$(BUILDDIR)/ist-min.js: $(BUILDDIR) $(RJSCONFIG) $(SOURCE)
+$(BUILDDIR)/ist-min.js: $(RJSCONFIG) $(SOURCE) | $(BUILDDIR)
 	$(RJS) -o $(RJSCONFIG) out=$@
 
 @PHONY: ist
