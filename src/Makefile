@@ -8,6 +8,7 @@ RJSCONFIG=ist.build.js
 COMPONENTS=$(wildcard components/*.js)
 PARSER=parser/parser.js parser/preprocessor.js
 UTIL=$(wildcard util/*.js)
+PARTS=$(wildcard parts/build.*.part)
 
 SOURCE=ist.js $(COMPONENTS) $(PARSER) $(UTIL)
 
@@ -22,10 +23,10 @@ parser/parser.compiled.js: parser/parser.pegjs
 parser/parser.js: parts/parser.header.part parser/parser.compiled.js parts/parser.footer.part
 	cat $^ > $@
 
-$(BUILDDIR)/ist.js: $(RJSCONFIG) $(SOURCE) | $(BUILDDIR)
+$(BUILDDIR)/ist.js: $(RJSCONFIG) $(SOURCE) $(PARTS) | $(BUILDDIR)
 	$(RJS) -o $(RJSCONFIG) out=$@ optimize=none
 	
-$(BUILDDIR)/ist-min.js: $(RJSCONFIG) $(SOURCE) | $(BUILDDIR)
+$(BUILDDIR)/ist-min.js: $(RJSCONFIG) $(SOURCE) $(PARTS) | $(BUILDDIR)
 	$(RJS) -o $(RJSCONFIG) out=$@
 
 @PHONY: ist
@@ -37,5 +38,6 @@ ist-min: $(BUILDDIR)/ist-min.js
 @PHONY: clean
 clean:
 	@rm parser/parser.compiled.js
+	@rm parser/parser.js
 	@rm -rf $(BUILDDIR) 
 

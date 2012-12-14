@@ -1,12 +1,3 @@
-/** @license
- * IST: Indented Selector Templating
- *
- * Copyright (c) 2012 Nicolas Joyard
- * Released under the MIT license.
- *
- * Author: Nicolas Joyard <joyard.nicolas@gmail.com>
- * http://njoyard.github.com/ist
- */
 define(function() {
 	return function(id) {
 		var i, len, s, found, scripts; 

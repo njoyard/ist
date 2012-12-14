@@ -1,12 +1,3 @@
-/**
- * IST: Indented Selector Templating
- *
- * Copyright (c) 2012 Nicolas Joyard
- * Released under the MIT license.
- *
- * Author: Nicolas Joyard <joyard.nicolas@gmail.com>
- * http://njoyard.github.com/ist
- */
 define(['require', 'util/findscript'], function(require, findScriptTag) {
 	var pluginify = function(ist) {
 		var getXhr, fetchText,
