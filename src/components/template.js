@@ -1,7 +1,10 @@
-define(['components/context', 'components/rendered', 'components/livefragment'],
-function(Context, RenderedTemplate, LiveFragment) {
-	var directives;
-
+define([
+	'components/context',
+	'components/rendered',
+	'components/livefragment',
+	'components/directives'
+],
+function(Context, RenderedTemplate, LiveFragment, directives) {
 	/**
 	 * Template object; encapsulate template nodes and rendering helpers
 	 */
@@ -192,26 +195,20 @@ function(Context, RenderedTemplate, LiveFragment) {
 					throw this._completeError(err, node);
 				}
 			}
+			
+			var fragment = ctx.createDocumentFragment();
 		
 			try {
-				ret = helper.call(ctx, subCtx, subTemplate);
+				helper.call(ctx, subCtx, subTemplate, new LiveFragment(fragment));
 			} catch (err) {
 				throw this._completeError(err, node);
 			}
-		
-			if (typeof ret === 'undefined') {
-				return ctx.createDocumentFragment();
-			}
 			
-			if (ret.nodeType === ctx.doc.DOCUMENT_FRAGMENT_NODE) {
-				for (i = 0, len = ret.childNodes.length; i < len; i++) {
-					ctx.istData(ret.childNodes[i]).index = index;
-				}
-			} else {
-				ctx.istData(ret).index = index;
+			for (i = 0, len = fragment.childNodes.length; i < len; i++) {
+				ctx.istData(fragment.childNodes[i]).index = index;
 			}
 		
-			return ret;
+			return fragment;
 		},
 		
 

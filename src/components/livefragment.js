@@ -1,33 +1,61 @@
 define(function() {
+	var slice = Array.prototype.slice;
+	
 	/*
 	 * LiveFragment object; used to represent a "live"-DocumentFragment.
-	 * It is created from an existing an continuous set of sibling nodes.
-	 * Operations on a LiveFragment are propagated to its parent.
+	 *
+	 * Has the same API as a DocumentFragment, with some additions.  Operations
+	 * on a LiveFragment are propagated to its parent.
+	 *
+	 * new LiveFragment(node)
+	 * 	creates a LiveFragment holding all child nodes of 'node'.  Can be used
+	 * 	with a "real" node, a DocumentFragment or an other LiveFragment.
+	 *
+	 * new LiveFragment(node, [], prevNode, nextNode)
+	 * 	creates an empty LiveFragment inside 'node' between 'prevNode' and
+	 * 	'nextNode'
+	 *
+	 * new LiveFragment(node, [nodes...])
+	 * 	creates a LiveFragment holding a subset of child nodes from 'node'.  The
+	 *  subset must be contiguous (and it may be an Array or a NodeList).
 	 */
 	var LiveFragment = function(parent, nodes, prev, next) {
-		if (nodes.length === 0) {
-			if (!prev || !next) {
-				throw new Error("Cannot find adjacent siblings");
+		if (typeof nodes === 'undefined') {
+			this.childNodes = slice.call(parent.childNodes);
+			this.previousSibling = null;
+			this.nextSibling = null;
+		} else {
+			if (nodes.length === 0) {
+				if (!prev || !next) {
+					throw new Error("Cannot find adjacent siblings");
+				}
+			
+				// TODO check validity of prev/next
+				this.previousSibling = prev;
+				this.nextSibling = next;
+			} else {
+				// TODO check whether nodes are contiguous
+				this.previousSibling = nodes[0].previousSibling;
+				this.nextSibling = nodes[nodes.length - 1].nextSibling;
 			}
 			
-			this.previousSibling = prev;
-			this.nextSibling = next;
-		} else {
-			this.previousSibling = nodes[0].previousSibling;
-			this.nextSibling = nodes[nodes.length - 1].nextSibling;
+			this.childNodes = slice.call(nodes);
 		}
 		
 		if (parent instanceof LiveFragment) {
 			this.parentNode = parent.parentNode;
 		} else {
+			// TODO check validity of parent
 			this.parentNode = parent;
 		}
 	
+		// Make other LiveFragments treat this as a DocumentFragment
 		this.nodeType = this.parentNode.DOCUMENT_FRAGMENT_NODE;
-		this.childNodes = nodes;
 	};
 
 	LiveFragment.prototype = {
+		/* Append node to fragment, removing it from its parent first.
+		   Can be called with a DocumentFragment or a LiveFragment */
 		appendChild: function(node) {
 			var cn, i, len;
 			if (node.nodeType === node.DOCUMENT_FRAGMENT_NODE) {
@@ -60,6 +88,9 @@ define(function() {
 			return node;
 		},
 		
+		/* Insert node into fragment before reference node, removing it from its
+			parent first. Can be called with a DocumentFragment or a
+			LiveFragment */
 		insertBefore: function(newNode, refNode) {
 			var index, cn, i, len;
 			
@@ -98,6 +129,7 @@ define(function() {
 			return newNode;
 		},
 		
+		/* Remove node from fragment */
 		removeChild: function(node) {
 			var index = this.childNodes.indexOf(node);
 			
@@ -111,6 +143,7 @@ define(function() {
 			return node;
 		},
 		
+		/* Replace node in fragment */
 		replaceChild: function(newNode, oldNode) {
 			var index = this.childNodes.indexOf(newNode);
 			
@@ -124,6 +157,7 @@ define(function() {
 			return oldNode;
 		},
 		
+		/* Remove all nodes from fragment */
 		empty: function() {
 			this.childNodes.forEach(function(node) {
 				this.parentNode.removeChild(node);
@@ -132,6 +166,7 @@ define(function() {
 			this.childNodes = [];
 		},
 		
+		/* Extend fragment to adjacent node */
 		extend: function(node) {
 			if (node === this.nextSibling) {
 				this.childNodes.push(this.nextSibling);
@@ -146,6 +181,18 @@ define(function() {
 			}
 			
 			throw new Error("Cannot extend to non-adjacent node");
+		},
+		
+		get firstChild() {
+			return this.childNodes[0] || null;
+		},
+		
+		get lastChild() {
+			return this.childNodes[this.childNodes.length - 1] || null;
+		},
+		
+		get hasChildNodes() {
+			return this.childNodes.length > 0;
 		}
 	};
 	
