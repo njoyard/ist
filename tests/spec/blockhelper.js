@@ -71,7 +71,6 @@ define([
 			
 			ist.registerHelper('testBlock', function(subcontext, subtemplate) {
 				frag = this.createDocumentFragment();
-				return frag;
 			});
 			ist(textBlockhelper).render(context);
 			
@@ -84,7 +83,6 @@ define([
 			
 			ist.registerHelper('testBlock', function(subcontext, subtemplate) {
 				elem = this.createElement('div');
-				return this.createDocumentFragment();
 			});
 			ist(textBlockhelper).render(context);
 			
@@ -120,18 +118,31 @@ define([
 			expect( result.querySelector('.child').firstChild.textContent ).toBe( 'interpolated my value' );
 		});
 		
-		it("should insert what helpers return into the parent template node", function() {
-			var node, fragment;
+		it("should pass an empty LiveFragment to helpers as third argument", function() {
+			var frag,
+				context = { context: { value: 'context' } };
+			
+			ist.registerHelper('testBlock', function(subctx, tmpl, fragment) {
+				frag = fragment;
+			});
+			ist(textBlockhelper).render(context);
+			
+			expect( frag.nodeType ).toBe( document.DOCUMENT_FRAGMENT_NODE );
+			expect( typeof frag.extend ).toBe( 'function' );
+		});
+		
+		it("should insert what helpers insert in their LiveFragment into the parent template node", function() {
+			var node, frag;
 				
-			ist.registerHelper('testBlock', function(subcontext, subtemplate) {
+			ist.registerHelper('testBlock', function(subcontext, subtemplate, fragment) {
 				node = this.createElement('div');
 				node.className = 'generated';
-				return node;
+				fragment.appendChild(node);
 			});
-			fragment = ist(textBlockhelper).render({ context: undefined });
+			frag = ist(textBlockhelper).render({ context: undefined });
 			
-			expect( fragment.querySelector("div.parent div.generated") ).toNotBe( null );
-			expect( fragment.querySelector("div.parent div.generated") ).toBe( node );
+			expect( frag.querySelector("div.parent div.generated") ).toNotBe( null );
+			expect( frag.querySelector("div.parent div.generated") ).toBe( node );
 		});
 		
 		it("should allow passing a quoted string instead of a context path", function() {
@@ -158,9 +169,9 @@ define([
 		});
 		
 		it("should allow pushing variables to a rendering context", function() {
-			ist.registerHelper('pushBlock', function(subcontext, subtemplate) {
+			ist.registerHelper('pushBlock', function(subcontext, subtemplate, fragment) {
 				subcontext.pushScope({ variable: "value" });
-				return subtemplate.render(subcontext);
+				fragment.appendChild(subtemplate.render(subcontext));
 			});
 			expect(
 				ist("@pushBlock this\n '{{ variable }}'").render({}).childNodes[0]
@@ -168,9 +179,9 @@ define([
 		});
 		
 		it("should allow overwriting existing rendering context properties when pushing variables", function() {
-			ist.registerHelper('pushBlock', function(subcontext, subtemplate) {
+			ist.registerHelper('pushBlock', function(subcontext, subtemplate, fragment) {
 				subcontext.pushScope({ variable: "new value" });
-				return subtemplate.render(subcontext);
+				fragment.appendChild(subtemplate.render(subcontext));
 			});
 			expect(
 				ist("@pushBlock this\n '{{ variable }}'").render({ variable: "value" }).childNodes[0]
@@ -178,29 +189,29 @@ define([
 		});
 		
 		it("should allow stacking pushed variables in rendering contexts", function() {
-			var fragment;
+			var frag;
 			
-			ist.registerHelper('pushBlock1', function(subcontext, subtemplate) {
+			ist.registerHelper('pushBlock1', function(subcontext, subtemplate, fragment) {
 				subcontext.pushScope({ variable: "value 1" });
-				return subtemplate.render(subcontext);
+				fragment.appendChild(subtemplate.render(subcontext));
 			});
-			ist.registerHelper('pushBlock2', function(subcontext, subtemplate) {
+			ist.registerHelper('pushBlock2', function(subcontext, subtemplate, fragment) {
 				subcontext.pushScope({ variable: "value 2" });
-				return subtemplate.render(subcontext);
+				fragment.appendChild(subtemplate.render(subcontext));
 			});
 			
-			fragment = ist("@pushBlock1 this\n '0 {{ variable }}'\n @pushBlock2 this\n  '1 {{ variable }}'\n '2 {{ variable }}'").render({});
+			frag = ist("@pushBlock1 this\n '0 {{ variable }}'\n @pushBlock2 this\n  '1 {{ variable }}'\n '2 {{ variable }}'").render({});
 			
-			expect( fragment.childNodes[0] ).toHaveTextContent( "0 value 1" );
-			expect( fragment.childNodes[1] ).toHaveTextContent( "1 value 2" );
-			expect( fragment.childNodes[2] ).toHaveTextContent( "2 value 1" );
+			expect( frag.childNodes[0] ).toHaveTextContent( "0 value 1" );
+			expect( frag.childNodes[1] ).toHaveTextContent( "1 value 2" );
+			expect( frag.childNodes[2] ).toHaveTextContent( "2 value 1" );
 		});
 		
 		it("should allow popping pushed variables from rendering contexts", function() {
-			ist.registerHelper('pushBlock', function(subcontext, subtemplate) {
+			ist.registerHelper('pushBlock', function(subcontext, subtemplate, fragment) {
 				subcontext.pushScope({ variable: "new value" });
 				subcontext.popScope();
-				return subtemplate.render(subcontext);
+				fragment.appendChild(subtemplate.render(subcontext));
 			});
 			expect(
 				ist("@pushBlock this\n '{{ variable }}'").render({ variable: "value" }).childNodes[0]
