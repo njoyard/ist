@@ -111,7 +111,7 @@ define(['components/livefragment'], function(LiveFragment) {
 				throw new Error(array + " is not an array");
 			}
 			
-			iterationHelper(array, array, ctx, tmpl, fragment);
+			iterationHelper.call(this, array, array, ctx, tmpl, fragment);
 		},
 
 		"eachkey": function(ctx, tmpl) {
@@ -124,7 +124,7 @@ define(['components/livefragment'], function(LiveFragment) {
 			});
 			
 			// TODO 'object' must be added to 'loop' !
-			iterationHelper(keys, array, ctx, tmpl, fragment);
+			iterationHelper.call(this, keys, array, ctx, tmpl, fragment);
 		}
 	};
 	
