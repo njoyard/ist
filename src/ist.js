@@ -78,7 +78,7 @@ define([
 	
 	
 	/* Built-in @include helper */
-	ist.registerHelper("include", function(ctx, tmpl) {
+	ist.registerHelper("include", function(ctx, tmpl, fragment) {
 		var what = ctx.value.replace(/\.ist$/, ''),
 			scripts, found, tryReq;
 
@@ -115,7 +115,11 @@ define([
 
 		if (typeof found.render === 'function') {
 			// Render included template
-			return found.render(this, tmpl.document);
+			if (fragment.hasChildNodes) {
+				found.update(this, fragment);
+			} else {	
+				fragment.appendChild(found.render(this));
+			}
 		} else {
 			throw new Error("Invalid included template '" + what + "'");
 		}
