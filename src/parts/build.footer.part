@@ -1,5 +1,7 @@
 	
-	if (!isAMD) {
+	if (isAMD) {
+		global.define("ist", [], function() { return modules.ist; });
+	} else {
 		previous = global.ist;
 		
 		global.ist = modules.ist;

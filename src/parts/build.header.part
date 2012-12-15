@@ -9,27 +9,8 @@
  * http://njoyard.github.com/ist
  */
 (function(global) {
-	var isAMD, previous, define, require, modules;
+	var isAMD, previous, modules;
 	
 	isAMD = typeof global.define === 'function' && global.define.amd;
-
-	if (!isAMD) {
-		modules = {};
-		
-		define = function(name, deps, def) {
-			if (typeof deps === 'function') {
-				def = deps;
-				deps = [];
-			}
-		
-			modules[name] = def.apply(this, deps.map(function(dep) { return modules[dep]; }));
-		};
-	
-		require = function(deps, callback) {
-			callback.apply(this, deps.map(function(dep) { return modules[dep]; }));
-		};
-	} else {
-		define = global.define;
-		require = global.require;
-	}
+	modules = { require: global.require };
 
