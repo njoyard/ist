@@ -57,13 +57,8 @@ define(function() {
 		/* Append node to fragment, removing it from its parent first.
 		   Can be called with a DocumentFragment or a LiveFragment */
 		appendChild: function(node) {
-			var cn, i, len;
 			if (node.nodeType === node.DOCUMENT_FRAGMENT_NODE) {
-				cn = node.childNodes;
-				for (i = 0, len = cn.length; i < len; i++) {
-					this.appendChild(cn[i]);
-				}
-			
+				slice.call(node.childNodes).forEach(this.appendChild, this);
 				return;
 			}
 		
@@ -92,18 +87,16 @@ define(function() {
 			parent first. Can be called with a DocumentFragment or a
 			LiveFragment */
 		insertBefore: function(newNode, refNode) {
-			var index, cn, i, len;
+			var index;
 			
 			if (!refNode) {
 				return this.appendChild(newNode);
 			}
 			
 			if (newNode.nodeType === newNode.DOCUMENT_FRAGMENT_NODE) {
-				cn = newNode.childNodes;
-				for (i = 0, len = cn.length; i < len; i++) {
-					this.appendChild(cn[i]);
-				}
-			
+				slice.call(newNode.childNodes).forEach(function(n) {
+					this.insertBefore(n, refNode);
+				}, this);
 				return;
 			}
 			
