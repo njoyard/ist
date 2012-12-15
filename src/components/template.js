@@ -1,5 +1,5 @@
-define(['components/context', 'components/rendered'],
-function(Context, RenderedTemplate) {
+define(['components/context', 'components/rendered', 'components/livefragment'],
+function(Context, RenderedTemplate, LiveFragment) {
 	var directives;
 
 	/**
