@@ -9,8 +9,8 @@
  * http://njoyard.github.com/ist
  */
 (function(global) {
-	var isAMD, previous, modules;
+	var isAMD, previous, istComponents;
 	
 	isAMD = typeof global.define === 'function' && global.define.amd;
-	modules = { require: global.require };
+	istComponents = { require: global.require };
 

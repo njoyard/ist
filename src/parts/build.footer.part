@@ -1,10 +1,10 @@
 	
 	if (isAMD) {
-		global.define("ist", [], function() { return modules.ist; });
+		global.define("ist", [], function() { return istComponents.ist; });
 	} else {
 		previous = global.ist;
 		
-		global.ist = modules.ist;
+		global.ist = istComponents.ist;
 		global.ist.noConflict = function() {
 			var ist = global.ist;
 			global.ist = previous;
