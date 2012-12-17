@@ -48,6 +48,8 @@ define(function() {
 			// TODO check validity of parent
 			this.parentNode = parent;
 		}
+		
+		this.ownerDocument = this.parentNode.ownerDocument;
 	
 		// Make other LiveFragments treat this as a DocumentFragment
 		this.nodeType = this.parentNode.DOCUMENT_FRAGMENT_NODE;
