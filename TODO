@@ -1,0 +1,8 @@
+- Fix 'object' not passed to 'loop' by @eachkey
+- Add test suite for @eachkey
+- Add test suite for LiveFragment
+- Externalize LiveFragment ?
+- Rewrite tests for headless testing ?
+- Rewrite and document [Rendered]Template#update
+- Document new helper API
+- Add JSDoc everywhere
