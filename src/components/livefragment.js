@@ -26,7 +26,12 @@ define(function() {
 			this.nextSibling = null;
 		} else {
 			if (nodes.length === 0) {
-				if (!prev || !next) {
+				/* If prev is null, next must be firstChild, which means an
+				   empty LiveFragment at the beginning of parent. Same thing if
+				   next is null. Corollary: prev and next can be null if parent
+				   is empty. */
+				if ((!prev && next !== parent.firstChild) ||
+					(!next && prev !== parent.lastChild)) {
 					throw new Error("Cannot find adjacent siblings");
 				}
 			
