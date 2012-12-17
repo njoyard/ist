@@ -1,10 +1,9 @@
 define([
 	'components/context',
-	'components/rendered',
 	'components/livefragment',
 	'components/directives'
 ],
-function(Context, RenderedTemplate, LiveFragment, directives) {
+function(Context, LiveFragment, directives) {
 	var Template, findPartialRec, findIndex;
 	
 	
@@ -283,9 +282,8 @@ function(Context, RenderedTemplate, LiveFragment, directives) {
 		
 		
 		/* Render template using 'context' in 'doc' */
-		render: function(context, doc, nodes, fragment) {
-			var rec, rnodes,
-				updating = true,
+		render: function(context, doc, fragment) {
+			var rec, 
 				self = this;
 			
 			if (!(context instanceof Context)) {
@@ -321,8 +319,6 @@ function(Context, RenderedTemplate, LiveFragment, directives) {
 			this.nodes.forEach(function(node, index) {
 				rec(context, node, index, findIndex(context, fragment, index));
 			});
-			
-			this.lastRender = new RenderedTemplate(this, context, fragment);
 		
 			return fragment;
 		},
