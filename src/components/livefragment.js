@@ -54,12 +54,11 @@ define(function() {
 			this.parentNode = parent;
 		}
 		
-		this.detachedParent = null;
-		
 		this.ownerDocument = this.parentNode.ownerDocument;
 	
 		// Make other LiveFragments treat this as a DocumentFragment
-		this.nodeType = this.parentNode.DOCUMENT_FRAGMENT_NODE;
+		this.nodeType = this.DOCUMENT_FRAGMENT_NODE
+			= this.parentNode.DOCUMENT_FRAGMENT_NODE;
 	};
 
 	LiveFragment.prototype = {
@@ -188,7 +187,7 @@ define(function() {
 		/* Empty LiveFragment and return a DocumentFragment with all nodes.
 		   Useful to perform operations on nodes while detached from the
 		   document.  Call LiveFragment#appendChild with the DocumentFragment
-		   to reattach nodes. */
+		   to reattach nodes.  Useless when LiveFragment is empty. */
 		getDocumentFragment: function() {
 			var frag = this.ownerDocument.createDocumentFragment();
 			this.childNodes.forEach(frag.appendChild, frag);
