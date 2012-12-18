@@ -5,7 +5,7 @@ define(['components/livefragment'], function(LiveFragment) {
 		if (render) {
 			if (fragment.hasChildNodes) {
 				// Fragment contains nodes, update them
-				tmpl.update(this, fragment);
+				tmpl.render(this, null, fragment);
 			} else {
 				// Nothing in fragment, render subtemplate
 				fragment.appendChild(tmpl.render(this));
@@ -73,15 +73,15 @@ define(['components/livefragment'], function(LiveFragment) {
 			});
 			
 			if (rendered) {
-				tmpl.update(sctx, rendered);
-				fragment.appendChild(rendered);
+				tmpl.render(sctx, null, rendered);
 			} else {
-				rendered = tmpl.render(sctx);
+				rendered = tmpl.render(sctx, null, rendered);
 				for (i = 0, len = rendered.childNodes.length; i < len; i++) {
 					ctx.istData(rendered.childNodes[i]).iterationKey = keys[index];
 				}
-				fragment.appendChild(rendered);
 			}
+			
+			fragment.appendChild(rendered);
 		});
 	};
 	
@@ -97,8 +97,10 @@ define(['components/livefragment'], function(LiveFragment) {
 		},
 
 		"with": function(ctx, tmpl, fragment) {
+			
+		
 			if (fragment.childNodes.length) {
-				tmpl.update(ctx, fragment);
+				tmpl.render(ctx, null, fragment);
 			} else {
 				fragment.appendChild(tmpl.render(ctx));
 			}
