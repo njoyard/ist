@@ -307,7 +307,7 @@ function(Context, LiveFragment, directives) {
 	
 	/* Render template using 'context' in 'doc' */
 	Template.prototype.render = function(context, doc, fragment) {
-		/* var detached; */
+		var detached;
 		
 		if (!(context instanceof Context)) {
 			context = new Context(context, doc);
@@ -322,14 +322,12 @@ function(Context, LiveFragment, directives) {
 		if (!fragment) {
 			fragment = context.createDocumentFragment();
 		}
-		
-		/* TODO check if something like this would make sense
+
 		if (fragment instanceof LiveFragment) {
 			// Detach nodes from document while updating
 			detached = fragment;
 			fragment = detached.getDocumentFragment();
 		}
-		*/
 	
 		this.nodes.forEach(
 			renderRec,
@@ -339,15 +337,29 @@ function(Context, LiveFragment, directives) {
 				fragment: fragment
 			}
 		);
-		
-		/*
+
 		if (detached) {
 			// Reattach nodes
 			detached.appendChild(fragment);
 		}
-		*/
 	
 		return fragment;
+	};
+	
+	
+	Template.prototype.renderInto = function(context, destination) {
+		var fragment = this.render(context, destination.ownerDocument),
+			rendered;
+		
+		if (fragment.hasChildNodes) {
+			rendered = new RenderedTemplate(this, context, slice.call(fragment.childNodes));
+		} else {
+			// No nodes rendered, give destination to RenderedTemplate
+			rendered = new RenderedTemplate(this, context, null, destination);
+		}
+		
+		destination.appendChild(fragment);
+		return rendered;
 	};
 	
 	
