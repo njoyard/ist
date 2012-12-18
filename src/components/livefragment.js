@@ -54,6 +54,8 @@ define(function() {
 			this.parentNode = parent;
 		}
 		
+		this.detachedParent = null;
+		
 		this.ownerDocument = this.parentNode.ownerDocument;
 	
 		// Make other LiveFragments treat this as a DocumentFragment
@@ -181,6 +183,16 @@ define(function() {
 			}
 			
 			throw new Error("Cannot extend to non-adjacent node");
+		},
+		
+		/* Empty LiveFragment and return a DocumentFragment with all nodes.
+		   Useful to perform operations on nodes while detached from the
+		   document.  Call LiveFragment#appendChild with the DocumentFragment
+		   to reattach nodes. */
+		getDocumentFragment: function() {
+			var frag = this.ownerDocument.createDocumentFragment();
+			this.childNodes.forEach(frag.appendChild, frag);
+			return frag;
 		},
 		
 		get firstChild() {
