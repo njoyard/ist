@@ -348,7 +348,7 @@ function(Context, LiveFragment, directives) {
 	};
 	
 	
-	Template.prototype.renderInto = function(context, destination) {
+	Template.prototype.renderInto = function(destination, context) {
 		var fragment = this.render(context, destination.ownerDocument),
 			rendered;
 		

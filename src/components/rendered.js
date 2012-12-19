@@ -21,7 +21,7 @@ define(['components/context'], function(Context) {
 		}
 		
 		if (!this.nodes) {
-			rendered = this.template.renderInto(this.context, this.parent);
+			rendered = this.template.renderInto(this.parent, this.context);
 			this.nodes = rendered.nodes;
 		} else {
 			fragment = this.template.update(this.context, this.nodes);
