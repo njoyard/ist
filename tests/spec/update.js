@@ -1,15 +1,17 @@
 define(["ist"], function(ist) {
 	return function() {
-		it("should enable updating by passing a new context object and previously rendered nodes to Template#update()", function() {
-			var template = ist("div\n '{{ variable }}'"),
+		it("should enable updating by passing a new context object and " +
+			"previously rendered nodes to Template#update()", function() {
+			var template = ist("div '{{ variable }}'"),
 				nodes = template.render({ variable: "value" }),
 				updated = template.update({ variable: "new value" }, nodes);
 			
 			expect( updated.firstChild ).toHaveTextContent( "new value" );
 		});
 		
-		it("should update nodes and not create new ones when updating", function() {
-			var template = ist("div\n '{{ variable }}'"),
+		it("should update nodes and not create new ones when updating",
+			function() {
+			var template = ist("div '{{ variable }}'"),
 				nodes = template.render({ variable: "value" }),
 				node = nodes.firstChild,
 				updated = template.update({ variable: "new value" }, nodes);
@@ -18,7 +20,7 @@ define(["ist"], function(ist) {
 		});
 		
 		it("should accept node arrays in Template#update()", function() {
-			var template = ist("div\n '{{ variable }}'"),
+			var template = ist("div '{{ variable }}'"),
 				nodes = template.render({ variable: "value" }),
 				upnodes = Array.prototype.slice.call(nodes.childNodes),
 				updated = template.update({ variable: "new value" }, upnodes);
@@ -27,7 +29,7 @@ define(["ist"], function(ist) {
 		});
 		
 		it("should accept NodeLists in Template#update()", function() {
-			var template = ist("div\n '{{ variable }}'"),
+			var template = ist("div '{{ variable }}'"),
 				nodes = template.render({ variable: "value" }),
 				upnodes = nodes.childNodes,
 				updated = template.update({ variable: "new value" }, upnodes);
@@ -36,7 +38,7 @@ define(["ist"], function(ist) {
 		});
 		
 		it("should accept DocumentFragments in Template#update()", function() {
-			var template = ist("div\n '{{ variable }}'"),
+			var template = ist("div '{{ variable }}'"),
 				nodes = template.render({ variable: "value" }),
 				upnodes = document.createDocumentFragment(),
 				updated;
@@ -45,6 +47,39 @@ define(["ist"], function(ist) {
 			updated = template.update({ variable: "new value" }, upnodes);
 			
 			expect( updated.firstChild ).toHaveTextContent( "new value" );
+		});
+		
+		it("should render into container when using Template#renderInto",
+			function() {
+			var template = ist("div '{{ variable }}'"),
+				container = document.createElement("div");
+				
+			template.renderInto(container, { variable: "value" });
+				
+			expect( container.firstChild ).toBeElement( "div" );
+			expect( container.firstChild ).toHaveTextContent( "value" );
+		});
+		
+		it("should enable updating by using #update() on the return value of " +
+			"Template#renderInto", function() {
+			var template = ist("div '{{ variable }}'"),
+				div = document.createElement("div"),
+				rendered = template.renderInto(div, { variable: "value" });
+				
+			rendered.update({ variable: "new value" });
+			expect( div.firstChild ).toHaveTextContent( "new value" );
+		});
+		
+		it("should enable updating when using Template#renderInto even when " +
+			"no nodes have been rendered in the first place", function() {
+			var template = ist("@if cond\n div '{{ variable }}'"),
+				container = document.createElement("div"),
+				rendered = template.renderInto(container, {
+					cond: false, variable: "value"
+				});
+				
+			rendered.update({ cond: true, variable: "new value" });
+			expect( container.firstChild ).toHaveTextContent( "new value" );
 		});
 	};
 });
