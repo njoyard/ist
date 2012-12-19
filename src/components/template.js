@@ -350,8 +350,13 @@ function(Context, LiveFragment, RenderedTemplate, directives) {
 	
 	
 	Template.prototype.renderInto = function(destination, context) {
-		var fragment = this.render(context, destination.ownerDocument),
-			rendered;
+		var fragment, rendered;
+		
+		if (!(context instanceof Context)) {
+			context = new Context(context, destination.ownerDocument);
+		}
+		
+		fragment = this.render(context, destination.ownerDocument);
 		
 		if (fragment.hasChildNodes) {
 			rendered = new RenderedTemplate(this, context, slice.call(fragment.childNodes));
