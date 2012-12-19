@@ -341,6 +341,7 @@ function(Context, LiveFragment, directives) {
 		if (detached) {
 			// Reattach nodes
 			detached.appendChild(fragment);
+			fragment = detached;
 		}
 	
 		return fragment;
