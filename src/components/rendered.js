@@ -25,7 +25,7 @@ define(['components/context'], function(Context) {
 			this.nodes = rendered.nodes;
 		} else {
 			fragment = this.template.update(this.context, this.nodes);
-			this.nodes = slice.Call(fragment.childNodes);
+			this.nodes = slice.call(fragment.childNodes);
 		}
 		
 		return this;
