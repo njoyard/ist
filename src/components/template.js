@@ -1,9 +1,10 @@
 define([
 	'components/context',
 	'components/livefragment',
+	'components/rendered',
 	'components/directives'
 ],
-function(Context, LiveFragment, directives) {
+function(Context, LiveFragment, RenderedTemplate, directives) {
 	var Template, preRenderRec, findPartialRec, findIndex,
 		expressionRE = /{{((?:}(?!})|[^}])*)}}/,
 		slice = Array.prototype.slice;
