@@ -30,11 +30,11 @@
         require(
             [
             	'ist',
-            	'nodetypes', 'qualifiers', 'syntax', 'interpolation', 'blocks',
-            	'blockhelper', 'createnode', 'update', 'usage'
+            	'nodetypes', 'qualifiers', 'syntax', 'interpolation', 'builtins',
+            	'directivehelper', 'createnode', 'update', 'usage'
             ],
-            function(ist, nodetypes, qualifiers, syntax, interpolation, blocks,
-            	blockhelper, createnode, update, usage){
+            function(ist, nodetypes, qualifiers, syntax, interpolation, builtins,
+            	directivehelper, createnode, update, usage){
             	/* IST specific matchers */
 				beforeEach(function() {
 					var matchers = {};
@@ -206,8 +206,8 @@
             	describe('qualifiers', qualifiers);
             	describe('syntax', syntax);
             	describe('interpolation', interpolation);
-            	describe('blocks', blocks);
-            	describe('blockhelper', blockhelper);
+            	describe('directivehelper', directivehelper);
+            	describe('builtins', builtins);
             	describe('createnode', createnode);
             	describe('update', update);
             

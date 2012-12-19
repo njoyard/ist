@@ -1,20 +1,20 @@
 define([
 	'ist',
-	'ist!blocks/if',
-	'ist!blocks/unless',
-	'ist!blocks/with',
-	'ist!blocks/each',
-	'ist!blocks/include',
-	'text!blocks/include.ist',
-	'text!blocks/includetext.ist',
-	'text!blocks/includeinvalid.ist',
-	'ist!blocks/errors',
+	'ist!builtins/if',
+	'ist!builtins/unless',
+	'ist!builtins/with',
+	'ist!builtins/each',
+	'ist!builtins/include',
+	'text!builtins/include.ist',
+	'text!builtins/includetext.ist',
+	'text!builtins/includeinvalid.ist',
+	'ist!builtins/errors',
 	
-	'blocks/included_invalid',
-	'ist!blocks/included_ist',
-	'text!blocks/included_text.ist',
-	'blocks/included_string',
-	'blocks/included_compiled'
+	'builtins/included_invalid',
+	'ist!builtins/included_ist',
+	'text!builtins/included_text.ist',
+	'builtins/included_string',
+	'builtins/included_compiled'
 ], function(ist, tIf, tUnless, tWith, tEach, tInclude, textInclude,
 			textIncludeText, textIncludeInvalid, tErrors) {
 	return function() {
@@ -181,28 +181,28 @@ define([
 		it("should fail to render when accessing properties of undefined context parts", function() {
 			tfObj.sub = undefined;
 			expect( function() { tIf.render(tfObj); } ).toThrowAny([
-				"Cannot read property 'property1' of undefined in 'blocks/if' on line 21",
-				"sub is undefined in 'blocks/if' on line 21",
-				"'undefined' is not an object (evaluating 'sub.property1') in 'blocks/if' on line 21"
+				"Cannot read property 'property1' of undefined in 'builtins/if' on line 21",
+				"sub is undefined in 'builtins/if' on line 21",
+				"'undefined' is not an object (evaluating 'sub.property1') in 'builtins/if' on line 21"
 			]);
 			expect( function() { tUnless.render(tfObj); } ).toThrowAny([
-				"Cannot read property 'property1' of undefined in 'blocks/unless' on line 21",
-				"sub is undefined in 'blocks/unless' on line 21",
-				"'undefined' is not an object (evaluating 'sub.property1') in 'blocks/unless' on line 21"
+				"Cannot read property 'property1' of undefined in 'builtins/unless' on line 21",
+				"sub is undefined in 'builtins/unless' on line 21",
+				"'undefined' is not an object (evaluating 'sub.property1') in 'builtins/unless' on line 21"
 			]);
 			
 			withObj.sub = undefined;
 			expect( function() { tWith.render(withObj); } ).toThrowAny([
-				"Cannot read property 'subcontext' of undefined in 'blocks/with' on line 6",
-				"sub is undefined in 'blocks/with' on line 6",
-				"'undefined' is not an object (evaluating 'sub.subcontext') in 'blocks/with' on line 6"
+				"Cannot read property 'subcontext' of undefined in 'builtins/with' on line 6",
+				"sub is undefined in 'builtins/with' on line 6",
+				"'undefined' is not an object (evaluating 'sub.subcontext') in 'builtins/with' on line 6"
 			]);
 			
 			eachObj.sub = undefined;
 			expect( function() { tEach.render(eachObj); } ).toThrowAny([
-				"Cannot read property 'array' of undefined in 'blocks/each' on line 6",
-				"sub is undefined in 'blocks/each' on line 6",
-				"'undefined' is not an object (evaluating 'sub.array') in 'blocks/each' on line 6"
+				"Cannot read property 'array' of undefined in 'builtins/each' on line 6",
+				"sub is undefined in 'builtins/each' on line 6",
+				"'undefined' is not an object (evaluating 'sub.array') in 'builtins/each' on line 6"
 			]);
 		});
 		
@@ -255,7 +255,7 @@ define([
 		});
 		
 		it("should fail to render templates with invalid includes", function() {
-			expect( function() { ist(textIncludeInvalid).render(); } ).toThrow( "Invalid included template 'blocks/included_invalid' in '<unknown>' on line 1" );
+			expect( function() { ist(textIncludeInvalid).render(); } ).toThrow( "Invalid included template 'builtins/included_invalid' in '<unknown>' on line 1" );
 		});
 		
 		
@@ -263,19 +263,19 @@ define([
 		it("should report errors thrown by expressions when rendering", function() {
 			expect( function() { tErrors.render({ test: 'syntax' }); } )
 				.toThrowAny([
-					"Unexpected identifier in 'blocks/errors' on line 2",
-					"missing ; before statement in 'blocks/errors' on line 2",
-					"Expected an identifier but found 'error' instead in 'blocks/errors' on line 2"
+					"Unexpected identifier in 'builtins/errors' on line 2",
+					"missing ; before statement in 'builtins/errors' on line 2",
+					"Expected an identifier but found 'error' instead in 'builtins/errors' on line 2"
 				]);
 				
 			expect( function() { tErrors.render({ test: 'type' }); } )
 				.toThrowAny([
-					"a is not defined in 'blocks/errors' on line 6",
-					"Can't find variable: a in 'blocks/errors' on line 6"
+					"a is not defined in 'builtins/errors' on line 6",
+					"Can't find variable: a in 'builtins/errors' on line 6"
 				]);
 				
 			expect( function() { tErrors.render({ test: 'throw' }); } )
-				.toThrow("custom error in 'blocks/errors' on line 10");
+				.toThrow("custom error in 'builtins/errors' on line 10");
 		});
 	};
 });

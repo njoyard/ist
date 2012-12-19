@@ -1,0 +1,17 @@
+div.elements1
+	@include "builtins/included_ist"
+	
+div.elements2
+	@include "builtins/included_ist.ist"
+
+div.elements3
+	@include "builtins/included_text"
+
+div.elements4
+	@include "builtins/included_text.ist"
+	
+div.elements5
+	@include "builtins/included_compiled"
+	
+div.elements6
+	@include "builtins/included_string"

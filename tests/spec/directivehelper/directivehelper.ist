@@ -1,4 +1,4 @@
 div.parent
-	@testBlock context
+	@testDirective context
 		div.child
 			"interpolated {{ value }}"

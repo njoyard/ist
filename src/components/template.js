@@ -240,7 +240,7 @@ function(Context, LiveFragment, RenderedTemplate, directives) {
 			subCtx, ret, i, len;
 	
 		if (typeof helper !== 'function') {
-			throw new Error('No block helper for @' + node.directive + ' has been registered');
+			throw new Error('No directive helper for @' + node.directive + ' has been registered');
 		}
 	
 		if (typeof node.expr !== 'undefined') {
