@@ -358,7 +358,7 @@ function(Context, LiveFragment, RenderedTemplate, directives) {
 		
 		fragment = this.render(context, destination.ownerDocument);
 		
-		if (fragment.hasChildNodes) {
+		if (fragment.hasChildNodes()) {
 			rendered = new RenderedTemplate(this, context, slice.call(fragment.childNodes));
 		} else {
 			// No nodes rendered, give destination to RenderedTemplate

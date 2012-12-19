@@ -203,7 +203,7 @@ define(function() {
 			return this.childNodes[this.childNodes.length - 1] || null;
 		},
 		
-		get hasChildNodes() {
+		hasChildNodes: function() {
 			return this.childNodes.length > 0;
 		}
 	};

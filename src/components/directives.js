@@ -99,7 +99,7 @@ define(['components/livefragment'], function(LiveFragment) {
 		"with": function(ctx, tmpl, fragment) {
 			
 		
-			if (fragment.childNodes.length) {
+			if (fragment.hasChildNodes()) {
 				tmpl.render(ctx, null, fragment);
 			} else {
 				fragment.appendChild(tmpl.render(ctx));
