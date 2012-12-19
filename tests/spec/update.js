@@ -81,5 +81,32 @@ define(["ist"], function(ist) {
 			rendered.update({ cond: true, variable: "new value" });
 			expect( container.firstChild ).toHaveTextContent( "new value" );
 		});
+		
+		it("should pass a LiveFragment with previously rendered nodes to " +
+			"directive helpers when updating", function() {
+			var template = ist("@test"),
+				container = document.createElement("div"),
+				nodelists = [],
+				rendered;
+			
+			ist.registerHelper("test", function(ctx, tmpl, fragment) {
+				nodelists.push(Array.prototype.slice.call(fragment.childNodes));
+				
+				if (!fragment.hasChildNodes()) {
+					fragment.appendChild(this.createTextNode("original node"));
+				} else {
+					fragment.appendChild(this.createTextNode("new node"));
+				}
+			});
+			
+			rendered = template.renderInto(container);
+			rendered.update();
+			
+			expect( nodelists[1].length ).toBe( 1 );
+			expect( nodelists[1][0] ).toHaveTextContent( "original node" );
+			
+			expect( container.childNodes.length ).toBe( 2 );
+			expect( container.lastChild ).toHaveTextContent( "new node" );
+		});
 	};
 });
