@@ -191,6 +191,7 @@ define(function() {
 		getDocumentFragment: function() {
 			var frag = this.ownerDocument.createDocumentFragment();
 			this.childNodes.forEach(frag.appendChild, frag);
+			this.childNodes = [];
 			return frag;
 		},
 		
