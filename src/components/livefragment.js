@@ -75,10 +75,7 @@ define(function() {
 				node.parentNode.removeChild(node);
 			}
 			
-			try {
-				this._removeChildNoFail(node);
-			} catch (e) {
-			}
+			this._removeChildNoFail(node);
 		
 			if (this.nextSibling) {
 				this.parentNode.insertBefore(node, this.nextSibling);
@@ -113,10 +110,7 @@ define(function() {
 				newNode.parentNode.removeChild(newNode);
 			}
 			
-			try {
-				this._removeChildNoFail(newNode);
-			} catch (e) {
-			}
+			this._removeChildNoFail(newNode);
 			
 			index = this.childNodes.indexOf(refNode);
 			
