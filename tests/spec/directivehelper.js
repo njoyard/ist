@@ -2,8 +2,9 @@ define([
 	'ist',
 	'text!directivehelper/directivehelper.ist',
 	'text!directivehelper/string.ist',
-	'text!directivehelper/none.ist'
-], function(ist, textDirectivehelper, textString, textNone) {
+	'text!directivehelper/none.ist',
+	'ist!directivehelper/errors'
+], function(ist, textDirectivehelper, textString, textNone, tErrors) {
 	return function() {
 		it("should allow parsing templates with unknown @directives", function() {
 			var thrown = false;
@@ -216,6 +217,24 @@ define([
 			expect(
 				ist("@pushDirective this\n '{{ variable }}'").render({ variable: "value" }).childNodes[0]
 			).toHaveTextContent( "value" );
+		});
+		
+		it("should report errors thrown by expressions when rendering", function() {
+			expect( function() { tErrors.render({ test: 'syntax' }); } )
+				.toThrowAny([
+					"Unexpected identifier in 'directivehelper/errors' on line 2",
+					"missing ; before statement in 'directivehelper/errors' on line 2",
+					"Expected an identifier but found 'error' instead in 'directivehelper/errors' on line 2"
+				]);
+				
+			expect( function() { tErrors.render({ test: 'type' }); } )
+				.toThrowAny([
+					"a is not defined in 'directivehelper/errors' on line 6",
+					"Can't find variable: a in 'directivehelper/errors' on line 6"
+				]);
+				
+			expect( function() { tErrors.render({ test: 'throw' }); } )
+				.toThrow("custom error in 'directivehelper/errors' on line 10");
 		});
 	};
 });
