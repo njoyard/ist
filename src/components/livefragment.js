@@ -76,7 +76,7 @@ define(function() {
 			}
 			
 			try {
-				this.removeChild(node);
+				this._removeChildNoFail(node);
 			} catch (e) {
 			}
 		
@@ -114,7 +114,7 @@ define(function() {
 			}
 			
 			try {
-				this.removeChild(newNode);
+				this._removeChildNoFail(newNode);
 			} catch (e) {
 			}
 			
@@ -136,6 +136,19 @@ define(function() {
 			
 			if (index === -1) {
 				throw new Error("Cannot remove node");
+			}
+			
+			this.parentNode.removeChild(node);
+			this.childNodes.splice(index, 1);
+			
+			return node;
+		},
+		
+		_removeChildNoFail: function(node) {
+			var index = this.childNodes.indexOf(node);
+			
+			if (index === -1) {
+				return;
 			}
 			
 			this.parentNode.removeChild(node);
