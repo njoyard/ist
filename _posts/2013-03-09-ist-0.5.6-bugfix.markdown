@@ -1,0 +1,15 @@
+---
+layout: post
+title: ist.js v0.5.6 released
+---
+
+I have just pushed ist.js version 0.5.6 to GitHub.  This version fixes a bug
+that prevented building (with r.js) projects when using the `ist!` requirejs
+plugin syntax. 
+
+I'm sorry for the lack of updates lately; I'm currently working on ist.js v0.6,
+which will allow updating rendered nodes with a new or modified context,
+introduce some new built-in helpers and enhance performance.  I plan to add
+JSDoc to the code and rewrite tests to be more thorough, better organized and so
+that they can be automated (and hopefully get ist.js on a continuous integration
+server).
