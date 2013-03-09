@@ -1,17 +1,19 @@
 /** @license
  * IST: Indented Selector Templating
- * version 0.5.5
+ * version 0.5.6
  *
  * Copyright (c) 2012 Nicolas Joyard
  * Released under the MIT license.
  *
  * Author: Nicolas Joyard <joyard.nicolas@gmail.com>
- * http://github.com/k-o-x/ist
+ * http://github.com/njoyard/ist
  */
 (function(global) {
 	"use strict";
 	
-	var isAMD = typeof global.define === 'function' && global.define.amd;
+	var isAMD = typeof global.define === 'function' && global.define.amd,
+		isNode = typeof process !== "undefined" && process.versions && !!process.versions.node,
+		isBrowser = typeof window !== "undefined" && window.navigator && window.document;
 	
 	var definition = function(requirejs) {
 	
@@ -942,12 +944,12 @@
 		});
 	
 	
-		if (isAMD) {
+		if (isNode || (isBrowser && isAMD)) {
 			/******************************************
 			 *         Require plugin helpers         *
 			 ******************************************/
 
-			if (typeof window !== "undefined" && window.navigator && window.document) {
+			if (isBrowser) {
 				getXhr = function() {
 					var xhr, i, progId;
 					if (typeof XMLHttpRequest !== "undefined") {
@@ -989,7 +991,7 @@
 					};
 					xhr.send(null);
 				};
-			} else if (typeof process !== "undefined" && process.versions && !!process.versions.node) {
+			} else if (isNode) {
 				fs = require.nodeRequire('fs');
 
 				fetchText = function(url, callback) {
