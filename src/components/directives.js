@@ -1,14 +1,17 @@
+/*global define */
 define(['components/livefragment'], function(LiveFragment) {
+	'use strict';
+
 	var directives, registered, conditionalHelper, iterationHelper;
 	
-	conditionalHelper = function(render, tmpl, fragment) {
+	conditionalHelper = function(outer, render, tmpl, fragment) {
 		if (render) {
 			if (fragment.hasChildNodes) {
 				// Fragment contains nodes, update them
-				tmpl.render(this, null, fragment);
+				tmpl.render(outer, null, fragment);
 			} else {
 				// Nothing in fragment, render subtemplate
-				fragment.appendChild(tmpl.render(this));
+				fragment.appendChild(tmpl.render(outer));
 			}
 		} else {
 			// Empty fragment
@@ -16,8 +19,8 @@ define(['components/livefragment'], function(LiveFragment) {
 		}
 	};
 	
-	iterationHelper = function(keys, items, ctx, tmpl, fragment) {
-		var outer = this.value,
+	iterationHelper = function(outer, keys, items, inner, tmpl, fragment) {
+		var outerValue = outer.value,
 			renderedFragments = [],
 			lastFragment,
 			lastKey,
@@ -27,7 +30,7 @@ define(['components/livefragment'], function(LiveFragment) {
 		   rendered nodes by source array item (knowing that they are
 		   adjacent siblings) */
 		fragment.childNodes.forEach(function(node) {
-			var key = ctx.istData(node).iterationKey;
+			var key = inner.istData(node).iterationKey;
 			
 			if (key !== lastKey) {
 				if (keys.indexOf(key) === -1) {
@@ -59,16 +62,16 @@ define(['components/livefragment'], function(LiveFragment) {
 		/* Loop over array and append updated/newly rendered fragments */
 		items.forEach(function(item, index) {
 			var i, len,
-				sctx = ctx.createContext(item),
+				sctx = inner.createContext(item),
 				rendered = findRenderedFragment(item);
 				
 			sctx.pushScope({
 				loop: {
-					first: index == 0,
+					first: index === 0,
 					index: index,
 					last: index == items.length - 1,
 					length: items.length,
-					outer: outer
+					outer: outerValue
 				}
 			});
 			
@@ -77,7 +80,7 @@ define(['components/livefragment'], function(LiveFragment) {
 			} else {
 				rendered = tmpl.render(sctx, null, rendered);
 				for (i = 0, len = rendered.childNodes.length; i < len; i++) {
-					ctx.istData(rendered.childNodes[i]).iterationKey = keys[index];
+					inner.istData(rendered.childNodes[i]).iterationKey = keys[index];
 				}
 			}
 			
@@ -88,36 +91,36 @@ define(['components/livefragment'], function(LiveFragment) {
 	
 	/* Built-in directive helpers (except @include) */
 	registered = {
-		"if": function(ctx, tmpl, fragment) {
-			conditionalHelper.call(this, ctx.value, tmpl, fragment);
+		'if': function(outer, inner, tmpl, fragment) {
+			conditionalHelper.call(null, outer, inner.value, tmpl, fragment);
 		},
 
-		"unless": function(ctx, tmpl, fragment) {
-			conditionalHelper.call(this, !ctx.value, tmpl, fragment);
+		'unless': function(outer, inner, tmpl, fragment) {
+			conditionalHelper.call(null, outer, !inner.value, tmpl, fragment);
 		},
 
-		"with": function(ctx, tmpl, fragment) {
+		'with': function(outer, inner, tmpl, fragment) {
 			
 		
 			if (fragment.hasChildNodes()) {
-				tmpl.render(ctx, null, fragment);
+				tmpl.render(inner, null, fragment);
 			} else {
-				fragment.appendChild(tmpl.render(ctx));
+				fragment.appendChild(tmpl.render(inner));
 			}
 		},
 
-		"each": function(ctx, tmpl, fragment) {
-			var array = ctx.value;
+		'each': function(outer, inner, tmpl, fragment) {
+			var array = inner.value;
 			
 			if (!Array.isArray(array)) {
-				throw new Error(array + " is not an array");
+				throw new Error(array + ' is not an array');
 			}
 			
-			iterationHelper.call(this, array, array, ctx, tmpl, fragment);
+			iterationHelper.call(null, outer, array, array, inner, tmpl, fragment);
 		},
 
-		"eachkey": function(ctx, tmpl) {
-			var object = ctx.value,
+		'eachkey': function(outer, inner, tmpl, fragment) {
+			var object = inner.value,
 				keys = Object.keys(object),
 				array;
 				
@@ -126,7 +129,21 @@ define(['components/livefragment'], function(LiveFragment) {
 			});
 			
 			// TODO 'object' must be added to 'loop' !
-			iterationHelper.call(this, keys, array, ctx, tmpl, fragment);
+			iterationHelper.call(null, outer, keys, array, inner, tmpl, fragment);
+		},
+
+		'dom': function(outer, inner, tmpl, fragment) {
+			var node = inner.value;
+
+			while (fragment.hasChildNodes()) {
+				fragment.removeChild(fragment.firstChild);
+			}
+
+			if (node.ownerDocument !== inner.doc) {
+				node = inner.doc.importNode(node);
+			}
+
+			fragment.appendChild(node);
 		}
 	};
 	
@@ -137,7 +154,7 @@ define(['components/livefragment'], function(LiveFragment) {
 		},
 
 		get: function(name) {
-			return registered[name]
+			return registered[name];
 		}
 	};
 	

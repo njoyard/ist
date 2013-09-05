@@ -1,3 +1,4 @@
+/*global define, requirejs, isAMD */
 define([
 	'components/template',
 	'components/directives',
@@ -6,12 +7,12 @@ define([
 	'util/amdplugin',
 	'util/findscript'
 ], function(Template, directives, pegjsParser, preprocess, pluginify, findScriptTag) {
-	var ist;
-	
+	'use strict';
+
 	/**
 	 * Template parser
 	 */
-	ist = function(template, name) {
+	function ist(template, name) {
 		var parsed;
 		
 		name = name || '<unknown>';
@@ -19,13 +20,13 @@ define([
 		try {
 			parsed = pegjsParser.parse(preprocess(template));
 		} catch(e) {
-			e.message += " in '" + name + "' on line " + e.line +
-				(typeof e.column !== 'undefined' ?  ", character " + e.column : '');
+			e.message += ' in \'' + name + '\' on line ' + e.line +
+				(typeof e.column !== 'undefined' ?  ', character ' + e.column : '');
 			throw e;
 		}
 	
 		return new Template(name, parsed);
-	};
+	}
 	
 	ist.Template = Template;
 	
@@ -78,15 +79,14 @@ define([
 	
 	
 	/* Built-in @include helper */
-	ist.registerHelper("include", function(ctx, tmpl, fragment) {
-		var what = ctx.value.replace(/\.ist$/, ''),
-			scripts, found, tryReq;
+	ist.registerHelper('include', function(outer, inner, tmpl, fragment) {
+		var what = inner.value.replace(/\.ist$/, ''),
+			found, tryReq;
 
 		// Try to find a <script type="text/x-ist" id="...">
 		found = findScriptTag(what);
 
-		if (isAMD)
-		{
+		if (isAMD) {
 			// Try to find a previously require()-d template or string
 			tryReq = [
 				what,
@@ -105,7 +105,7 @@ define([
 		}
 
 		if (!found) {
-			throw new Error("Cannot find included template '" + what + "'");
+			throw new Error('Cannot find included template \'' + what + '\'');
 		}
 
 		if (typeof found === 'string') {
@@ -116,12 +116,12 @@ define([
 		if (typeof found.render === 'function') {
 			// Render included template
 			if (fragment.hasChildNodes) {
-				found.update(this, fragment);
-			} else {	
-				fragment.appendChild(found.render(this));
+				found.update(outer, fragment);
+			} else {
+				fragment.appendChild(found.render(outer));
 			}
 		} else {
-			throw new Error("Invalid included template '" + what + "'");
+			throw new Error('Invalid included template \'' + what + '\'');
 		}
 	});
 	

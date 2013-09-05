@@ -1,9 +1,12 @@
+/*global define */
 define(function() {
+	'use strict';
+
 	/**
 	 * Context object; holds the rendering context and target document,
 	 * and provides helper methods.
 	 */
-	var Context = function(object, doc) {
+	function Context(object, doc) {
 		this.value = object;
 		this.doc = doc || document;
 		this.scopes = [ { document: this.doc } ];
@@ -11,7 +14,7 @@ define(function() {
 		if (typeof object !== 'undefined') {
 			this.scopes.push(object);
 		}
-	};
+	}
 
 
 	Context.prototype = {
@@ -51,7 +54,7 @@ define(function() {
 		/* Pop the last object pushed on the scope stack  */
 		popScope: function() {
 			if (this.scopes.length < 3) {
-				throw new Error("No scope left to pop out");
+				throw new Error('No scope left to pop out');
 			}
 			
 			return this.scopes.shift();
@@ -66,10 +69,10 @@ define(function() {
 		
 		/* Deprecated, use popScope */
 		popEvalVar: function(name) {
-			var scope = scopes[0];
+			var scope = this.scopes[0];
 			
 			if (typeof scope[name] === 'undefined' || Object.keys(scope).length > 1) {
-				throw new Error("Cannot pop variable, does not match topmost scope");
+				throw new Error('Cannot pop variable, does not match topmost scope');
 			}
 			
 			return this.popScope()[name];
@@ -81,13 +84,13 @@ define(function() {
 		 * available as locals, and the target document is available as `document`.
 		 */
 		evaluate: function(expr) {
-			var fexpr = "return " + expr + ";",
+			var fexpr = 'return ' + expr + ';',
 				scopeNames = [],
 				func;
 
 			this.scopes.forEach(function(scope, index) {
-				scopeNames.push("scope" + index);
-				fexpr = "with(scope" + index + "){\n" + fexpr + "\n}";
+				scopeNames.push('scope' + index);
+				fexpr = 'with(scope' + index + '){\n' + fexpr + '\n}';
 			});
 			
 			func = new Function(scopeNames.join(','), fexpr);
@@ -95,7 +98,7 @@ define(function() {
 			return func.apply(this.value, this.scopes);
 		},
 	
-		interpolate: function(text) {		
+		interpolate: function(text) {
 			return text.replace(/{{((?:}(?!})|[^}])*)}}/g, (function(m, p1) { return this.evaluate(p1); }).bind(this));
 		},
 	

@@ -1,13 +1,16 @@
-define(['require', 'util/findscript'], function(require, findScriptTag) {
-	var pluginify = function(ist) {
+/*global define, ActiveXObject, process */
+define(['require', 'util/findscript', 'util/escape'], function(require, findScriptTag, jsEscape) {
+	'use strict';
+
+	function pluginify(ist) {
 		var getXhr, fetchText,
 			progIds = ['Msxml2.XMLHTTP', 'Microsoft.XMLHTTP', 'Msxml2.XMLHTTP.4.0'],
 			buildMap = {};
 
-		if (typeof window !== "undefined" && window.navigator && window.document) {
+		if (typeof window !== 'undefined' && window.navigator && window.document) {
 			getXhr = function() {
 				var xhr, i, progId;
-				if (typeof XMLHttpRequest !== "undefined") {
+				if (typeof XMLHttpRequest !== 'undefined') {
 					return new XMLHttpRequest();
 				} else {
 					for (i = 0; i < 3; i++) {
@@ -24,7 +27,7 @@ define(['require', 'util/findscript'], function(require, findScriptTag) {
 				}
 
 				if (!xhr) {
-					throw new Error("getXhr(): XMLHttpRequest not available");
+					throw new Error('getXhr(): XMLHttpRequest not available');
 				}
 
 				return xhr;
@@ -33,12 +36,12 @@ define(['require', 'util/findscript'], function(require, findScriptTag) {
 			fetchText = function(url, callback) {
 				var xhr = getXhr();
 				xhr.open('GET', url, true);
-				xhr.onreadystatechange = function (evt) {
+				xhr.onreadystatechange = function () {
 					//Do not explicitly handle errors, those should be
 					//visible via console output in the browser.
 					if (xhr.readyState === 4) {
 						if (xhr.status !== 200) {
-							throw new Error("HTTP status "  + xhr.status + " when loading " + url);
+							throw new Error('HTTP status '  + xhr.status + ' when loading ' + url);
 						}
 	
 						callback(xhr.responseText);
@@ -46,8 +49,8 @@ define(['require', 'util/findscript'], function(require, findScriptTag) {
 				};
 				xhr.send(null);
 			};
-		} else if (typeof process !== "undefined" && process.versions && !!process.versions.node) {
-			fs = require.nodeRequire('fs');
+		} else if (typeof process !== 'undefined' && process.versions && !!process.versions.node) {
+			var fs = require.nodeRequire('fs');
 
 			fetchText = function(url, callback) {
 				var file = fs.readFileSync(url, 'utf8');
@@ -76,11 +79,11 @@ define(['require', 'util/findscript'], function(require, findScriptTag) {
 				name = name.replace(/!bare$/, '');
 			}
 			
-			path = parentRequire.toUrl(name + '.ist'),
+			path = parentRequire.toUrl(name + '.ist');
 			dirname = name.indexOf('/') === -1 ? '.' : name.replace(/\/[^\/]*$/, '');
 
 			fetchText(path, function (text) {
-				var code, i, m, deps = ['ist'];
+				var code, deps = ['ist'];
 	
 				/* Find @include calls and replace them with 'absolute' paths
 				   (ie @include 'inc/include' in 'path/to/template'
@@ -107,23 +110,23 @@ define(['require', 'util/findscript'], function(require, findScriptTag) {
 				if (doParse) {
 					/* Get parsed code */
 					code = ist(text, name).getCode(true);
-					text = "define('ist!" + name + "'," + JSON.stringify(deps) + ", function(ist) {\n" +
-						   "  return " + code + ";\n" +
-						   "});\n";
+					text = 'define(\'ist!' + name + '\',' + JSON.stringify(deps) + ', function(ist) {\n' +
+						   '  return ' + code + ';\n' +
+						   '});\n';
 				} else {
 					if (config.isBuild) {
-						text = jsEscape(text);		
-						text = "define('ist!" + name + "'," + JSON.stringify(deps) + ",function(ist){" +
-							   "var template='" + text + "';" +
-							   	"return ist(template,'" + name + "');" +
-							   "});";
+						text = jsEscape(text);
+						text = 'define(\'ist!' + name + '\',' + JSON.stringify(deps) + ',function(ist){' +
+							   'var template=\'' + text + '\';' +
+							   'return ist(template,\'' + name + '\');' +
+							   '});';
 					} else {
 						/* "Pretty-print" template text */
-						text = jsEscape(text).replace(/\\n/g, "\\n' +\n\t               '");
-						text = "define('ist!" + name + "'," + JSON.stringify(deps) + ", function(ist){ \n" +
-							   "\tvar template = '" + text + "';\n" +
-							   "\treturn ist(template, '" + name + "');\n" +
-							   "});\n";
+						text = jsEscape(text).replace(/\\n/g, '\\n\' +\n\t               \'');
+						text = 'define(\'ist!' + name + '\',' + JSON.stringify(deps) + ', function(ist){ \n' +
+							   '\tvar template = \'' + text + '\';\n' +
+							   '\treturn ist(template, \'' + name + '\');\n' +
+							   '});\n';
 					}
 				}
 					   
@@ -136,7 +139,7 @@ define(['require', 'util/findscript'], function(require, findScriptTag) {
 				//sourceURL trick, so skip it if enabled.
 				/*@if (@_jscript) @else @*/
 				if (!config.isBuild) {
-					text += "\r\n//@ sourceURL=" + path;
+					text += '\r\n//@ sourceURL=' + path;
 				}
 				/*@end@*/
 	
@@ -148,8 +151,7 @@ define(['require', 'util/findscript'], function(require, findScriptTag) {
 				});
 			});
 		};
-	};
+	}
 	
-	return pluginify
-	
+	return pluginify;
 });

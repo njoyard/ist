@@ -5,12 +5,11 @@ define([
 	'components/directives'
 ],
 function(Context, LiveFragment, RenderedTemplate, directives) {
-	var Template, preRenderRec, findPartialRec, findIndex,
-		expressionRE = /{{((?:}(?!})|[^}])*)}}/,
+	var expressionRE = /{{((?:}(?!})|[^}])*)}}/,
 		slice = Array.prototype.slice;
 		
 	
-	findPartialRec = function(name, nodes) {
+	function findPartialRec(name, nodes) {
 		var found, i, len,
 			results = nodes.filter(function(n) {
 				return n.partial === name;
@@ -29,14 +28,15 @@ function(Context, LiveFragment, RenderedTemplate, directives) {
 				}
 			}
 		}
-	};
+	}
 	
 	
 	/* Extract a LiveFragment from parent where nodes have "index" value */
-	findIndex = function(context, parent, index) {
+	function findIndex(context, parent, index) {
 		var nodes = parent.childNodes,
 			result = [],
-			previous = next = null,
+			previous = null,
+			next = null,
 			i, len, node, idx;
 		
 		for (i = 0, len = nodes.length; i < len; i++) {
@@ -53,33 +53,33 @@ function(Context, LiveFragment, RenderedTemplate, directives) {
 			
 			if (idx > index) {
 				next = node;
-				break;		
+				break;
 			}
 		}
 
 		return new LiveFragment(parent, result, previous, next);
-	};
+	}
 	
 
 	/**
 	 * Template object; encapsulate template nodes and rendering helpers
 	 */
-	var Template = function(name, nodes) {
+	function Template(name, nodes) {
 		this.name = name || '<unknown>';
 		this.nodes = nodes;
 		
 		this.prerendered = false;
 		this._preRender();
-	};
+	}
 	
 	
 	/* Prerender recursion helper */
-	preRenderRec = function(node) {
+	function preRenderRec(node) {
 		var pr, doc = this;
 		
 		/* Constant text node */
-		if (typeof node.text !== 'undefined'
-				&& !expressionRE.test(node.text)) {
+		if (typeof node.text !== 'undefined' &&
+				!expressionRE.test(node.text)) {
 			node.pr = doc.createTextNode(node.text);
 		}
 		
@@ -99,7 +99,7 @@ function(Context, LiveFragment, RenderedTemplate, directives) {
 		if (typeof node.children !== 'undefined') {
 			node.children.forEach(preRenderRec, doc);
 		}
-	};
+	}
 	
 	
 	/* Prerender constant part of nodes */
@@ -118,11 +118,11 @@ function(Context, LiveFragment, RenderedTemplate, directives) {
 	/* Complete an Error object with information about the current node and
 		template */
 	Template.prototype._completeError = function(err, node) {
-		var current = "in '" + this.name + "' on line "
-			+ (node.line || '<unknown>');
+		var current = 'in \'' + this.name + '\' on line ' +
+					  (node.line || '<unknown>');
 		
 		if (typeof err.istStack === 'undefined') {
-			err.message += " " + current;
+			err.message += ' ' + current;
 			err.istStack = [];
 		}
 		
@@ -182,8 +182,10 @@ function(Context, LiveFragment, RenderedTemplate, directives) {
 		
 		// Set attributes
 		Object.keys(node.attributes).forEach(function(attr) {
+			var value;
+
 			try {
-				var value = ctx.interpolate(node.attributes[attr]);
+				value = ctx.interpolate(node.attributes[attr]);
 			} catch (err) {
 				throw this._completeError(err, node);
 			}
@@ -193,8 +195,10 @@ function(Context, LiveFragment, RenderedTemplate, directives) {
 	
 		// Set properties
 		Object.keys(node.properties).forEach(function(prop) {
+			var value;
+
 			try {
-				var value = ctx.interpolate(node.properties[prop]);
+				value = ctx.interpolate(node.properties[prop]);
 			} catch (err) {
 				throw this._completeError(err, node);
 			}
@@ -205,7 +209,7 @@ function(Context, LiveFragment, RenderedTemplate, directives) {
 		// Remove previously set handlers
 		if (data.detach) {
 			data.detach.forEach(function(detach) {
-				domnode.removeEventListener(detach.event, detach.handler, false);
+				elem.removeEventListener(detach.event, detach.handler, false);
 			});
 		}
 		data.detach = [];
@@ -213,8 +217,10 @@ function(Context, LiveFragment, RenderedTemplate, directives) {
 		// Set new handlers
 		Object.keys(node.events).forEach(function(event) {
 			node.events[event].forEach(function(expr) {
+				var handler;
+
 				try {
-					var handler = ctx.evaluate(expr);
+					handler = ctx.evaluate(expr);
 				} catch(err) {
 					throw this._completeError(err, node);
 				}
@@ -234,10 +240,9 @@ function(Context, LiveFragment, RenderedTemplate, directives) {
 	
 	/* Directive rendering helpers */
 	Template.prototype._renderDirective = function(ctx, node, index, fragment) {
-		var self = this,
-			subTemplate = new Template(this.name, node.children),
+		var subTemplate = new Template(this.name, node.children),
 			helper = directives.get(node.directive),
-			subCtx, ret, i, len;
+			subCtx, i, len;
 	
 		if (typeof helper !== 'function') {
 			throw new Error('No directive helper for @' + node.directive + ' has been registered');
@@ -252,7 +257,7 @@ function(Context, LiveFragment, RenderedTemplate, directives) {
 		}
 	
 		try {
-			helper.call(ctx, subCtx, subTemplate, fragment);
+			helper.call(null, ctx, subCtx, subTemplate, fragment);
 		} catch (err) {
 			throw this._completeError(err, node);
 		}
@@ -268,7 +273,7 @@ function(Context, LiveFragment, RenderedTemplate, directives) {
 	Template.prototype.findPartial = function(name) {
 		var result;
 		
-		if (typeof name === "undefined") {
+		if (typeof name === 'undefined') {
 			return;
 		}
 			
@@ -279,7 +284,7 @@ function(Context, LiveFragment, RenderedTemplate, directives) {
 		}
 	};
 	
-	renderRec = function(node, index) {
+	function renderRec(node, index) {
 		var template = this.template,
 			ctx = this.context,
 			fragment = findIndex(ctx, this.fragment, index);
@@ -303,7 +308,7 @@ function(Context, LiveFragment, RenderedTemplate, directives) {
 		if (typeof node.directive !== 'undefined') {
 			template._renderDirective(ctx, node, index, fragment);
 		}
-	};
+	}
 
 	
 	/* Render template using 'context' in 'doc' */
@@ -377,7 +382,7 @@ function(Context, LiveFragment, RenderedTemplate, directives) {
 			nodes.nodeType === nodes.DOCUMENT_FRAGMENT_NODE;
 		
 		if (!nodes || (!isFragment && !nodes.length)) {
-			throw new Error("No nodes to update");
+			throw new Error('No nodes to update');
 		}
 		
 		if (!(context instanceof Context)) {
@@ -396,10 +401,10 @@ function(Context, LiveFragment, RenderedTemplate, directives) {
 
 	/* Return code to regenerate this template */
 	Template.prototype.getCode = function(pretty) {
-		return "new ist.Template("
-			+ JSON.stringify(this.name) + ", "
-			+ JSON.stringify(this.nodes, null, pretty ? 1 : 0)
-			+ ");";
+		return 'new ist.Template(' +
+			JSON.stringify(this.name) + ', ' +
+			JSON.stringify(this.nodes, null, pretty ? 1 : 0) +
+			');';
 	};
 	
 	
