@@ -89,13 +89,13 @@ define(["ist"], function(ist) {
 				nodelists = [],
 				rendered;
 			
-			ist.registerHelper("test", function(ctx, tmpl, fragment) {
+			ist.registerHelper("test", function(outer, inner, tmpl, fragment) {
 				nodelists.push(Array.prototype.slice.call(fragment.childNodes));
 				
 				if (!fragment.hasChildNodes()) {
-					fragment.appendChild(this.createTextNode("original node"));
+					fragment.appendChild(outer.createTextNode("original node"));
 				} else {
-					fragment.appendChild(this.createTextNode("new node"));
+					fragment.appendChild(outer.createTextNode("new node"));
 				}
 			});
 			
