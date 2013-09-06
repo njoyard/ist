@@ -9,8 +9,11 @@
  * http://njoyard.github.com/ist
  */
 (function(global) {
-	var isAMD, previous, istComponents;
-	
-	isAMD = typeof global.define === 'function' && global.define.amd;
+	var isAMD = typeof global.define === 'function' && global.define.amd,
+		isNode = typeof process !== "undefined" && process.versions && !!process.versions.node,
+		isBrowser = typeof window !== "undefined" && window.navigator && window.document;
+
+	var previous, istComponents;
+
 	istComponents = { require: global.require };
 

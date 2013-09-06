@@ -1,4 +1,4 @@
-/*global define, requirejs, isAMD */
+/*global define, requirejs, isAMD, isNode, isBrowser */
 define([
 	'components/template',
 	'components/directives',
@@ -126,7 +126,7 @@ define([
 	});
 	
 
-	if (isAMD) {
+	if (isNode || (isBrowser && isAMD)) {
 		pluginify(ist);
 	}
 	

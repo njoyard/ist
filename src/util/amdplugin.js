@@ -1,4 +1,4 @@
-/*global define, ActiveXObject, process */
+/*global define, isBrowser, isNode, ActiveXObject */
 define(['require', 'util/misc'], function(require, misc) {
 	'use strict';
 
@@ -7,7 +7,7 @@ define(['require', 'util/misc'], function(require, misc) {
 			progIds = ['Msxml2.XMLHTTP', 'Microsoft.XMLHTTP', 'Msxml2.XMLHTTP.4.0'],
 			buildMap = {};
 
-		if (typeof window !== 'undefined' && window.navigator && window.document) {
+		if (isBrowser) {
 			getXhr = function() {
 				var xhr, i, progId;
 				if (typeof XMLHttpRequest !== 'undefined') {
@@ -49,7 +49,7 @@ define(['require', 'util/misc'], function(require, misc) {
 				};
 				xhr.send(null);
 			};
-		} else if (typeof process !== 'undefined' && process.versions && !!process.versions.node) {
+		} else if (isNode) {
 			var fs = require.nodeRequire('fs');
 
 			fetchText = function(url, callback) {
