@@ -1,70 +1,39 @@
 /*global define */
-define(['components/livefragment'], function(LiveFragment) {
+define(function() {
 	'use strict';
 
-	var directives, registered, conditionalHelper, iterationHelper,
+	var directives, registered,
 		defined = {};
 	
-	conditionalHelper = function(outer, render, tmpl, fragment) {
+	/**
+	 * Conditional helper for @if, @unless
+	 *
+	 * @param {Context} outer outer context
+	 * @param render render template if truthy
+	 * @param {Template} tmpl template to render
+	 * @param {DocumentFragment} fragment target fragment
+	 */
+	function conditionalHelper(outer, render, tmpl, fragment) {
 		if (render) {
-			if (fragment.hasChildNodes) {
-				// Fragment contains nodes, update them
-				tmpl.render(outer, null, fragment);
-			} else {
-				// Nothing in fragment, render subtemplate
-				fragment.appendChild(tmpl.render(outer));
-			}
-		} else {
-			// Empty fragment
-			fragment.empty();
+			fragment.appendChild(tmpl.render(outer));
 		}
-	};
+	}
 	
-	iterationHelper = function(outer, keys, items, inner, tmpl, fragment) {
-		var outerValue = outer.value,
-			renderedFragments = [],
-			lastFragment,
-			lastKey,
-			findRenderedFragment;
-			
-		/* Start by building a list of fragments to group already
-		   rendered nodes by source array item (knowing that they are
-		   adjacent siblings) */
-		fragment.childNodes.forEach(function(node) {
-			var key = inner.istData(node).iterationKey;
-			
-			if (key !== lastKey) {
-				if (keys.indexOf(key) === -1) {
-					// Item has gone away, remove node immediately
-					fragment.removeChild(node);
-				} else {
-					lastFragment = new LiveFragment(fragment, [node]);
-					lastKey = key;
-				
-					renderedFragments.push({
-						key: key,
-						fragment: lastFragment
-					});
-				}
-			} else {
-				lastFragment.extend(node);
-			}
-		});
+	/**
+	 * Iteration helper for @each, @eachkey
+	 *
+	 * @param {Context} outer outer context
+	 * @param {Array} items item array to iterate over
+	 * @param [scope] additional scope object
+	 * @param {Template} tmpl template to render for each item
+	 * @param {DocumentFragment} fragment target fragment
+	 */
+	function iterationHelper(outer, items, scope, tmpl, fragment) {
+		var outerValue = outer.value;
 		
-		findRenderedFragment = function(key) {
-			var i, len;
-			for (i = 0, len = renderedFragments.length; i < len; i++) {
-				if (renderedFragments[i].key === key) {
-					return renderedFragments[i].fragment;
-				}
-			}
-		};
-		
-		/* Loop over array and append updated/newly rendered fragments */
+		/* Loop over array and append rendered fragments */
 		items.forEach(function(item, index) {
-			var i, len,
-				sctx = inner.createContext(item),
-				rendered = findRenderedFragment(item);
+			var sctx = outer.createContext(item);
 				
 			sctx.pushScope({
 				loop: {
@@ -75,19 +44,14 @@ define(['components/livefragment'], function(LiveFragment) {
 					outer: outerValue
 				}
 			});
-			
-			if (rendered) {
-				tmpl.render(sctx, null, rendered);
-			} else {
-				rendered = tmpl.render(sctx, null, rendered);
-				for (i = 0, len = rendered.childNodes.length; i < len; i++) {
-					inner.istData(rendered.childNodes[i]).iterationKey = keys[index];
-				}
+
+			if (scope) {
+				sctx.pushScope(scope);
 			}
-			
-			fragment.appendChild(rendered);
+
+			fragment.appendChild(tmpl.render(sctx));
 		});
-	};
+	}
 	
 	
 	/* Built-in directive helpers (except @include) */
@@ -101,13 +65,7 @@ define(['components/livefragment'], function(LiveFragment) {
 		},
 
 		'with': function(outer, inner, tmpl, fragment) {
-			
-		
-			if (fragment.hasChildNodes()) {
-				tmpl.render(inner, null, fragment);
-			} else {
-				fragment.appendChild(tmpl.render(inner));
-			}
+			fragment.appendChild(tmpl.render(inner));
 		},
 
 		'each': function(outer, inner, tmpl, fragment) {
@@ -117,28 +75,22 @@ define(['components/livefragment'], function(LiveFragment) {
 				throw new Error(array + ' is not an array');
 			}
 			
-			iterationHelper.call(null, outer, array, array, inner, tmpl, fragment);
+			iterationHelper(outer, array, null, tmpl, fragment);
 		},
 
 		'eachkey': function(outer, inner, tmpl, fragment) {
 			var object = inner.value,
-				keys = Object.keys(object),
 				array;
 				
-			array = keys.map(function(k) {
+			array = Object.keys(object).map(function(k) {
 				return { key: k, value: object[k] };
 			});
 			
-			// TODO 'object' must be added to 'loop' !
-			iterationHelper.call(null, outer, keys, array, inner, tmpl, fragment);
+			iterationHelper(outer, array, { object: object }, tmpl, fragment);
 		},
 
 		'dom': function(outer, inner, tmpl, fragment) {
 			var node = inner.value;
-
-			while (fragment.hasChildNodes()) {
-				fragment.removeChild(fragment.firstChild);
-			}
 
 			if (node.ownerDocument !== inner.doc) {
 				node = inner.doc.importNode(node);
@@ -157,10 +109,6 @@ define(['components/livefragment'], function(LiveFragment) {
 
 			if (!template) {
 				throw new Error('Template \'' + name + '\' has not been @defined');
-			}
-
-			while (fragment.hasChildNodes()) {
-				fragment.removeChild(fragment.firstChild);
 			}
 
 			fragment.appendChild(template.render(outer));

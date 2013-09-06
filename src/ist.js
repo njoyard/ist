@@ -115,11 +115,7 @@ define([
 
 		if (typeof found.render === 'function') {
 			// Render included template
-			if (fragment.hasChildNodes) {
-				found.update(outer, fragment);
-			} else {
-				fragment.appendChild(found.render(outer));
-			}
+			fragment.appendChild(found.render(outer));
 		} else {
 			throw new Error('Invalid included template \'' + name + '\'');
 		}

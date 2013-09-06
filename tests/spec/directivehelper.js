@@ -119,7 +119,7 @@ define([
 			expect( result.querySelector('.child').firstChild.textContent ).toBe( 'interpolated my value' );
 		});
 		
-		it("should pass an empty LiveFragment to helpers as 4th argument", function() {
+		it("should pass an empty DocumentFragment to helpers as 4th argument", function() {
 			var frag,
 				context = { context: { value: 'context' } };
 			
@@ -129,7 +129,6 @@ define([
 			ist(textDirectivehelper).render(context);
 			
 			expect( frag.nodeType ).toBe( document.DOCUMENT_FRAGMENT_NODE );
-			expect( typeof frag.extend ).toBe( 'function' );
 		});
 		
 		it("should insert what helpers insert in their LiveFragment into the parent template node", function() {
