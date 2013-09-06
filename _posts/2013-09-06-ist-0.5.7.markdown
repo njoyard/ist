@@ -1,0 +1,59 @@
+---
+layout: post
+title: ist.js v0.5.7 released
+---
+
+{% assign opencurly = '{{' %}
+{% assign closecurly = '}}' %}
+
+I just pushed a 0.5.7 release.  I've been working quite a bit to prepare
+version 0.6 (which will mainly enable updating rendered templates), rewriting
+things many times, and I decided to do another release before 0.6 because of
+some already useful changes.
+
+On a user's perspective, here is what changed in this version:
+
+* New directives are available. `@dom` enables inserting DOM nodes when
+  rendering:
+
+{% highlight css %}
+@dom someNode
+{% enhighlight }
+
+{% highlight javascript %}
+template.render({ someNode: document.createElement("div"); });
+{% endhighlight %}
+
+* You can now create reusable "components" using `@define` and `@use`:
+
+{% highlight css %}
+@define "article"
+	.article
+		h1 "{{ opencurly }} title {{ closecurly }}"
+		"{{ opencurly }} text {{ closecurly }}"
+
+@each articles
+	@use "article"
+{% endhighlight %}
+
+* Rendering performance has been boosted quite a lot (around 30% faster in my
+  not-scientific-at-all benchmarks).  This is actually a quite welcome side
+  effect of rewriting things to enable template updating.
+
+For people defining directive helpers, here is a summary of what changed; please
+refer to the [documentation][1] for more details.
+
+* Directive helper definition has changed a bit to prepare ground for 0.6;
+  helpers defined before 0.5.7 are incompatible.  The two main changes are that
+  rendered nodes are now to be inserted into a document-fragment passed as a
+  parameter, and that the outer and inner context objects are now both "real"
+  parameters (no more using `this`).
+* The `pushEvalVar` and `popEvalVar` methods on rendering context objects have
+  been deprecated in favor of new `pushScope` and `popScope`.  They will be
+  removed in version 0.6.
+
+More changes have happened under the hood, see the [changelog][2] for more
+details.
+
+[1]: {{ site.url }}/doc.html
+[2]: https://raw.github.com/njoyard/ist/master/CHANGELOG

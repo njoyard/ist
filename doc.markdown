@@ -29,6 +29,7 @@ Documentation
         * <a href="#Context switching">Context switching</a>
         * <a href="#Array iteration">Array iteration</a>
         * <a href="#Object property iteration">Object property iteration</a>
+        * <a href="#Components">Components</a>
         * <a href="#External template inclusion">External template inclusion</a>
     * <a href="#Partials">Partials</a>
 * <a href="#Single node creation">Single node creation</a>
@@ -129,7 +130,7 @@ document.body.appendChild(node);
 
 <section class="doc-item">
 <section class="doc-desc">
-Additionnaly, you can pass a DOMDocument as the second argument to `render()` to
+Additionnaly, you can pass a DOM document as the second argument to `render()` to
 render nodes into an other document.  This is mainly useful when using multiple
 windows or frames.
 
@@ -854,10 +855,60 @@ about the iteration.
 * `loop.first` is true when `loop.index === 0`
 * `loop.last` is true when `loop.index === loop.length - 1`
 * `loop.outer` is a reference to the outer context object
-* `loop.object` is a reference to the enumerated object 
+* `loop.object` is a reference to the enumerated object
 
 </section>
 </section>
+#### <a class="nohover" name="Components">Components</a>
+
+<section class="doc-item">
+<section class="doc-desc">
+The `@define` and `@use` directives can be used to define components (or what
+other templating engines also call macros).  This enables reusing parts of
+templates.  To define a component, use the `@define` directive with the
+component name as a parameter.
+
+</section>
+<section class="doc-code">
+{% highlight css %}
+@define "article"
+    .article
+        h1 "{{ opencurly }} title {{ closecurly }}"
+        .content "{{ opencurly }} text {{ closecurly }}"
+{% endhighlight %}
+</section>
+</section>
+
+<section class="doc-item">
+<section class="doc-desc">
+The component name can be any string value.  Any existing component with the
+same name will be overriden.  You can then use the component with the `@use`
+directive.
+
+</section>
+<section class="doc-code">
+{% highlight css %}
+/* articles should be an array of objects with title and text properties */
+@each articles
+    @use "article"
+{% endhighlight %}
+</section>
+</section>
+
+<section class="doc-item">
+<section class="doc-desc">
+There is no direct way to pass a specific context to a component when
+`@use`-ing it, but you can use the `@with` directive to achieve the same.
+
+</section>
+<section class="doc-code">
+{% highlight css %}
+@with { title: "My article", text: "Hello, world !" }
+    @use "article"
+{% endhighlight %}
+</section>
+</section>
+
 #### <a class="nohover" name="External template inclusion">External template inclusion</a>
 
 <section class="doc-item">
@@ -1159,7 +1210,7 @@ it a directive name (case-sensitive) and a helper function.
 <section class="doc-code">
 {% highlight js %}
 /* Helper for '@foo' */
-ist.registerHelper('foo', function(subContext, subTemplate) {
+ist.registerHelper("foo", function(outer, inner, template, fragment) {
 	/* Do stuff */
 });
 {% endhighlight %}
@@ -1168,29 +1219,65 @@ ist.registerHelper('foo', function(subContext, subTemplate) {
 
 <section class="doc-item">
 <section class="doc-desc">
-Directive helpers must return a DOM node or a DOM document fragment, which will
-be inserted in the DOM node tree where the directive is called. Returning
-`undefined` (ie. not returning anything) is also allowed and has the same result
-as returning an empty document fragment.
+The arguments passed to helpers are:
 
-Note that you should not use `document` or any of its methods directly in
-directive helpers as you don't know the target document the template is being
-rendered into.
+* `outer`: a [Context object](#Context objects) for the outer rendering context,
+  ie. the value of the rendering context where the directive is called;
+* `inner`: a [Context object](#Context objects) for the inner rendering context,
+  ie. the value that is passed as an argument to the directive; this argument
+  is undefined when no parameter is passed;
+* `template`: an ist compiled template that enables access to nodes defined as
+  children of the directive;
+* `fragment`: an empty DocumentFragment where the directive should add the nodes
+  it creates.
+
+Here are some example calls to `@foo` with the parameters the helper receives:
+
+</section>
+<section class="doc-code">
+{% highlight css %}
+@with { hello: "world" }
+    /* Call with a parameter, the handler receives:
+        - outer: a Context object for { hello: "world" }
+        - inner: a Context object for "world" (ie. the value of hello)
+        - template: a compiled ist template for
+                div.childA
+                div.childB
+     */
+    @foo hello
+        div.childA
+        div.childB
+
+    /* Call with a parameter, the handler receives:
+        - outer: a Context object for { hello: "world" }
+        - inner: undefined
+        - template: a compiled ist template for
+                div.child
+                    div.grandChild
+     */
+    @foo
+        div.child
+            div.grandChild
+{% endhighlight %}
+</section>
+</section>
+
+<section class="doc-item">
+<section class="doc-desc">
+To create nodes from a directive helper, you should not use `document` or any of
+its methods, as you don't know which DOM document your directive will be used
+to create nodes in.  You can use helper properties and methods on any of the
+[Context object](#Context objects) arguments instead (you may prefer always
+using `outer` as it is always present).
 
 </section>
 <section class="doc-code">
 {% highlight js %}
-ist.registerHelper('foo', function(subContext, subTemplate) {
-	return this.createTextNode("foo");
-});
-
-ist.registerHelper('bar', function(subContext, subTemplate) {
-	var fragment = this.createDocumentFragment();
-	
-	fragment.appendChild(this.createTextNode("foo"));
-	fragment.appendChild(this.createTextNode("bar"));
-	
-	return fragment;
+/* Always create a text node containing "foo", ignoring context values and
+   children template nodes */
+ist.registerHelper("foo", function(outer, inner, template, fragment) {
+	var node = outer.createTextNode("foo");
+    fragment.appendChild("foo");
 });
 {% endhighlight %}
 </section>
@@ -1198,20 +1285,17 @@ ist.registerHelper('bar', function(subContext, subTemplate) {
 
 <section class="doc-item">
 <section class="doc-desc">
-The first argument a helper receives gives access to the result of the
-expression parameter passed when the directive is called.  This result is
-wrapped in a [Context object](#Context objects).  For now, just note that the
-resulting value is accessible with its `value` property.
+You can access the value wrapped by a [Context object](#Context objects) with
+its `value` property.  Here is a simple `@echo` directive that creates a single
+text node with the string passed as a parameter.
 
 </section>
 <section class="doc-code">
 {% highlight js %}
-/* '@echo' directive
- * Outputs a text node containing its parameter value
- * (usage example: @echo "foo")
- */
-ist.registerHelper('echo', function(subContext, subTemplate) {
-	return this.createTextNode(subContext.value);
+/* Example: @echo "foo" */
+ist.registerHelper("echo", function(outer, inner, template, fragment) {
+    var node = outer.createTextNode(inner ? inner.value : "no value passed to @echo !");
+    fragment.appendChild(node);
 });
 {% endhighlight %}
 </section>
@@ -1219,64 +1303,73 @@ ist.registerHelper('echo', function(subContext, subTemplate) {
 
 <section class="doc-item">
 <section class="doc-desc">
-The second argument helpers are called with is the compiled subtemplate, ie.
-all nodes defined as children of the directive.  This example shows how the
-`@with` directive just renders its compiled subtemplate using the subcontext
-value.
+Here is another simple example showing how the built-in `@with` directive could
+be defined.  It simply renders its child template using the inner context value.
 
 </section>
 <section class="doc-code">
 {% highlight js %}
-/* The actual '@with' directive helper is
- * a little bit different, more on that later.
- */
-ist.registerHelper('with', function(subContext, subTemplate) {
-	return subTemplate.render(subContext.value);
-});
+ist.registerHelper("with", function(outer, inner, template, fragment) {
+    var nodes = template.render(inner.value);
+    fragment.appendChild(nodes);
+}
 {% endhighlight %}
 </section>
 </section>
 
 <section class="doc-item">
 <section class="doc-desc">
-Helpers are called with the current rendering context as `this`.  Like the first
-argument, `this` is a Context object.  The first argument to helpers can be
-`undefined` when a directive is used without any argument, thus you might prefer
-always calling Context object utilities on `this`.
-
-Finally, you can throw exceptions in directive helpers.  Those will be reported
-with added context data (such as the current template and line number).
+You may throw exceptions inside helpers.  Those exceptions will be reported with
+some added context data (including which template and which line it occured on).
+Here is a more robust version of `@with`.
 
 </section>
+<section class="doc-code">
+{% highlight js %}
+ist.registerHelper("with", function(outer, inner, template, fragment) {
+    if (!inner) {
+        throw new Error("No data passed to @with");
+    }
+
+    /* You can directly pass Context objects to the render() method of templates */
+    var nodes = template.render(inner);
+
+    fragment.appendChild(nodes);    
+});
+{% endhighlight %}
 </section>
+</section>
+
 ### <a class="nohover" name="Context objects">Context objects</a>
 
 <section class="doc-item">
 <section class="doc-desc">
 Directive helpers receive `Context` objects to encapsulate rendering contexts as
-well as the DOMDocument where templates are rendered.  The following members
-give access to the DOMDocument where the template is being rendered:
+well as the DOM document where templates are rendered.  The following members
+give access to the DOM document where the template is being rendered:
 
-* `Context.document` is a reference to the document where the template is being
+* `Context.doc` is a reference to the DOM document where the template is being
   rendered;
 * `Context#createDocumentFragment()` is an alias to the same method of the
-  rendering document;
-* `Context#createTextNode(text)` is an alias to the same method of the rendering
+  target document;
+* `Context#createTextNode(text)` is an alias to the same method of the target
   document;
 * `Context#createElement(tagName[, namespace])` is an alias to either
-  createElement or createElementNS on the rendering document.
+  createElement or createElementNS on the target document.
+* `Context#importNode(node)` is an alias to the same method of the target
+  document
   
 </section>
 <section class="doc-code">
 {% highlight js %}
-ist.registerHelper("divtext", function(subContext, subTemplate) {
-	var fragment = this.createDocumentFragment();
-	var div = this.createElement("div");
-	var text = this.createTextNode(subContext.value);
+/* Creates a <div> with a text child node containing the value passed as a 
+   parameter, ie @divtext "foo" renders to <div>foo</div> */
+ist.registerHelper("divtext", function(outer, inner, template, fragment) {
+	var div = outer.createElement("div");
+	var text = outer.createTextNode(inner.value);
 	
 	div.appendChild(text);
 	fragment.appendChild(div);
-	return fragment;
 });
 {% endhighlight %}
 </section>
@@ -1290,14 +1383,18 @@ method.
 </section>
 <section class="doc-code">
 {% highlight js %}
-ist.registerHelper('with', function(subContext, subTemplate) {
-	return subTemplate.render(subContext);
+ist.registerHelper('with', function(outer, inner, template, fragment) {
+	fragment.appendChild(
+        template.render(inner)
+     );
 	
 	/* Would be the same as :
-		return subTemplate.render(
-			subContext.value,
-			subContext.document
-		);
+		fragment.appendChild(
+            template.render(
+    			inner.value,
+    			inner.document
+    		)
+        );
 	*/
 });
 {% endhighlight %}
@@ -1308,18 +1405,18 @@ ist.registerHelper('with', function(subContext, subTemplate) {
 <section class="doc-desc">
 The following members can be used to create new contexts and access their value:
 
-* `Context.value` contains the value of the rendering context.
+* `Context.value` contains the value wrapped by the `Context` object.
 * `Context#createContext(newValue)` returns a new `Context` object with the same
   target document but a new value.
 
 </section>
 <section class="doc-code">
 {% highlight js %}
-ist.registerHelper('test', function(subContext, subTemplate) {
+ist.registerHelper('test', function(outer, inner, template, fragment) {
 	var testValue = { foo: "bar" },
-		testCtx = this.createContext(testValue);
+		testCtx = outer.createContext(testValue);
 	
-	console.log(testValue === testCtx.value); // true
+	assert(testValue === testCtx.value);
 });
 {% endhighlight %}
 </section>
@@ -1338,11 +1435,11 @@ The following members can be used to help evaluate expressions:
 </section>
 <section class="doc-code">
 {% highlight js %}
-ist.registerHelper('test', function(subContext, subTemplate) {
-	var testCtx = this.createContext({ foo: "bar" });
+ist.registerHelper('test', function(outer, inner, template, fragment) {
+	var testCtx = outer.createContext({ foo: "bar" });
 	
-	console.log(testCtx.evaluate("foo.toUpperCase()")); // "BAR"
-	console.log(testCtx.interpolate("foo={{ opencurly }} foo {{ closecurly }}")); // "foo=bar"
+    assert(textCtx.evaluate("foo.toUpperCase()") === "BAR");
+	assert(testCtx.interpolate("foo={{ opencurly }} foo {{ closecurly }}") === "foo=bar");
 });
 {% endhighlight %}
 </section>
@@ -1353,33 +1450,35 @@ ist.registerHelper('test', function(subContext, subTemplate) {
 And finally, the following members can be used to change the way expressions are
 evaluated:
 
-* `Context#pushEvalVar(name, value)` adds a variable named `name` with value
-  `value` to the expression evaluation context.  Variable values are stacked,
-  every new definition hiding any previously defined variable or context
-  property with the same name.  This is what is used to set the `loop` variable
-  in the `@each` directive helper.
-* `Context#popEvalVar(name)` undoes what `pushEvalVar` did, popping the last
-  value set for `name` and restoring any previously defined value.
+* `Context#pushScope(scope)` pushes properties of the `scope` object on the
+  scope used when evaluating expressions, possibly hiding previously existing
+  variables with the same name (from previously pushed scopes of from the
+  rendering context).
+* `Context#popScope()` undoes what pushScope did, popping the last pushed scope
+  object.
   
 </section>
 <section class="doc-code">
 {% highlight js %}
-ist.registerHelper('test', function(subContext, subTemplate) {
-	var testCtx = this.createContext({ foo: "bar" });
+ist.registerHelper('test', function(outer, inner, template, fragment) {
+	var testCtx = outer.createContext({ foo: "bar" });
 	
-	console.log(testCtx.evaluate("foo.toUpperCase()")); // "BAR"
+    assert(testCtx.evaluate("foo.toUpperCase()") === "BAR");
 	
-	testCtx.pushEvalVar("foo", "baz");
-	console.log(testCtx.evaluate("foo.toUpperCase()")); // "BAZ"
+	testCtx.pushScope({ foo: "baz", hello: "world" });
+    assert(testCtx.evaluate("foo.toUpperCase()") === "BAZ");
+    assert(testCtx.evaluate("hello") === "world");
+
+	testCtx.pushScope({ foo: "ding" });
+    assert(testCtx.evaluate("foo.toUpperCase()") === "DING");
+    assert(testCtx.evaluate("hello") === "world");
+
+	testCtx.popScope();
+    assert(testCtx.evaluate("foo.toUpperCase()") === "BAZ");
+    assert(testCtx.evaluate("hello") === "world");
 	
-	testCtx.pushEvalVar("foo", "ding");
-	console.log(testCtx.evaluate("foo.toUpperCase()")); // "DING"
-	
-	testCtx.popEvalVar("foo");
-	console.log(testCtx.evaluate("foo.toUpperCase()")); // "BAZ"
-	
-	testCtx.popEvalVar("foo");
-	console.log(testCtx.evaluate("foo.toUpperCase()")); // "BAR"
+	testCtx.popScope();
+    assert(testCtx.evaluate("foo.toUpperCase()") === "BAR");
 });
 {% endhighlight %}
 </section>
@@ -1395,9 +1494,9 @@ without any context switching as follows:
 </section>
 <section class="doc-code">
 {% highlight js %}
-ist.registerHelper('noop', function(subContext, subTemplate) {
+ist.registerHelper('noop', function(outer, inner, template, fragment) {
 	// Render inner template with the current context
-	return subTemplate.render(this);
+    fragment.appendChild(template.render(outer));
 });
 {% endhighlight %}
 </section>
@@ -1406,14 +1505,12 @@ ist.registerHelper('noop', function(subContext, subTemplate) {
 <section class="doc-item">
 <section class="doc-desc">
 The following example allows disabling part of a tree with a `@disable`
-directive.  It returns an empty document fragment, but could as well return
-nothing.
+directive.  It simply does not insert any nodes in the fragment parameter.
 
 </section>
 <section class="doc-code">
 {% highlight js %}
 ist.registerHelper('disabled', function() {
-	return this.createDocumentFragment();
 });
 {% endhighlight %}
 </section>
@@ -1428,12 +1525,17 @@ insert rendered markdown in your tree.
 </section>
 <section class="doc-code">
 {% highlight js %}
-ist.registerHelper('markdown', function(subContext) {
-	var container = this.createElement('section');
-	
-	section.innerHTML = parseMarkdown(subContext.value);
-	
-	return container;
+ist.registerHelper('markdown', function(outer, inner, template, fragment) {
+    // Create temporary container
+	var container = outer.createElement('div');
+
+    // Render markdown
+	container.innerHTML = parseMarkdown(inner.value);
+
+    // Dump container children into fragment
+    while (container.hasChildNodes()) {
+        fragment.appendChild(container.firstChild);
+    }
 });
 {% endhighlight %}
 </section>
@@ -1469,14 +1571,14 @@ ist.fromScriptTag("template")
 
 <section class="doc-item">
 <section class="doc-desc">
-Here is how the `@if` directive is defined.
+Here is how the `@if` directive can be defined.
 
 </section>
 <section class="doc-code">
 {% highlight js %}
-ist.registerHelper('if', function(ctx, tmpl) {
-	if (ctx.value) {
-		return tmpl.render(this);
+ist.registerHelper('if', function(outer, inner, template, fragment) {
+	if (inner.value) {
+        fragment.appendChild(template.render(outer));
 	}
 });
 {% endhighlight %}
@@ -1490,10 +1592,10 @@ Of course the `@unless` directive is very similar.
 </section>
 <section class="doc-code">
 {% highlight js %}
-ist.registerHelper('unless', function(ctx, tmpl) {
-	if (!ctx.value) {
-		return tmpl.render(this);
-	}
+ist.registerHelper('unless', function(outer, inner, template, fragment) {
+    if (!inner.value) {
+        fragment.appendChild(template.render(outer));
+    }
 });
 {% endhighlight %}
 </section>
@@ -1501,46 +1603,33 @@ ist.registerHelper('unless', function(ctx, tmpl) {
 
 <section class="doc-item">
 <section class="doc-desc">
-Examples for a `@with` directive have been shown above, here is the actual code.
+Here is how the `@each` directive can be defined.  Note the use of `pushScope`
+to define the `loop` variable.  Calling `popScope` is not necessary, as `subCtx`
+is used only once.  Additionnaly, the directive could throw an exception when
+its argument is not an array.
 
 </section>
 <section class="doc-code">
 {% highlight js %}
-ist.registerHelper('with', function(ctx, tmpl) {
-	return tmpl.render(ctx);
-});
-{% endhighlight %}
-</section>
-</section>
+ist.registerHelper('each', function(outer, inner, template, fragment) {
+	var outerValue = outer.value,
+        innerValue = inner.value;
 
-<section class="doc-item">
-<section class="doc-desc">
-The code for `@each` is still quite simple.  Note the use of `pushEvalVar()` to
-define the `loop` variable.  Calling `popEvalVar()` is not really necessary, as
-`sctx` is destroyed immediately.  Additionnaly, the directive could throw an
-exception when its argument is not an array.
-
-</section>
-<section class="doc-code">
-{% highlight js %}
-ist.registerHelper('each', function(ctx, tmpl) {
-	var fragment = this.createDocumentFragment(),
-		outer = this.value,
-		value = ctx.value;
-
-	if (value && Array.isArray(value)) {
-		value.forEach(function(item, index) {
-			var sctx = ctx.createContext(item);
+	if (Array.isArray(innerValue)) {
+		innerValue.forEach(function(item, index) {
+			var subCtx = outer.createContext(item);
 		
-			sctx.pushEvalVar('loop', {
-				first: index == 0,
-				index: index,
-				last: index == value.length - 1,
-				length: value.length,
-				outer: outer
-			});
-			fragment.appendChild(tmpl.render(sctx));
-			sctx.popEvalVar('loop');
+			subCtx.pushScope({
+                loop: {
+    				first: index === 0,
+    				index: index,
+    				last: index === innerValue.length - 1,
+    				length: innerValue.length,
+    				outer: outerValue
+    			}
+            });
+
+			fragment.appendChild(template.render(subCtx));
 		});
 	}
 
@@ -1552,103 +1641,27 @@ ist.registerHelper('each', function(ctx, tmpl) {
 
 <section class="doc-item">
 <section class="doc-desc">
-The code for `@eachkey` is also very similar.  `pushEvalVar()` is not used here
-as we create a new context object that has nothing to do with the original
-rendering context.  As with the `@each` directive, it would be possible to add
-more checks and throw exceptions when the directive argument is not what we
-expect.
+Finally, here is how `@define` and `@use` are defined.  The helper code for
+these is really simple.
 
 </section>
 <section class="doc-code">
 {% highlight js %}
-ist.registerHelper('eachkey', function(ctx, tmpl) {
-	var fragment = this.createDocumentFragment(),
-		outer = this.value,
-		value = ctx.value,
-		keys;
+// Component store
+var defined = {};
 
-	if (value) {
-		keys = Object.keys(value);
-		keys.forEach(function(key, index) {
-			var sctx = ctx.createContext({
-				key: key,
-				value: value[key],
-				loop: {
-					first: index == 0,
-					index: index,
-					last: index == keys.length - 1,
-					length: keys.length,
-					object: value,
-					outer: outer
-				}
-			});
-			
-			fragment.appendChild(tmpl.render(sctx));
-		});
-	}
-
-	return fragment;
+ist.registerHelper('define', function(outer, inner, template, fragment) {
+    defined[inner.value] = template;
 });
-{% endhighlight %}
-</section>
-</section>
 
-<section class="doc-item">
-<section class="doc-desc">
-Finally, here is the code for the `@include` directive.  It looks for `<script>`
-tags and already loaded AMD modules, and renders what it finds.  Note that
-the `ist!` requireJS plugin code also looks for `@include` directives in
-templates in order to set included templates as dependencies.
+ist.registerHelper('use', function(outer, inner, template, fragment) {
+    var t = defined[inner.value];
 
-Also note that the subtemplate `tmpl` is ignored.
+    if (!t) {
+        throw new Error("Component " + inner.value + " was not @define-d");
+    }
 
-</section>
-<section class="doc-code">
-{% highlight js %}
-ist.registerHelper('include', function(ctx, tmpl) {
-	var what = ctx.value.replace(/\.ist$/, ''),
-		scripts, found, tryReq;
-	
-	found = findScriptTag(what);
-	
-	if (isAMD)
-	{
-		// Try to find a previously require()-d template or string
-		tryReq = [
-			what,
-			what + '.ist',
-			'ist!' + what,
-			'text!' + what + '.ist'
-		];
-
-		while (!found && tryReq.length) {
-			try {
-				found = requirejs(tryReq.shift());
-			} catch(e) {
-				// Pass
-			}
-		}
-	}
-	
-	if (!found) {
-		throw new Error(
-			"Cannot find included template '" + what + "'"
-		);
-	}
-
-	if (typeof found === 'string') {
-		// Compile template
-		found = ist(found, what);
-	}
-
-	if (typeof found.render === 'function') {
-		// Render included template
-		return found.render(this, tmpl.document);
-	} else {
-		throw new Error(
-			"Invalid included template '" + what + "'"
-		);
-	}
+    fragment.appendChild(t.render(outer));
 });
 {% endhighlight %}
 </section>
@@ -1658,7 +1671,7 @@ ist.registerHelper('include', function(ctx, tmpl) {
 
 <section class="doc-item">
 <section class="doc-desc">
-This documentation was last updated for ist.js version 0.5.5.
+This documentation was last updated for ist.js version 0.5.7.
 
 [1]: http://handlebarsjs.com/block_helpers.html
 </section>
