@@ -1,0 +1,24 @@
+{
+  "name": "ist",
+  "version": "0.5.7",
+  "homepage": "https://njoyard.github.io/ist",
+  "authors": [
+    "Nicolas Joyard <joyard.nicolas@gmail.com>"
+  ],
+  "description": "DOM templating engine with a CSS selector-like syntax",
+  "main": "dist/ist-min.js",
+  "keywords": [
+    "DOM",
+    "templating",
+    "template",
+    "CSS",
+    "selector"
+  ],
+  "license": "MIT",
+  "ignore": [
+    "**/.*",
+    "src",
+    "tests",
+    "Makefile"
+  ]
+}
