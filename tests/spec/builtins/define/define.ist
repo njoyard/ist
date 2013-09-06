@@ -1,0 +1,6 @@
+@define "foo"
+	div.inFoo
+		"{{ value }}"
+
+@with { value: "bar" }
+	@use "foo"

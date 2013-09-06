@@ -18,9 +18,3 @@
 	div.array
 @if _true
 	div._true
-@if sub.property1
-	div.subproperty1
-@if sub.property2
-	div.subproperty2
-@if sub.undefined
-	div.subundefined

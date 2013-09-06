@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>ist.js custom testing</title>
+		<script type="text/javascript" src="../dist/ist.js"></script>
+		<style type="text/css">
+			.input {
+				display: inline-block;
+				width: 45%;
+			}
+			
+			.input textarea {
+				width: 99%;
+				height: 300px;
+			}
+			
+			#error {
+				font-weight: bold;
+				color: red;
+			}
+		</style>
+	</head>
+	<body>
+		<section>
+			<section class="input">
+				Template<br>
+				<textarea id="template"></textarea>
+			</section>
+			<section class="input">
+				Data<br>
+				<textarea id="data">{}</textarea>
+			</section>
+		</section>
+
+		<section id="error"></section>
+		<section id="preview"></section>
+
+		
+		<script type="text/javascript">
+			var template = "";
+			var data = undefined;
+			var preview = document.getElementById("preview");
+	
+			window.onload = function() {
+				var templateTA = document.getElementById("template"),
+					dataTA = document.getElementById("data"),
+					error = document.getElementById("error"),
+					previewDiv = document.getElementById("preview"),
+					update, keydown;
+					
+				templateTA.value = localStorage.getItem("ist-custom-template");
+				dataTA.value = localStorage.getItem("ist-custom-data");
+
+				update = function() {
+					template = templateTA.value;
+					
+					localStorage.setItem("ist-custom-template", template);
+					localStorage.setItem("ist-custom-data", dataTA.value);
+					
+					error.innerHTML = "";
+					
+					try {
+						data = JSON.parse(dataTA.value);
+					} catch(e) {
+						error.innerHTML = "Error in JSON data: " + e.message;
+						error.style.display = 'block';
+						return;
+					}
+				};
+
+				keydown = function(e) {
+					var kc, oS, sS, sE;
+
+					e = e || window.event;
+					kc = e.keyCode || e.which;
+
+					if (kc === 9) {
+						oS = this.scrollTop;
+						if (this.setSelectionRange) {
+							sS = this.selectionStart;
+							sE = this.selectionEnd;
+		
+							this.value = this.value.substring(0, sS) + "    " + this.value.substr(sE);
+							this.setSelectionRange(sS + 4, sS + 4);
+							this.focus();
+						} else if (this.createTextRange) {
+							document.selection.createRange().text = "    ";
+						}
+	
+						this.scrollTop = oS;
+	
+						if (e.preventDefault) {
+							e.preventDefault();
+						}
+	
+						e.returnValue = false;
+						return false;
+					}
+				};
+
+				templateTA.onkeyup = dataTA.onkeyup = update;
+				templateTA.onkeydown = dataTA.onkeydown = keydown;
+
+				update();
+			};
+		</script>
+	</body>
+</html>

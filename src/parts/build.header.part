@@ -1,0 +1,19 @@
+/**
+ * IST: Indented Selector Templating
+ * version 0.5.5
+ *
+ * Copyright (c) 2012 Nicolas Joyard
+ * Released under the MIT license.
+ *
+ * Author: Nicolas Joyard <joyard.nicolas@gmail.com>
+ * http://njoyard.github.com/ist
+ */
+(function(global) {
+	var isAMD = typeof global.define === 'function' && global.define.amd,
+		isNode = typeof process !== "undefined" && process.versions && !!process.versions.node,
+		isBrowser = typeof window !== "undefined" && window.navigator && window.document;
+
+	var previous, istComponents;
+
+	istComponents = { require: global.require };
+

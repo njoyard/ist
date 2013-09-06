@@ -30,11 +30,11 @@
         require(
             [
             	'ist',
-            	'nodetypes', 'qualifiers', 'syntax', 'interpolation', 'blocks',
-            	'blockhelper', 'createnode', 'usage'
+            	'nodetypes', 'qualifiers', 'syntax', 'interpolation', 'builtins',
+            	'directivehelper', 'createnode', 'usage'
             ],
-            function(ist, nodetypes, qualifiers, syntax, interpolation, blocks,
-            	blockhelper, createnode, usage){
+            function(ist, nodetypes, qualifiers, syntax, interpolation, builtins,
+            	directivehelper, createnode, usage){
             	/* IST specific matchers */
 				beforeEach(function() {
 					var matchers = {};
@@ -186,6 +186,16 @@
 					
 						return actual === textContent;
 					};
+					
+					matchers.toBeSameNodeAs = function(node) {
+						var actual = this.actual;
+						
+						this.message = function() {
+							return "Expected " + actual + " to be same node as " + node;
+						};
+						
+						return actual.isSameNode(node);
+					};
 			
 					this.addMatchers(matchers);
 				});
@@ -196,8 +206,8 @@
             	describe('qualifiers', qualifiers);
             	describe('syntax', syntax);
             	describe('interpolation', interpolation);
-            	describe('blocks', blocks);
-            	describe('blockhelper', blockhelper);
+            	describe('directivehelper', directivehelper);
+            	describe('builtins', builtins);
             	describe('createnode', createnode);
             
             	/* Run Jasmine */

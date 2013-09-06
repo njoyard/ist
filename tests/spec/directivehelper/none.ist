@@ -1,2 +1,2 @@
-@noParamBlock
+@noParamDirective
 	div.noParamChild
