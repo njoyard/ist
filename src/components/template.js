@@ -1,13 +1,12 @@
 /*global define */
 define([
 	'components/context',
-	'components/directives'
+	'components/renderer'
 ],
-function(Context, directives) {
+function(Context, Renderer) {
 	'use strict';
 
-	var expressionRE = /{{((?:}(?!})|[^}])*)}}/,
-		slice = Array.prototype.slice;
+	var expressionRE = /{{((?:}(?!})|[^}])*)}}/;
 		
 	
 	function findPartialRec(name, nodes) {
@@ -38,25 +37,24 @@ function(Context, directives) {
 	function Template(name, nodes) {
 		this.name = name || '<unknown>';
 		this.nodes = nodes;
-		
-		this.prerendered = false;
-		this._preRender();
+
+		this.nodes.forEach(preRenderRec);
 	}
 	
 	
 	/* Prerender recursion helper */
 	function preRenderRec(node) {
-		var pr, doc = this;
+		var pr;
 		
 		/* Constant text node */
 		if (typeof node.text !== 'undefined' &&
 				!expressionRE.test(node.text)) {
-			node.pr = doc.createTextNode(node.text);
+			node.pr = document.createTextNode(node.text);
 		}
 		
 		/* Element node */
 		if (typeof node.tagName !== 'undefined') {
-			node.pr = pr = doc.createElement(node.tagName);
+			node.pr = pr = document.createElement(node.tagName);
 			
 			node.classes.forEach(function(cls) {
 				pr.classList.add(cls);
@@ -68,22 +66,9 @@ function(Context, directives) {
 		}
 	
 		if (typeof node.children !== 'undefined') {
-			node.children.forEach(preRenderRec, doc);
+			node.children.forEach(preRenderRec);
 		}
 	}
-	
-	
-	/* Prerender constant part of nodes */
-	Template.prototype._preRender = function(doc) {
-		/* Ensure we have a document, or postpone prerender */
-		doc = doc || document;
-		if (!doc) {
-			return;
-		}
-
-		this.nodes.forEach(preRenderRec, doc);
-		this.prerendered = true;
-	};
 	
 	
 	/* Complete an Error object with information about the current node and
@@ -102,114 +87,6 @@ function(Context, directives) {
 	};
 	
 	
-	/* Text node rendering helper */
-	Template.prototype._renderTextNode = function(ctx, node) {
-		var tnode;
-		
-		if (typeof node.pr !== 'undefined') {
-			tnode = ctx.importNode(node.pr, false);
-		} else {
-			try {
-				tnode = ctx.createTextNode(ctx.interpolate(node.text));
-			} catch (err) {
-				throw this._completeError(err, node);
-			}
-		}
-		
-		return tnode;
-	};
-	
-	
-	/* Element rendering helper */
-	Template.prototype._renderElement = function(ctx, node) {
-		var elem;
-		
-		if (typeof node.pr !== 'undefined') {
-			elem = ctx.importNode(node.pr, false);
-		} else {
-			elem = ctx.createElement(node.tagName);
-
-			node.classes.forEach(function(cls) {
-				elem.classList.add(cls);
-			});
-
-			if (typeof node.id !== 'undefined') {
-				elem.id = node.id;
-			}
-		}
-
-		// Set attributes
-		Object.keys(node.attributes).forEach(function(attr) {
-			var value;
-
-			try {
-				value = ctx.interpolate(node.attributes[attr]);
-			} catch (err) {
-				throw this._completeError(err, node);
-			}
-		
-			elem.setAttribute(attr, value);
-		}, this);
-	
-		// Set properties
-		Object.keys(node.properties).forEach(function(prop) {
-			var value;
-
-			try {
-				value = ctx.interpolate(node.properties[prop]);
-			} catch (err) {
-				throw this._completeError(err, node);
-			}
-		
-			elem[prop] = value;
-		}, this);
-		
-		// Set event handlers
-		Object.keys(node.events).forEach(function(event) {
-			node.events[event].forEach(function(expr) {
-				var handler;
-
-				try {
-					handler = ctx.evaluate(expr);
-				} catch(err) {
-					throw this._completeError(err, node);
-				}
-			
-				elem.addEventListener(event, handler, false);
-			}, this);
-		}, this);
-		
-		return elem;
-	};
-	
-	
-	/* Directive rendering helpers */
-	Template.prototype._renderDirective = function(ctx, node) {
-		var subTemplate = new Template(this.name, node.children),
-			helper = directives.get(node.directive),
-			fragment = ctx.createDocumentFragment(),
-			subCtx;
-	
-		if (typeof helper !== 'function') {
-			throw new Error('No directive helper for @' + node.directive + ' has been registered');
-		}
-	
-		if (typeof node.expr !== 'undefined') {
-			try {
-				subCtx = ctx.createContext(ctx.evaluate(node.expr));
-			} catch(err) {
-				throw this._completeError(err, node);
-			}
-		}
-	
-		try {
-			helper.call(null, ctx, subCtx, subTemplate, fragment);
-		} catch (err) {
-			throw this._completeError(err, node);
-		}
-
-		return fragment;
-	};
 	
 	
 	/* Look for a node with the given partial name and return a new
@@ -228,35 +105,6 @@ function(Context, directives) {
 		}
 	};
 	
-	function renderRec(node, index) {
-		var template = this.template,
-			ctx = this.context,
-			tnode;
-	
-		if (typeof node.text !== 'undefined') {
-			tnode = template._renderTextNode(ctx, node);
-		}
-				
-		if (typeof node.tagName !== 'undefined') {
-			tnode = template._renderElement(ctx, node);
-
-			node.children.map(
-				renderRec,
-				{
-					template: template,
-					context: ctx
-				}
-			).forEach(function(cnode) {
-				tnode.appendChild(cnode);
-			});
-		}
-		
-		if (typeof node.directive !== 'undefined') {
-			tnode = template._renderDirective(ctx, node);
-		}
-
-		return tnode;
-	}
 
 	
 	/* Render template using 'context' in 'doc' */
@@ -267,23 +115,7 @@ function(Context, directives) {
 			doc = context.doc;
 		}
 		
-		if (!this.prerendered) {
-			this._preRender(context.document);
-		}
-			
-		var fragment = context.createDocumentFragment();
-	
-		this.nodes.map(
-			renderRec,
-			{
-				template: this,
-				context: context
-			}
-		).forEach(function(node) {
-			fragment.appendChild(node);
-		});
-	
-		return fragment;
+		return (new Renderer(this, context)).render();
 	};
 	
 
