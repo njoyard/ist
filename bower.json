@@ -17,8 +17,8 @@
   "license": "MIT",
   "ignore": [
     "**/.*",
-    "src/**/*",
-    "tests/**/*",
+    "src",
+    "tests",
     "Makefile"
   ]
 }
