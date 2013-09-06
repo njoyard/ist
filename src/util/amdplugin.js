@@ -1,5 +1,5 @@
 /*global define, ActiveXObject, process */
-define(['require', 'util/findscript', 'util/escape'], function(require, findScriptTag, jsEscape) {
+define(['require', 'util/misc'], function(require, misc) {
 	'use strict';
 
 	function pluginify(ist) {
@@ -91,21 +91,23 @@ define(['require', 'util/findscript', 'util/escape'], function(require, findScri
 				   while recording all distinct include paths
 				 */
 					 
-				text = text.replace(/^(\s*)@include\s+(?:text=)?(['"])((?:(?=(\\?))\4.)*?)\2/gm,
+				text = text.replace(
+					/^(\s*)@include\s+(?:text=)?(['"])((?:(?=(\\?))\4.)*?)\2/gm,
 					function(m, p1, p2, p3) {
-						if (!findScriptTag(p3)) {
-							var dpath = dirname + '/' + p3.replace(/\.ist$/, '');
-			
-							if (deps.indexOf('ist!' + dpath) === -1) {
-								deps.push('ist!' + dpath);
-							}
-			
-							return p1 + '@include "' + dpath + '"';
-						} else {
+						if (misc.findScript(p3)) {
 							// Script tag found, do not change directive
 							return m;
 						}
-					});
+						
+						var dpath = dirname + '/' + p3.replace(/\.ist$/, '');
+		
+						if (deps.indexOf('ist!' + dpath) === -1) {
+							deps.push('ist!' + dpath);
+						}
+
+						return p1 + '@include "' + dpath + '"';
+					}
+				);
 				
 				if (doParse) {
 					/* Get parsed code */
@@ -115,14 +117,14 @@ define(['require', 'util/findscript', 'util/escape'], function(require, findScri
 						   '});\n';
 				} else {
 					if (config.isBuild) {
-						text = jsEscape(text);
+						text = misc.jsEscape(text);
 						text = 'define(\'ist!' + name + '\',' + JSON.stringify(deps) + ',function(ist){' +
 							   'var template=\'' + text + '\';' +
 							   'return ist(template,\'' + name + '\');' +
 							   '});';
 					} else {
 						/* "Pretty-print" template text */
-						text = jsEscape(text).replace(/\\n/g, '\\n\' +\n\t               \'');
+						text = misc.jsEscape(text).replace(/\\n/g, '\\n\' +\n\t               \'');
 						text = 'define(\'ist!' + name + '\',' + JSON.stringify(deps) + ', function(ist){ \n' +
 							   '\tvar template = \'' + text + '\';\n' +
 							   '\treturn ist(template, \'' + name + '\');\n' +

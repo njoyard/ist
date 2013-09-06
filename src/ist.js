@@ -5,8 +5,8 @@ define([
 	'parser/parser',
 	'parser/preprocessor',
 	'util/amdplugin',
-	'util/findscript'
-], function(Template, directives, pegjsParser, preprocess, pluginify, findScriptTag) {
+	'util/misc'
+], function(Template, directives, pegjsParser, preprocess, pluginify, misc) {
 	'use strict';
 
 	/**
@@ -61,7 +61,7 @@ define([
 	 * <script> tag template parser
 	 */
 	ist.fromScriptTag = function(id) {
-		var template = findScriptTag(id);
+		var template = misc.findScript(id);
 		
 		if (template) {
 			return ist(template);
@@ -77,14 +77,14 @@ define([
 		directives.register(name, helper);
 	};
 	
-	
 	/* Built-in @include helper */
 	ist.registerHelper('include', function(outer, inner, tmpl, fragment) {
-		var what = inner.value.replace(/\.ist$/, ''),
+		var name = inner.value,
+			what = name.replace(/\.ist$/, ''),
 			found, tryReq;
 
 		// Try to find a <script type="text/x-ist" id="...">
-		found = findScriptTag(what);
+		found = misc.findScript(name);
 
 		if (isAMD) {
 			// Try to find a previously require()-d template or string
@@ -105,7 +105,7 @@ define([
 		}
 
 		if (!found) {
-			throw new Error('Cannot find included template \'' + what + '\'');
+			throw new Error('Cannot find included template \'' + name + '\'');
 		}
 
 		if (typeof found === 'string') {
@@ -121,7 +121,7 @@ define([
 				fragment.appendChild(found.render(outer));
 			}
 		} else {
-			throw new Error('Invalid included template \'' + what + '\'');
+			throw new Error('Invalid included template \'' + name + '\'');
 		}
 	});
 	

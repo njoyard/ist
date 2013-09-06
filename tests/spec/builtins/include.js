@@ -37,7 +37,7 @@ define([
 		});
 		
 		it("should fail to render templates with missing @include files/<script> tags", function() {
-			expect( function() { ist(textInclude).render(); } ).toThrow( "Cannot find included template 'included' in '<unknown>' on line 2" );
+			expect( function() { ist(textInclude).render(); } ).toThrow( "Cannot find included template 'included.ist' in '<unknown>' on line 2" );
 		});
 		
 		it("should use templates previously loaded with the ist! plugin when rendering a string template", function() {

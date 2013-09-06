@@ -45,7 +45,7 @@ Compatibility
 -------------
 
 ist.js has been successfully tested with the following browsers:
-- Chrome 18
+- Chrome 30
 - Epiphany 3.4
 - Firefox 13
 

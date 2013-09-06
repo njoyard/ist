@@ -2,7 +2,8 @@
 define(['components/livefragment'], function(LiveFragment) {
 	'use strict';
 
-	var directives, registered, conditionalHelper, iterationHelper;
+	var directives, registered, conditionalHelper, iterationHelper,
+		defined = {};
 	
 	conditionalHelper = function(outer, render, tmpl, fragment) {
 		if (render) {
@@ -144,6 +145,25 @@ define(['components/livefragment'], function(LiveFragment) {
 			}
 
 			fragment.appendChild(node);
+		},
+
+		'define': function(outer, inner, tmpl, fragment) {
+			defined[inner.value] = tmpl;
+		},
+
+		'use': function(outer, inner, tmpl, fragment) {
+			var name = inner.value,
+				template = defined[name];
+
+			if (!template) {
+				throw new Error('Template \'' + name + '\' has not been @defined');
+			}
+
+			while (fragment.hasChildNodes()) {
+				fragment.removeChild(fragment.firstChild);
+			}
+
+			fragment.appendChild(template.render(outer));
 		}
 	};
 	

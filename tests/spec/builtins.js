@@ -3,13 +3,15 @@ define([
 	'builtins/unless',
 	'builtins/with',
 	'builtins/each',
-	'builtins/include'
-], function(ifDesc, unlessDesc, withDesc, eachDesc, includeDesc) {
+	'builtins/include',
+	'builtins/define'
+], function(ifDesc, unlessDesc, withDesc, eachDesc, includeDesc, defineDesc) {
 	return function() {
 		ifDesc();
 		unlessDesc();
 		withDesc();
 		eachDesc();
 		includeDesc();
+		defineDesc();
 	};
 });

@@ -8,6 +8,7 @@ next version
 - Split code into modules, switched to building using r.js
 - Added @dom directive to insert DOM nodes from context
 - Prepared updateable version
+- Added @define and @use directives
 
 v0.5.5 - 2012-12-06
 - Fixed a bug where pushEvalVar would not hide a previously pushed variable
