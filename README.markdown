@@ -46,8 +46,7 @@ Compatibility
 
 ist.js has been successfully tested with the following browsers:
 - Chrome 30
-- Epiphany 3.4
-- Firefox 13
+- Firefox 23
 
 Feedback
 --------
@@ -66,7 +65,7 @@ Copyright (c) 2012-2013 Nicolas Joyard
 
 
 [1]: http://njoyard.github.io/ist
-[2]: http://njoyard.github.io/ist/doc.html
+[2]: http://njoyard.github.iofire/ist/doc.html
 [3]: https://github.com/njoyard/ist/blob/master/LICENSE
 [4]: https://github.com/njoyard/ist/issues
 [5]: http://twitter.com/njoyard
