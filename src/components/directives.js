@@ -24,31 +24,31 @@ define(function() {
 	 *
 	 * @param {Context} outer outer context
 	 * @param {Array} items item array to iterate over
-	 * @param [scope] additional scope object
+	 * @param [loopAdd] additional loop properties
 	 * @param {Template} tmpl template to render for each item
 	 * @param {DocumentFragment} fragment target fragment
 	 */
-	function iterationHelper(outer, items, scope, tmpl, fragment) {
+	function iterationHelper(outer, items, loopAdd, tmpl, fragment) {
 		var outerValue = outer.value;
 		
 		/* Loop over array and append rendered fragments */
 		items.forEach(function(item, index) {
-			var sctx = outer.createContext(item);
-				
-			sctx.pushScope({
-				loop: {
+			var sctx = outer.createContext(item),
+				loop = {
 					first: index === 0,
 					index: index,
 					last: index == items.length - 1,
 					length: items.length,
 					outer: outerValue
-				}
-			});
+				};
 
-			if (scope) {
-				sctx.pushScope(scope);
+			if (loopAdd) {
+				Object.keys(loopAdd).forEach(function(key) {
+					loop[key] = loopAdd[key];
+				})
 			}
 
+			sctx.pushScope({ loop: loop });
 			fragment.appendChild(tmpl.render(sctx));
 		});
 	}

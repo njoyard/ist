@@ -1,0 +1,23 @@
+div.object
+	@eachkey object
+		"{{ key }}"
+
+div.objectvalues
+	@eachkey object
+		"{{ value }}"
+
+div.empty
+	@eachkey empty
+		"will not appear"
+		
+div.loopindex
+	@eachkey object
+		"{{ loop.index }}"
+		
+div.loopouter
+	@eachkey object
+		"{{ loop.outer.variable }}"
+
+div.loopobject
+	@eachkey object
+		"{{ loop.object.key1 }}"
