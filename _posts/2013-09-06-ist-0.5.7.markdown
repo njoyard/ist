@@ -18,7 +18,7 @@ On a user's perspective, here is what changed in this version:
 
 {% highlight css %}
 @dom someNode
-{% enhighlight }
+{% endhighlight %}
 
 {% highlight javascript %}
 template.render({ someNode: document.createElement("div"); });
