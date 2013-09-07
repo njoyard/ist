@@ -1,0 +1,15 @@
+h3 "id"
+div#someID
+  "foo"
+
+h3 "class"
+div.someClass
+  "bar"
+
+h3 "attribute"
+div[style=background-color: #fdb;]
+  "baz"
+
+h3 "property"
+div[.title=Hello !]
+  "Hover me"

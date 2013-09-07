@@ -1,0 +1,18 @@
+@each articles
+  article
+    h3 "Episode {{ opencurly }} number {{ closecurly }}"
+
+    h4 "{{ opencurly }} title {{ closecurly }}"
+
+    @if typeof (paragraphs) !== 'undefined'
+      @each paragraphs
+        p "{{ opencurly }} this {{ closecurly }}"
+    
+    @if text
+      p "{{ opencurly }} text {{ closecurly }}"
+
+    span[style=font-style: italic;]
+      "Article {{ opencurly }} loop.index + 1 {{ closecurly }} of {{ opencurly }} loop.length {{ closecurly }}"
+      
+    @if !loop.last
+      hr

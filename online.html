@@ -2,13 +2,50 @@
 layout: default
 id: online
 ---
+
+<style type="text/css">
+#someID:after {
+	content: ' (has ID "someID")';
+}
+.someClass:after {
+	content: ' (has CSS class "someClass")';
+}
+</style>
+
 <h1>Online demo</h1>
+<!-- Articles example -->
+{% assign opencurly = '{{' %}
+{% assign closecurly = '}}' %}
+<script type="text/x-ist" id="ist-articles">{% include example_articles.ist %}</script>
+<script type="application/json" id="data-articles">{% include example_articles.json %}</script>
+<script type="text/x-ist" id="ist-qualifiers">{% include example_qualifiers.ist %}</script>
+<script type="application/json" id="data-qualifiers">{% include example_qualifiers.json %}</script>
+<script type="text/x-ist" id="ist-directives">{% include example_directives.ist %}</script>
+<script type="application/json" id="data-directives">{% include example_directives.json %}</script>
+<script type="text/x-ist" id="ist-components">{% include example_components.ist %}</script>
+<script type="application/json" id="data-components">{% include example_components.json %}</script>
+<script type="text/x-ist" id="ist-events">{% include example_events.ist %}</script>
+<script type="application/json" id="data-events">{% include example_events.json %}</script>
+
+<section class="instructions">
+	You can play with ist.js by editing template code and rendering data below, the preview
+	will update automatically.<br>
+	<br>
+	Alternatively, you can select preset examples here : 
+	<select id="examples">
+		<option value="articles" selected="selected">Articles</option>
+		<option value="qualifiers">Element qualifiers</option>
+		<option value="directives">Directives</option>
+		<option value="components">Components</option>
+		<option value="events">Event handlers</option>
+	</select>
+</section>
 <section class="left">
 	<h2>Template code</h2>
-	<textarea id="template">{% include online_template.ist %}</textarea>
+	<textarea id="template"></textarea>
 	
 	<h2>Data (JSON)</h2>
-	<textarea id="data">{% include online_data.json %}</textarea>
+	<textarea id="data"></textarea>
 </section>
 <section class="right">
 	<h2>Preview</h2>
@@ -18,14 +55,26 @@ id: online
 
 <script type="text/javascript" src="ist-min.js"></script>
 <script type="text/javascript">
+	function upperCase(e) {
+		this.value = this.value.toUpperCase();
+	}
+
+	function changeColor(e) {
+		var red = Math.floor(Math.random() * 12).toString(16),
+			green = Math.floor(Math.random() * 12).toString(16),
+			blue = Math.floor(Math.random() * 12).toString(16);
+
+		this.style.color = "#" + red + green + blue;
+	}
+
 	window.onload = function() {
 		var templateTA = document.getElementById("template"),
 			dataTA = document.getElementById("data"),
+			examples = document.getElementById("examples"),
 			error = document.getElementById("error"),
-			previewDiv = document.getElementById("preview"),
-			update, keydown;
+			previewDiv = document.getElementById("preview");
 
-		update = function() {
+		function update() {
 			var template, data, node;
 
 			error.style.display = 'none';
@@ -58,9 +107,9 @@ id: online
 				previewDiv.removeChild(previewDiv.firstChild);
 			}				
 			previewDiv.appendChild(node);
-		};
+		}
 
-		keydown = function(e) {
+		function keydown(e) {
 			var kc, oS, sS, sE;
 
 			e = e || window.event;
@@ -88,11 +137,23 @@ id: online
 				e.returnValue = false;
 				return false;
 			}
-		};
+		}
+
+		function switchExample(e) {
+			var name = examples.value,
+				template = document.getElementById("ist-" + name).innerHTML,
+				data = document.getElementById("data-" + name).innerHTML;
+
+			templateTA.value = template;
+			dataTA.value = data;
+
+			update();
+		}
 
 		templateTA.onkeyup = dataTA.onkeyup = update;
 		templateTA.onkeydown = dataTA.onkeydown = keydown;
+		examples.onchange = switchExample;
 
-		update();
+		switchExample();
 	};
 </script>

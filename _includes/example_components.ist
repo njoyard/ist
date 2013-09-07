@@ -1,0 +1,21 @@
+@define "comment"
+  .comment
+    h5
+      "On {{ opencurly }} date {{ closecurly }}, "
+      "{{ opencurly }} author {{ closecurly }} wrote:"
+    "{{ opencurly }} text {{ closecurly }}"
+
+@define "post"
+  .post
+    h3 "{{ opencurly }} title {{ closecurly }}"
+    .content
+      "{{ opencurly }} text {{ closecurly }}"
+    .comments
+      h4 "Comments"
+      @if comments.length === 0
+        "No comments yet."
+      @each comments
+        @use "comment"
+
+@each posts
+  @use "post"

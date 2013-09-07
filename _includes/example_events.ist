@@ -1,0 +1,23 @@
+/* Note that event handlers used here are actually
+   defined as globals (as JSON does not allow functions)
+   as follows:
+
+function upperCase(e) {
+  this.value = this.value.toUpperCase();
+}
+
+function changeColor(e) {
+  var red = Math.floor(Math.random() * 12).toString(16),
+      green = Math.floor(Math.random() * 12).toString(16),
+      blue = Math.floor(Math.random() * 12).toString(16);
+
+  this.style.color = "#" + red + green + blue;
+}
+
+*/
+
+h3[!click=changeColor]
+  "Click me !"
+
+label[for=upper] "Upper case input: "
+input[type=text][!keyup=upperCase]

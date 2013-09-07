@@ -1,0 +1,25 @@
+{
+  "posts": [
+    {
+      "title": "New post",
+      "text": "Yay! I managed to write a second one!",
+      "comments": []
+    },
+    {
+      "title": "Hello, world",
+      "text": "This is my first post. Hope to write more in the future!",
+      "comments": [
+        {
+          "author": "Alice",
+          "date": "2013-09-01",
+          "text": "First!"
+        },
+        {
+          "author": "Bob",
+          "date": "2013-09-02",
+          "text": "Those first posts are really bugging me..."
+        }
+      ]
+    }
+  ]
+}
