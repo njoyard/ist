@@ -111,13 +111,45 @@ function(Context, Renderer) {
 	Template.prototype.render = function(context, doc) {
 		if (!(context instanceof Context)) {
 			context = new Context(context, doc);
-		} else {
-			doc = context.doc;
 		}
-		
-		return (new Renderer(this, context)).render();
+
+		var template = this,
+			rendered = (new Renderer(template, context)).render();
+
+		/* Add an update method */
+		rendered.update = function(ctx) {
+			/* Update context if present */
+			if (ctx instanceof Context) {
+				context = ctx;
+			} else if (ctx) {
+				context = new Context(ctx, doc);
+			}
+
+			/* Get previously rendered nodes parent and previous sibling */
+			var children = this.update.nodes,
+				child0 = children[0],
+				parent = child0.parentNode,
+				previous = child0.previousSibling;
+
+			/* Put previously rendered nodes in a fragment */
+			var fragment = context.createDocumentFragment();
+			children.forEach(function(child) {
+				fragment.appendChild(child);
+			});
+
+			(new Renderer(template, context)).render(fragment);
+
+			/* Put nodes back where they were */
+			this.update.nodes = [].slice.call(fragment.childNodes);
+			parent.insertBefore(fragment, previous.nextSibling);
+		};
+
+		/* Keep a ref to child nodes */
+		rendered.update.nodes = [].slice.call(rendered.childNodes);
+
+		return rendered;
 	};
-	
+
 
 	/* Return code to regenerate this template */
 	Template.prototype.getCode = function(pretty) {
