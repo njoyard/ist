@@ -1,0 +1,46 @@
+---
+layout: post
+title: ist.js v0.6 can finally update nodes !
+---
+
+{% assign opencurly = '{{' %}
+{% assign closecurly = '}}' %}
+
+After having rewritten the template renderer 3 times, ist.js is finally able
+to update rendered nodes.  I settled on an approach that is MUCH simpler that
+anything I had attempted before, and that just works (I guess taking a break
+from ist.js for several months also helped).
+
+Fragments returned from a template `render()` method now have an additional
+`update()` method to update rendering, so you must keep a reference on those
+fragments to be able to update them (even if you called
+`somenode.appendChild(fragment)`, and as a consequence the fragment itself is
+now empty).
+
+Here is a quick example:
+
+{% highlight js %}
+var template = ist("div '{{ opencurly }} foo {{ closecurly }}'"),
+	rendered = template.render({ foo: "bar" });
+
+document.body.appendChild(rendered);
+// <div>bar</div>
+
+// rendered is now empty, but it still holds the update() method !
+rendered.update({ foo: "baz" });
+// <div>baz</div>
+{% endhighlight %}
+
+You can call the `update()` method with a new context object, or without any
+arguments to reuse the same object as before.
+
+The syntax for directive helpers has not changed since 0.5.7, but they must
+be written a bit differently to cope with updating (as the same helper will be
+called for both rendering and updating).  As always, refer to the
+[documentation][1] for more details and examples.
+
+Finally, my apologies to people reading those news in a feed reader, as the
+last update caused all previous news posts to be seen as new (this was a
+consequence of moving urls to github.io).
+
+[1]: {{ site.url }}/doc.html
