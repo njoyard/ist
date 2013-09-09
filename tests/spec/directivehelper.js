@@ -1,10 +1,12 @@
+/*global define, it, expect */
 define([
 	'ist',
 	'text!directivehelper/directivehelper.ist',
 	'text!directivehelper/string.ist',
 	'text!directivehelper/none.ist',
-	'ist!directivehelper/errors'
-], function(ist, textDirectivehelper, textString, textNone, tErrors) {
+	'ist!directivehelper/errors',
+	'ist!directivehelper/update'
+], function(ist, textDirectivehelper, textString, textNone, tErrors, tUpdate) {
 	return function() {
 		it("should allow parsing templates with unknown @directives", function() {
 			var thrown = false;
@@ -234,6 +236,76 @@ define([
 				
 			expect( function() { tErrors.render({ test: 'throw' }); } )
 				.toThrow("custom error in 'directivehelper/errors' on line 10");
+		});
+
+		it("should report errors thrown by helpers when rendering", function() {
+			ist.registerHelper("throwingHelper", function() {
+				throw new Error("Helper error");
+			});
+
+			expect( function() { tErrors.render({ test: 'throwingHelper' }); } )
+				.toThrow("Helper error in 'directivehelper/errors' on line 14");
+		});
+
+		it("should allow helpers to save and retrieve rendered templates with arbitrary keys across updates", function() {
+			var frag;
+			ist.registerHelper("test", function(outer, inner, template, fragment) {
+				frag = fragment;
+			});
+
+			ist("@test").render();
+			expect( typeof frag.extractRenderedFragment ).toBe( "function" );
+			expect( typeof frag.appendRenderedFragment ).toBe( "function" );
+
+			var key = { a: 1, b: "2" },
+				test, retrieved;
+
+			ist.registerHelper("test", function(outer, inner, template, fragment) {
+				switch (test) {
+					case "save":
+						fragment.appendRenderedFragment(template.render(outer), key);
+						break;
+
+					case "retrieve":
+						retrieved = fragment.extractRenderedFragment(key);
+						break;
+
+					case "update":
+						retrieved = fragment.extractRenderedFragment(key);
+
+						if (retrieved)
+							retrieved.update(outer);
+						else
+							retrieved = template.render(outer);
+
+						fragment.appendRenderedFragment(template.render(outer), key);
+						break;
+				}
+			});
+
+			test = "save";
+			var rendered = tUpdate.render({ foo: 1, bar: 2 });
+
+			expect( rendered.firstChild.textContent ).toBe( "1" );
+			expect( rendered.firstChild.nextSibling.textContent ).toBe( "2" );
+
+			test = "retrieve";
+			rendered.update({ foo: 3, bar: 4 });
+
+			expect( retrieved.firstChild.textContent ).toBe( "1" );
+			expect( retrieved.firstChild.nextSibling.textContent ).toBe( "2" );
+			expect( rendered.hasChildNodes() ).toBe( false );
+
+			test = "update";
+			var rendered = tUpdate.render({ foo: 1, bar: 2 });
+
+			expect( rendered.firstChild.textContent ).toBe( "1" );
+			expect( rendered.firstChild.nextSibling.textContent ).toBe( "2" );
+
+			rendered.update({ foo: 3, bar: 4 });
+
+			expect( rendered.firstChild.textContent ).toBe( "3" );
+			expect( rendered.firstChild.nextSibling.textContent ).toBe( "4" );
 		});
 	};
 });

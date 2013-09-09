@@ -31,10 +31,10 @@
             [
             	'ist',
             	'nodetypes', 'qualifiers', 'syntax', 'interpolation', 'builtins',
-            	'directivehelper', 'createnode', 'usage'
+            	'directivehelper', 'createnode', 'update', 'usage'
             ],
             function(ist, nodetypes, qualifiers, syntax, interpolation, builtins,
-            	directivehelper, createnode, usage){
+            	directivehelper, createnode, update, usage){
             	/* IST specific matchers */
 				beforeEach(function() {
 					var matchers = {};
@@ -209,6 +209,7 @@
             	describe('directivehelper', directivehelper);
             	describe('builtins', builtins);
             	describe('createnode', createnode);
+            	describe('update', update);
             
             	/* Run Jasmine */
                 jasmine.getEnv().addReporter(new jasmine.TrivialReporter());

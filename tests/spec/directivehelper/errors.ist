@@ -9,3 +9,6 @@
 @if test === "throw"
 	@if (function() { throw new Error('custom error'); })()
 		"oops"
+
+@if test === "throwingHelper"
+	@throwingHelper
