@@ -51,8 +51,6 @@ define([
 		
 		it("should accept escaped characters in attribute values", function() {
 			expect( attrNodes[3].getAttribute('anAttribute') ).toBe( "\\\"aéé\n]" );
-	//	\\\"\a\u03a9\xe9\n\]]
-		
 		});
 
 		it("should be able to set random properties on elements", function() {
@@ -113,12 +111,12 @@ define([
 		});
 		
 		it("should allow accessing partials", function() {
-			expect( typeof tPartial.findPartial ).toBe( 'function' );
-			expect( typeof tPartial.findPartial('unknown') ).toBe( 'undefined' );
+			expect( typeof tPartial.partial ).toBe( 'function' );
+			expect( typeof tPartial.partial('unknown') ).toBe( 'undefined' );
 			
-			var level1 = tPartial.findPartial('level_1_partial');
-			var level2 = tPartial.findPartial('level_2_partial');
-			var level3 = tPartial.findPartial('level_3_partial');
+			var level1 = tPartial.partial('level_1_partial');
+			var level2 = tPartial.partial('level_2_partial');
+			var level3 = tPartial.partial('level_3_partial');
 			
 			expect( typeof level1.render ).toBe( 'function' );
 			expect( typeof level2.render ).toBe( 'function' );

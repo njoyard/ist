@@ -29,20 +29,36 @@ define([
 	}
 	
 	ist.Template = Template;
+
+
+	/* Deprecated method names */
+	ist.fromScriptTag = function(id) {
+		if (console) console.log('Warning: ist.fromScriptTag is deprecated, use ist.script instead');
+		return ist.script(id);
+	};
+	ist.registerHelper = function(name, helper) {
+		if (console) console.log('Warning: ist.registerHelper is deprecated, use ist.helper instead');
+		ist.helper(name, helper);
+	};
+	ist.createNode = function(branchSpec, context, doc) {
+		if (console) console.log('Warning: ist.registerHelper is createNode, use ist.create instead');
+		return ist.create(branchSpec, context, doc);
+	};
+
 	
 	/**
 	 * Node creation interface
 	 * Creates nodes with IST template syntax
 	 *
 	 * Several nodes can be created at once using angle brackets, eg.:
-	 *   ist.createNode('div.parent > div#child > "text node")
+	 *   ist.createNode('div.parent > div#child > 'text node')
 	 *
 	 * Supports context variables and an optional alternative document.
 	 * Does not support angle brackets anywhere else than between nodes.
 	 * 
-	 * Directives are supported ("div.parent > @each ctxVar > div.child")
+	 * Directives are supported ('div.parent > @each ctxVar > div.child')
 	 */
-	ist.createNode = function(branchSpec, context, doc) {
+	ist.create = function(branchSpec, context, doc) {
 		var nodes = branchSpec.split('>').map(function(n) { return n.trim(); }),
 			indent = '',
 			template = '',
@@ -60,7 +76,7 @@ define([
 	/**
 	 * <script> tag template parser
 	 */
-	ist.fromScriptTag = function(id) {
+	ist.script = function(id) {
 		var template = misc.findScript(id);
 		
 		if (template) {
@@ -73,17 +89,17 @@ define([
 	 * IST helper block registration; allows custom iterators/helpers that will
 	 * be called with a new context.
 	 */
-	ist.registerHelper = function(name, helper) {
+	ist.helper = function(name, helper) {
 		directives.register(name, helper);
 	};
 	
 	/* Built-in @include helper */
-	ist.registerHelper('include', function(outer, inner, tmpl, fragment) {
+	ist.helper('include', function(outer, inner, tmpl, fragment) {
 		var name = inner.value,
 			what = name.replace(/\.ist$/, ''),
 			found, tryReq;
 
-		// Try to find a <script type="text/x-ist" id="...">
+		// Try to find a <script type='text/x-ist' id='...'>
 		found = misc.findScript(name);
 
 		if (isAMD) {

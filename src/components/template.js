@@ -92,6 +92,10 @@ function(Context, Renderer) {
 	/* Look for a node with the given partial name and return a new
 	   Template object if found */
 	Template.prototype.findPartial = function(name) {
+		if (console) console.log("Warning: Template#findPartial is deprecated, use Template#partial instead");
+		return this.partial(name);
+	}
+	Template.prototype.partial = function(name) {
 		var result;
 		
 		if (typeof name === 'undefined') {

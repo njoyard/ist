@@ -65,7 +65,7 @@
 		        };
 		        
 		        window.report = function() {
-		        	document.body.appendChild(ist.fromScriptTag("timingTemplate").render({ tests: tests, runs: runs }));
+		        	document.body.appendChild(ist.script("timingTemplate").render({ tests: tests, runs: runs }));
 		        };
 		        
 		        run(); report();
