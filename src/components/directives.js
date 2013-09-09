@@ -14,8 +14,16 @@ define(function() {
 	 * @param {DocumentFragment} fragment target fragment
 	 */
 	function conditionalHelper(outer, render, tmpl, fragment) {
+		var rendered = fragment.extractRenderedFragment();
+
 		if (render) {
-			fragment.appendChild(tmpl.render(outer));
+			if (rendered) {
+				rendered.update(outer);
+			} else {
+				rendered = tmpl.render(outer);
+			}
+
+			fragment.appendRenderedFragment(rendered);
 		}
 	}
 	
@@ -24,32 +32,54 @@ define(function() {
 	 *
 	 * @param {Context} outer outer context
 	 * @param {Array} items item array to iterate over
+	 * @param {Array} keys item identifiers
 	 * @param [loopAdd] additional loop properties
 	 * @param {Template} tmpl template to render for each item
 	 * @param {DocumentFragment} fragment target fragment
 	 */
-	function iterationHelper(outer, items, loopAdd, tmpl, fragment) {
-		var outerValue = outer.value;
+	function iterationHelper(outer, items, keys, loopAdd, tmpl, fragment) {
+		var outerValue = outer.value,
+			fragKeys, fragments;
+
+		/* Extract previously rendered fragments */
+		fragKeys = fragment.getRenderedFragmentKeys();
+		fragments = fragKeys.map(function(key) {
+			return fragment.extractRenderedFragment(key);
+		});
 		
 		/* Loop over array and append rendered fragments */
 		items.forEach(function(item, index) {
-			var sctx = outer.createContext(item),
-				loop = {
-					first: index === 0,
-					index: index,
-					last: index == items.length - 1,
-					length: items.length,
-					outer: outerValue
-				};
+			/* Create subcontext */
+			var loop = {
+				first: index === 0,
+				index: index,
+				last: index == items.length - 1,
+				length: items.length,
+				outer: outerValue
+			};
 
 			if (loopAdd) {
 				Object.keys(loopAdd).forEach(function(key) {
 					loop[key] = loopAdd[key];
-				})
+				});
 			}
 
+			var sctx = outer.createContext(item);
 			sctx.pushScope({ loop: loop });
-			fragment.appendChild(tmpl.render(sctx));
+
+			/* Render or update fragments */
+			var keyIndex = fragKeys.indexOf(keys[index]),
+				rendered;
+
+			if (keyIndex === -1) {
+				/* Item was not rendered yet */
+				rendered = tmpl.render(sctx);
+			} else {
+				rendered = fragments[keyIndex];
+				rendered.update(sctx);
+			}
+
+			fragment.appendRenderedFragment(rendered, keys[index]);
 		});
 	}
 	
@@ -65,6 +95,14 @@ define(function() {
 		},
 
 		'with': function(outer, inner, tmpl, fragment) {
+			var rendered = fragment.extractRenderedFragment();
+
+			if (rendered) {
+				rendered.update(inner);
+			} else {
+				rendered = tmpl.render(inner);
+			}
+
 			fragment.appendChild(tmpl.render(inner));
 		},
 
@@ -75,18 +113,19 @@ define(function() {
 				throw new Error(array + ' is not an array');
 			}
 			
-			iterationHelper(outer, array, null, tmpl, fragment);
+			iterationHelper(outer, array, array, null, tmpl, fragment);
 		},
 
 		'eachkey': function(outer, inner, tmpl, fragment) {
 			var object = inner.value,
+				keys = Object.keys(object),
 				array;
 				
-			array = Object.keys(object).map(function(k) {
+			array = keys.map(function(k) {
 				return { key: k, value: object[k] };
 			});
 			
-			iterationHelper(outer, array, { object: object }, tmpl, fragment);
+			iterationHelper(outer, array, keys, { object: object }, tmpl, fragment);
 		},
 
 		'dom': function(outer, inner, tmpl, fragment) {
@@ -96,6 +135,9 @@ define(function() {
 				node = inner.doc.importNode(node);
 			}
 
+			while(fragment.hasChildNodes()) {
+				fragment.removeChild(fragment.firstChild);
+			}
 			fragment.appendChild(node);
 		},
 
@@ -111,7 +153,15 @@ define(function() {
 				throw new Error('Template \'' + name + '\' has not been @defined');
 			}
 
-			fragment.appendChild(template.render(outer));
+			var rendered = fragment.extractRenderedFragment();
+
+			if (rendered) {
+				rendered.update(outer);
+			} else {
+				rendered = template.render(outer);
+			}
+
+			fragment.appendRenderedFragment(rendered);
 		}
 	};
 	

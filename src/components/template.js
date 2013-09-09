@@ -141,7 +141,12 @@ function(Context, Renderer) {
 
 			/* Put nodes back where they were */
 			this.update.nodes = [].slice.call(fragment.childNodes);
-			parent.insertBefore(fragment, previous.nextSibling);
+
+			if (previous) {
+				parent.insertBefore(fragment, previous.nextSibling);
+			} else {
+				parent.appendChild(fragment);
+			}
 		};
 
 		/* Keep a ref to child nodes */

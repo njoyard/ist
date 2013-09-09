@@ -137,7 +137,14 @@ define(['components/directives'], function(directives) {
 				
 		if (typeof node.tagName !== 'undefined') {
 			this._renderElement(node, fragment);
-			fragment.firstChild.appendChild(this._renderNodes(node.children));
+
+			var childrenFragment = this.context.createDocumentFragment();
+			[].slice.call(fragment.firstChild.childNodes).forEach(function(child) {
+				childrenFragment.appendChild(child);
+			});
+
+			this._renderNodes(node.children, childrenFragment);
+			fragment.firstChild.appendChild(childrenFragment);
 		}
 		
 		if (typeof node.directive !== 'undefined') {
@@ -146,10 +153,40 @@ define(['components/directives'], function(directives) {
 	};
 
 
+	/**
+	 * Add helper methods to fragment
+	 */
 	Renderer.prototype._extendFragment = function(fragment) {
 		var renderer = this;
 
+		fragment.getRenderedFragmentKeys = function() {
+			var keys = [],
+				children = [].slice.call(fragment.childNodes);
+
+			for (var i = 0, len = children.length; i < len; i++) {
+				var key = children[i]._istStack[0];
+
+				if (keys.indexOf(key) === -1) {
+					keys.push(key);
+				}
+			}
+
+			return keys;
+		};
+
+		fragment.extractRenderedFragment = function(key) {
+			var pulled = renderer._pullNodes(fragment, key);
+
+			if (pulled.firstChild && '_istUpdate' in pulled.firstChild) {
+				pulled.update = pulled.firstChild._istUpdate;
+				delete pulled.firstChild._istUpdate;
+
+				return pulled;
+			}
+		};
+
 		fragment.appendRenderedFragment = function(sub, key) {
+			// Save rendered fragment updater in first child
 			sub.firstChild._istUpdate = sub.update;
 
 			if (!('_istParent' in sub)) {
@@ -157,17 +194,6 @@ define(['components/directives'], function(directives) {
 			}
 
 			renderer._pushNodes(sub, key);
-		};
-
-		fragment.extractRenderedFragment = function(key) {
-			var pulled = renderer._pullNodes(fragment, key);
-
-			if (pulled.firstChild && '_istRendered' in pulled.firstChild) {
-				pulled.update = pulled.firstChild._istUpdate;
-				delete pulled.firstChild._istUpdate;
-
-				return pulled;
-			}
 		};
 
 		return fragment;
@@ -205,7 +231,13 @@ define(['components/directives'], function(directives) {
 	 */
 	Renderer.prototype._pushNodes = function(pulled, key) {
 		var parent = pulled._istParent,
-			next = '_istPrevious' in pulled ? pulled._istPrevious.nextSibling : null;
+			next;
+
+		if ('_istPrevious' in pulled && pulled._istPrevious) {
+			next = pulled._istPrevious.nextSibling;
+		} else {
+			next = null;
+		}
 
 		[].slice.call(pulled.childNodes).forEach(function(child) {
 			if (!child._istStack) {
