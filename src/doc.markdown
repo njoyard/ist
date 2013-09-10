@@ -26,14 +26,14 @@ You can deliver templates to the browser using a `<script>` tag.
 ```
 
 You can then call `ist()` with the content of this tag, or you can use
-`ist.fromScriptTag()`.
+`ist.script()`.
 
 ```js
 var template = ist($("#example-template").html());
-var template = ist.fromScriptTag("example-template");
+var template = ist.script("example-template");
 ```
 
-You can also directly use strings.
+You can also directly pass a string to `ist()`.
 
 ```js
 var template = ist('h1 "{{ title }}"');
@@ -54,9 +54,9 @@ var node = template.render(context);
 document.body.appendChild(node);
 ```
 
-Additionnaly, you can pass a DOM document as the second argument to `render()` to
-render nodes into an other document.  This is mainly useful when using multiple
-windows or frames.
+Additionnaly, you can pass a DOM document as the second argument to `render()`
+to render nodes into an other document.  This is mainly useful when using
+multiple windows or frames.
 
 ```js
 var popup = window.open();
@@ -130,10 +130,10 @@ rendered.update();
 ```
 
 ist.js also allows easy [single node creation](#Single node creation) using
-`ist.createNode()`.
+`ist.create()`.
 
 ```js
-var myLink = ist.createNode("a.link[href=#]");
+var myLink = ist.create("a.link[href=#]");
 ```
 
 ## Usage
@@ -195,7 +195,7 @@ var compiled = ist('h1 "{{ title }}"');
 ```
 
 Templates stored in a `<script>` tag are compiled when you get them using
-`ist.fromScriptTag()`.
+`ist.script()`.
 
 ```html
 <script id="example-template" type="text/x-ist">
@@ -205,7 +205,7 @@ Templates stored in a `<script>` tag are compiled when you get them using
 </script>
 
 <script>
-    var compiled = ist.fromScriptTag("example-template");
+    var compiled = ist.script("example-template");
 </script>
 ```
 
@@ -737,7 +737,7 @@ definition of `<script>` tags does not matter.
 
 <script type="text/javascript">
 	function renderMenu() {
-		ist.fromScriptTag("menu").render([
+		ist.script("menu").render([
 			{ label: "Home", url: "index.html" },
 			{ label: "News", url: "news.html" },
 			{ label: "Contact", url: "contact.html" }
@@ -802,7 +802,7 @@ define("included-template", ["ist!some/template"], function(tmpl) {
 });
 
 require(["ist", "included-template"], function(ist) {
-	ist.fromScriptTag("main").render(/* ... */);
+	ist.script("main").render(/* ... */);
 });
 ```
 
@@ -814,7 +814,7 @@ define("included-template", [], function() {
 });
 
 require(["ist", "included-template"], function(ist) {
-	ist.fromScriptTag("main").render(/* ... */);
+	ist.script("main").render(/* ... */);
 });
 ```
 
@@ -841,9 +841,9 @@ Partial names must be specified last on an element line, and must be preceded by
 at least one space or tab character.  If an inline text node is present, the
 partial name must be placed after it.
 
-They can be accessed using the `findPartial()` method of a compiled template,
-which takes the partial name as argument.  It returns the first matching
-partial, which can be manipulated as any other compiled template.
+They can be accessed using the `partial()` method of a compiled template, which
+takes the partial name as argument.  It returns the first matching partial,
+which can be manipulated as any other compiled template.
 
 ```js
 var myTemplate = ist(...);
@@ -856,7 +856,7 @@ function initialRender(tweets) {
 
 function addNewTweet(author, text) {
     var container = document.querySelector(".liveTweets"),
-        partial = myTemplate.findPartial("tweet");
+        partial = myTemplate.partial("tweet");
         
     container.appendChild(
         partial.render({ author: author, text: text })
@@ -867,11 +867,11 @@ function addNewTweet(author, text) {
 ## Single node creation
 
 ist.js provides a shortcut "single node" creation interface that support the
-same syntax as full template files.  Just call `ist.createNode()` and pass it
-an element selector.
+same syntax as full template files.  Just call `ist.create()` and pass it an
+element selector.
 
 ```js
-var myDiv = ist.createNode(
+var myDiv = ist.create(
 		"div.class#id[attribute=Value]"
 	);
 ```
@@ -879,17 +879,17 @@ var myDiv = ist.createNode(
 It also supports rendering with context.
 
 ```js
-var myDiv = ist.createNode(
+var myDiv = ist.create(
 		"div[class={{ cls }}]",
 		{ cls: 'myclass' }
 	);
 ```
     
-Actually `ist.createNode()` is able to create several nodes at once using a
-CSS-like angle-bracket syntax.
+`ist.create()` is also able to create several nodes at once using a CSS-like
+angle-bracket syntax.
 
 ```js
-var myParentDiv = ist.createNode(
+var myParentDiv = ist.create(
 		'div.parent > div.child > "{{ text }}"',
 		{ text: "Text node content" }
 	);
@@ -897,12 +897,12 @@ var myParentDiv = ist.createNode(
 
 And you can even use directives.
 
-Please note however that `createNode` has a quite naive angle-bracket parser,
-and as such does not support angle brackets anywhere else than between nodes.
+Please note however that `create` has a quite naive angle-bracket parser, and as
+such does not support angle brackets anywhere else than between nodes.
 Therefore you should only use it for trivial node tree creation.
 
 ```js
-var myParentDiv = ist.createNode(
+var myParentDiv = ist.create(
 		'div.parent > @each children > "{{ name }}"',
 		{
 			children: [
@@ -917,7 +917,7 @@ Finally, you can create nodes in an alternate document by passing it as third
 argument.
 
 ```js
-var popupDiv = ist.createNode(
+var popupDiv = ist.create(
 		'div.inPopup', 
 		{},
 		popup.document
@@ -926,16 +926,18 @@ var popupDiv = ist.createNode(
 
 ## Custom directives
 
+### Definition and syntax
+
 ist.js allows defining custom directives, and built-in directives are actually
 defined the same way.  If you're used to [handlebars block helpers][1], you'll
 find that ist.js directives work in a very similar way.
 
-A directive helper is registered by calling `ist.registerHelper()` and passing
-it a directive name (case-sensitive) and a helper function.
+A directive helper is registered by calling `ist.helper()` and passing it a
+directive name (case-sensitive) and a helper function.
 
 ```js
 /* Helper for '@foo' */
-ist.registerHelper("foo", function(outer, inner, template, fragment) {
+ist.helper("foo", function(outer, inner, template, fragment) {
 	/* Do stuff */
 });
 ```
@@ -949,8 +951,9 @@ The arguments passed to helpers are:
   is undefined when no parameter is passed;
 * `template`: an ist compiled template that enables access to nodes defined as
   children of the directive;
-* `fragment`: an empty DocumentFragment where the directive should add the nodes
-  it creates.
+* `fragment`: a DocumentFragment where the directive should render nodes.  When
+  updating a previously rendered template, it contains all nodes the directive
+  rendered; otherwise it is empty.
 
 Here are some example calls to `@foo` with the parameters the helper receives:
 
@@ -989,7 +992,7 @@ using `outer` as it is always present).
 ```js
 /* Always create a text node containing "foo", ignoring
    context values and children template nodes */
-ist.registerHelper(
+ist.helper(
     "foo",
     function(outer, inner, template, fragment) {
     	var node = outer.createTextNode("foo");
@@ -1004,11 +1007,135 @@ text node with the string passed as a parameter.
 
 ```js
 /* Example: @echo "foo" */
-ist.registerHelper(
+ist.helper(
     "echo",
     function(outer, inner, template, fragment) {
-        var node = outer.createTextNode(inner ? inner.value : "no value passed to @echo !");
+        var node = outer.createTextNode(
+                inner ? inner.value : "no value passed to @echo !"
+            );
+
         fragment.appendChild(node);
+    }
+);
+```
+
+### Handling updates
+
+When rendering a template, the `fragment` argument to directive helpers is
+empty.  However, when updating, it contains previously rendered nodes.  When the
+helper returns, whatever the fragment contains will be added to the rendered
+node tree.  It is up to directive helpers to decide what to do based on the
+fragment contents.
+
+A naive approach to handling node updates is to just empty the fragment and
+render nodes in all cases.  This approach works, but it is not very efficient.
+Here is how the `@echo` directive above could handle updates using this
+approach.
+
+```js
+ist.helper(
+    'echo',
+    function(outer, inner, template, fragment) {
+        /* Empty the fragment first */
+        while (fragment.hasChildNodes()) {
+            fragment.removeChild(fragment.firstChild);
+        }
+
+        /* Render node */
+        var node = outer.createTextNode(
+                inner ? inner.value : "no value passed to @echo !"
+            );
+
+        fragment.appendChild(node);
+    }
+);
+```
+
+A better approach is to reuse already rendered nodes and update them.
+
+```js
+ist.helper(
+    'echo',
+    function(outer, inner, template, fragment) {
+        var node = fragment.firstChild;
+
+        if (!node) {
+            /* No previously rendered node available */
+            node = outer.createTextNode("");
+            fragment.appendChild(node);
+        }
+
+        /* Update node content */
+        node.textContent = inner ? inner.value : "no value passed to @echo !";
+    }
+);
+```
+
+Helpers that render templates need access to the rendered template `update()`
+method when updating.  Therefore they need to save the rendered fragment
+returned by calling `render()` and retrieve it when updating.  The `fragment`
+argument to helpers comes with two additional methods to help with that:
+
+* `fragment.appendRenderedFragment(rendered)` appends the contents from
+  `rendered` (just like calling `fragment.appendChild(rendered)`) to the
+  fragment, but also saves `rendered` itself for later retrieval.
+* `fragment.extractRenderedFragment()` looks for a previously saved rendered
+  fragment, and returns it.  When no rendered fragment has been saved, it
+  returns `undefined`.  Otherwise, all previously rendered nodes are removed
+  from `fragment` and returned in the resulting rendered fragment.  In that
+  case, you will need to re-append the nodes to `fragment` after updating.
+
+Here is an example showing how this works with the `@with` directive.
+
+```js
+ist.helper(
+    'with',
+    function(outer, inner, template, fragment) {
+        /* Retrieve previously saved rendered fragment */
+        var rendered = fragment.extractRenderedFragment();
+
+        if (rendered) {
+            /* A rendered fragment was found, update it */
+            rendered.update(inner);
+        } else {
+            /* Nothing was saved, render the template */
+            rendered = template.render(inner);
+        }
+
+        /* Put nodes back in the fragment */
+        fragment.appendRenderedFragment(rendered);
+    }
+);
+```
+
+When a helper renders multiple templates at once, you can pass an additional key
+argument to both `appendRenderedFragment` and `extractRenderedFragment` to
+distinguish them.  Keys can be any Javascript value.
+
+Here is an example of a `doubleWith` directive that renders its inner template
+twice and is able to update correctly.
+
+```js
+ist.helper(
+    'doubleWith',
+    function(outer, inner, template, fragment) {
+        var first = fragment.extractRenderedFragment("first"),
+            second = fragment.extractRenderedFragment("second");
+
+        if (first) {
+            first.update(inner);
+        } else {
+            first = template.render(inner);
+        }
+
+        if (second) {
+            second.update(inner);
+        } else {
+            second = template.render(inner);
+        }
+
+        fragment.appendRenderedFragment(first, "first");
+        fragment.appendRenderedFragment(second, "second");
     }
 );
 ```
@@ -1017,7 +1144,7 @@ Here is another simple example showing how the built-in `@with` directive could
 be defined.  It simply renders its child template using the inner context value.
 
 ```js
-ist.registerHelper(
+ist.helper(
     "with",
     function(outer, inner, template, fragment) {
         var nodes = template.render(inner.value);
@@ -1031,7 +1158,7 @@ some added context data (including which template and which line it occured on).
 Here is a more robust version of `@with`.
 
 ```js
-ist.registerHelper(
+ist.helper(
     "with",
     function(outer, inner, template, fragment) {
         if (!inner) {
@@ -1068,7 +1195,7 @@ give access to the DOM document where the template is being rendered:
 /* Creates a <div> with a text child node containing
    the value passed as a  parameter, ie @divtext "foo"
    renders to <div>foo</div> */
-ist.registerHelper(
+ist.helper(
     "divtext",
     function(outer, inner, template, fragment) {
     	var div = outer.createElement("div");
@@ -1084,7 +1211,7 @@ ist.registerHelper(
 method.
 
 ```js
-ist.registerHelper(
+ist.helper(
     'with',
     function(outer, inner, template, fragment) {
     	fragment.appendChild(
@@ -1110,13 +1237,13 @@ The following members can be used to create new contexts and access their value:
   target document but a new value.
 
 ```js
-ist.registerHelper(
+ist.helper(
     'test',
     function(outer, inner, template, fragment) {
     	var testValue = { foo: "bar" },
-    		testCtx = outer.createContext(testValue);
+    		ctx = outer.createContext(testValue);
     	
-    	assert(testValue === testCtx.value);
+    	assert(testValue === ctx.value);
     }
 );
 ```
@@ -1130,13 +1257,13 @@ The following members can be used to help evaluate expressions:
   double curly braces expression.
   
 ```js
-ist.registerHelper(
+ist.helper(
     'test',
     function(outer, inner, template, fragment) {
-    	var testCtx = outer.createContext({ foo: "bar" });
+    	var ctx = outer.createContext({ foo: "bar" });
     	
         assert(textCtx.evaluate("foo.toUpperCase()") === "BAR");
-    	assert(testCtx.interpolate("foo={{ foo }}") === "foo=bar");
+    	assert(ctx.interpolate("foo={{ foo }}") === "foo=bar");
     }
 );
 ```
@@ -1152,7 +1279,7 @@ evaluated:
   object.
   
 ```js
-ist.registerHelper(
+ist.helper(
     'test',
     function(outer, inner, template, fragment) {
     	var ctx = outer.createContext({ foo: "bar" });
@@ -1174,7 +1301,7 @@ ist.registerHelper(
     	ctx.popScope();
         assert(ctx.evaluate("foo.toUpperCase()") === "BAR");
     }
-    );
+);
 ```
 
 ### Simple examples
@@ -1183,7 +1310,7 @@ You can define a `@noop` directive that simply renders the inner template
 without any context switching as follows:
 
 ```js
-ist.registerHelper(
+ist.helper(
     'noop',
     function(outer, inner, template, fragment) {
     	// Render inner template with the current context
@@ -1196,7 +1323,7 @@ The following example allows disabling part of a tree with a `@disable`
 directive.  It simply does not insert any nodes in the fragment parameter.
 
 ```js
-ist.registerHelper('disabled', function() {
+ist.helper('disabled', function() {
 });
 ```
 
@@ -1205,7 +1332,7 @@ markdown code into HTML code.  You could define a `@markdown` directive to
 insert rendered markdown in your tree.
 
 ```js
-ist.registerHelper(
+ist.helper(
     'markdown',
     function(outer, inner, template, fragment) {
         // Create temporary container
@@ -1232,7 +1359,7 @@ You could then use it as follows:
 </script>
 
 <script type="text/javascript">
-ist.fromScriptTag("template")
+ist.script("template")
    .render({
    	articles: [
    		{ content: "# Title\n## Subtitle" },
@@ -1247,7 +1374,7 @@ ist.fromScriptTag("template")
 Here is how the `@if` directive can be defined.
 
 ```js
-ist.registerHelper(
+ist.helper(
     'if',
     function(outer, inner, template, fragment) {
     	if (inner.value) {
@@ -1260,7 +1387,7 @@ ist.registerHelper(
 Of course the `@unless` directive is very similar.
 
 ```js
-ist.registerHelper(
+ist.helper(
     'unless',
     function(outer, inner, template, fragment) {
         if (!inner.value) {
@@ -1276,7 +1403,7 @@ is used only once.  Additionnaly, the directive could throw an exception when
 its argument is not an array.
 
 ```js
-ist.registerHelper(
+ist.helper(
     'each',
     function(outer, inner, template, fragment) {
     	var outerValue = outer.value,
@@ -1310,14 +1437,14 @@ those is really simple.
 // Component store
 var defined = {};
 
-ist.registerHelper(
+ist.helper(
     'define',
     function(outer, inner, template, fragment) {
         defined[inner.value] = template;
     }
 );
 
-ist.registerHelper(
+ist.helper(
     'use',
     function(outer, inner, template, fragment) {
         var t = defined[inner.value];

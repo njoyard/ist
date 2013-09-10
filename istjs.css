@@ -51,7 +51,7 @@ textarea, .highlight, code {
 }
 
 body > * {
-	width: 1000px;
+	width: 1200px;
 	margin: auto;
 }
 
@@ -338,7 +338,7 @@ span.button a {
 	display: none;
 }
 
-@media screen and (max-width: 1000px) {
+@media screen and (max-width: 1200px) {
 	/* Remove left and right borders */
 	body > * {
 		width: auto;

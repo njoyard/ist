@@ -34,6 +34,12 @@ rendered.update({ foo: "baz" });
 You can call the `update()` method with a new context object, or without any
 arguments to reuse the same object as before.
 
+Some methods have also been renamed in this version.  The goal is to have
+short method names everywhere.  `Template#findPartial` is now
+`Template#partial`, `ist.fromScriptTag` became `ist.script` and
+`ist.createNode` is now `ist.create`.  The previous methods will still work
+for a few releases.
+
 The syntax for directive helpers has not changed since 0.5.7, but they must
 be written a bit differently to cope with updating (as the same helper will be
 called for both rendering and updating).  As always, refer to the
