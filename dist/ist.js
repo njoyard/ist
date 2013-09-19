@@ -82,13 +82,15 @@
 				var cacheKey = '{{ ' + expr + ' }}';
 	
 				if (!(cacheKey in codeCache)) {
-					codeCache[cacheKey] = 'function(_istScope){' +
-						'with(_istScope){' +
-							'if(this!==null&&this!==undefined){' +
-								'with(this){' +
+					codeCache[cacheKey] = 'function(document,_istScope){' +
+						'if(this!==null&&this!==undefined){' +
+							'with(this){' +
+								'with(_istScope){' +
 									'return ' + expr + ';' +
 								'}' +
-							'}else{' +
+							'}' +
+						'}else{' +
+							'with(_istScope){' +
 								'return ' + expr + ';' +
 							'}' +
 						'}' +
@@ -123,8 +125,8 @@
 	
 			directiveEvaluator: function(node) {
 				if ('expr' in node) {
-					return new Function('_istScope',
-						'return (' + this.expression(node.expr) + ').call(this,_istScope);'
+					return new Function('document,_istScope',
+						'return (' + this.expression(node.expr) + ').call(this,document,_istScope);'
 					);
 				} else {
 					return undef;
@@ -142,7 +144,7 @@
 					code.push(
 						'element.setAttribute(' +
 							'"' + attr + '",' +
-							'(' + codegen.interpolation(attributes[attr]) + ').call(this,_istScope)' +
+							'(' + codegen.interpolation(attributes[attr]) + ').call(this,document,_istScope)' +
 						');'
 					);
 				});
@@ -150,7 +152,7 @@
 				Object.keys(properties).forEach(function(prop) {
 					code.push(
 						'element["' + prop + '"]=' +
-							'(' + codegen.interpolation(properties[prop]) + ').call(this,_istScope);'
+							'(' + codegen.interpolation(properties[prop]) + ').call(this,document,_istScope);'
 					);
 				});
 	
@@ -158,18 +160,18 @@
 					code.push(
 						'element.addEventListener(' +
 							'"' + evt + '",' +
-							'(' + codegen.expression(events[evt]) + ').call(this,_istScope),' +
+							'(' + codegen.expression(events[evt]) + ').call(this,document,_istScope),' +
 							'false' +
 						');'
 					);
 				});
 	
-				return new Function('_istScope,element', code.join(''));
+				return new Function('document,_istScope,element', code.join(''));
 			},
 	
 			textUpdater: function(node) {
-				return new Function('_istScope,textNode',
-					'textNode.textContent=(' + this.interpolation(node.text) + ').call(this,_istScope);'
+				return new Function('document,_istScope,textNode',
+					'textNode.textContent=(' + this.interpolation(node.text) + ').call(this,document,_istScope);'
 				);
 			}
 		};
@@ -189,7 +191,7 @@
 			this.values = [object];
 	
 			this.doc = doc || document;
-			this.rootScope = this.scope = { document: this.doc };
+			this.rootScope = this.scope = {};
 		}
 	
 	
@@ -262,7 +264,7 @@
 			},
 	
 			scopedCall: function(fn, target) {
-				return fn.call(this.value, this.scope, target);
+				return fn.call(this.value, this.doc, this.scope, target);
 			}
 		};
 		

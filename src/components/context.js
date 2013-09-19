@@ -13,7 +13,7 @@ define([], function() {
 		this.values = [object];
 
 		this.doc = doc || document;
-		this.rootScope = this.scope = { document: this.doc };
+		this.rootScope = this.scope = {};
 	}
 
 
@@ -86,7 +86,7 @@ define([], function() {
 		},
 
 		scopedCall: function(fn, target) {
-			return fn.call(this.value, this.scope, target);
+			return fn.call(this.value, this.doc, this.scope, target);
 		}
 	};
 	

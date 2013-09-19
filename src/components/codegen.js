@@ -12,13 +12,15 @@ define(['util/misc'], function(misc) {
 			var cacheKey = '{{ ' + expr + ' }}';
 
 			if (!(cacheKey in codeCache)) {
-				codeCache[cacheKey] = 'function(_istScope){' +
-					'with(_istScope){' +
-						'if(this!==null&&this!==undefined){' +
-							'with(this){' +
+				codeCache[cacheKey] = 'function(document,_istScope){' +
+					'if(this!==null&&this!==undefined){' +
+						'with(this){' +
+							'with(_istScope){' +
 								'return ' + expr + ';' +
 							'}' +
-						'}else{' +
+						'}' +
+					'}else{' +
+						'with(_istScope){' +
 							'return ' + expr + ';' +
 						'}' +
 					'}' +
@@ -53,8 +55,8 @@ define(['util/misc'], function(misc) {
 
 		directiveEvaluator: function(node) {
 			if ('expr' in node) {
-				return new Function('_istScope',
-					'return (' + this.expression(node.expr) + ').call(this,_istScope);'
+				return new Function('document,_istScope',
+					'return (' + this.expression(node.expr) + ').call(this,document,_istScope);'
 				);
 			} else {
 				return undef;
@@ -72,7 +74,7 @@ define(['util/misc'], function(misc) {
 				code.push(
 					'element.setAttribute(' +
 						'"' + attr + '",' +
-						'(' + codegen.interpolation(attributes[attr]) + ').call(this,_istScope)' +
+						'(' + codegen.interpolation(attributes[attr]) + ').call(this,document,_istScope)' +
 					');'
 				);
 			});
@@ -80,7 +82,7 @@ define(['util/misc'], function(misc) {
 			Object.keys(properties).forEach(function(prop) {
 				code.push(
 					'element["' + prop + '"]=' +
-						'(' + codegen.interpolation(properties[prop]) + ').call(this,_istScope);'
+						'(' + codegen.interpolation(properties[prop]) + ').call(this,document,_istScope);'
 				);
 			});
 
@@ -88,18 +90,18 @@ define(['util/misc'], function(misc) {
 				code.push(
 					'element.addEventListener(' +
 						'"' + evt + '",' +
-						'(' + codegen.expression(events[evt]) + ').call(this,_istScope),' +
+						'(' + codegen.expression(events[evt]) + ').call(this,document,_istScope),' +
 						'false' +
 					');'
 				);
 			});
 
-			return new Function('_istScope,element', code.join(''));
+			return new Function('document,_istScope,element', code.join(''));
 		},
 
 		textUpdater: function(node) {
-			return new Function('_istScope,textNode',
-				'textNode.textContent=(' + this.interpolation(node.text) + ').call(this,_istScope);'
+			return new Function('document,_istScope,textNode',
+				'textNode.textContent=(' + this.interpolation(node.text) + ').call(this,document,_istScope);'
 			);
 		}
 	};
