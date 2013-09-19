@@ -1,15 +1,6 @@
 /*global define */
-define([], function() {
+define(['util/misc'], function(misc) {
 	'use strict';
-
-	function appendNodeSegment(firstChild, lastChild, target) {
-		var node = firstChild;
-
-		while (node && node != lastChild.nextSibling) {
-			target.appendChild(node);
-			node = node.nextSibling;
-		}
-	}
 
 
 	function appendRenderedFragment(fragment, key) {
@@ -35,7 +26,7 @@ define([], function() {
 				fragments: fragIndex.map(function(item) {
 					var frag = ctx.createDocumentFragment();
 
-					appendNodeSegment(item.firstChild, item.lastChild, frag);
+					misc.appendNodeSegment(item.firstChild, item.lastChild, frag);
 					frag.update = item.update;
 
 					return frag;
@@ -61,7 +52,7 @@ define([], function() {
 			item = fragIndex[position];
 			fragment = ctx.createDocumentFragment();
 
-			appendNodeSegment(item.firstChild, item.lastChild, fragment);
+			misc.appendNodeSegment(item.firstChild, item.lastChild, fragment);
 			fragment.update = item.update;
 
 			keyIndex.splice(position, 1);
@@ -92,7 +83,7 @@ define([], function() {
 		fragment.extractRenderedFragment = extractRenderedFragment;
 		fragment.extractRenderedFragments = extractRenderedFragments;
 
-		appendNodeSegment(this.firstChild, this.lastChild, fragment);
+		misc.appendNodeSegment(this.firstChild, this.lastChild, fragment);
 
 		return fragment;
 	};

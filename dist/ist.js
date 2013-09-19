@@ -52,6 +52,18 @@
 				}
 				
 				return found;
+			},
+	
+			appendNodeSegment: function(firstChild, lastChild, target) {
+				var node = firstChild,
+					end = lastChild ? lastChild.nextSibling : null,
+					next;
+	
+				while (node && node != end) {
+					next = node.nextSibling;
+					target.appendChild(node);
+					node = next;
+				}
 			}
 		};
 	}());
@@ -443,17 +455,8 @@
 	}());
 	
 	/*global define */
-	istComponents.rendereddirective = ( function() {
+	istComponents.rendereddirective = ( function(misc) {
 		
-	
-		function appendNodeSegment(firstChild, lastChild, target) {
-			var node = firstChild;
-	
-			while (node && node != lastChild.nextSibling) {
-				target.appendChild(node);
-				node = node.nextSibling;
-			}
-		}
 	
 	
 		function appendRenderedFragment(fragment, key) {
@@ -479,7 +482,7 @@
 					fragments: fragIndex.map(function(item) {
 						var frag = ctx.createDocumentFragment();
 	
-						appendNodeSegment(item.firstChild, item.lastChild, frag);
+						misc.appendNodeSegment(item.firstChild, item.lastChild, frag);
 						frag.update = item.update;
 	
 						return frag;
@@ -505,7 +508,7 @@
 				item = fragIndex[position];
 				fragment = ctx.createDocumentFragment();
 	
-				appendNodeSegment(item.firstChild, item.lastChild, fragment);
+				misc.appendNodeSegment(item.firstChild, item.lastChild, fragment);
 				fragment.update = item.update;
 	
 				keyIndex.splice(position, 1);
@@ -536,7 +539,7 @@
 			fragment.extractRenderedFragment = extractRenderedFragment;
 			fragment.extractRenderedFragments = extractRenderedFragments;
 	
-			appendNodeSegment(this.firstChild, this.lastChild, fragment);
+			misc.appendNodeSegment(this.firstChild, this.lastChild, fragment);
 	
 			return fragment;
 		};
@@ -549,21 +552,10 @@
 	
 	
 		return RenderedDirective;
-	}());
+	}(istComponents.misc));
 	/*global define */
-	istComponents.renderedtree = ( function(RenderedDirective) {
+	istComponents.renderedtree = ( function(RenderedDirective, misc) {
 		
-	
-	
-		function appendNodeSegment(firstChild, lastChild, target) {
-			var node = firstChild;
-	
-			while (node && node != lastChild.nextSibling) {
-				target.appendChild(node);
-				node = node.nextSibling;
-			}
-		}
-	
 	
 		function RenderedTree(element, childrenIndex) {
 			this.element = element;
@@ -593,7 +585,7 @@
 				if (indexItem instanceof RenderedTree) {
 					parent.appendChild(indexItem.element);
 				} else if (indexItem instanceof RenderedDirective) {
-					appendNodeSegment(indexItem.firstChild, indexItem.lastChild, parent);
+					misc.appendNodeSegment(indexItem.firstChild, indexItem.lastChild, parent);
 				} else {
 					parent.appendChild(indexItem);
 				}
@@ -601,7 +593,7 @@
 		};
 	
 		return RenderedTree;
-	}(istComponents.rendereddirective));
+	}(istComponents.rendereddirective, istComponents.misc));
 	/*global define */
 	istComponents.renderer = (
 	function(Context, directives, RenderedTree, RenderedDirective) {

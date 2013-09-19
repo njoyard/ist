@@ -1,17 +1,6 @@
 /*global define */
-define(['components/rendereddirective'], function(RenderedDirective) {
+define(['components/rendereddirective', 'util/misc'], function(RenderedDirective, misc) {
 	'use strict';
-
-
-	function appendNodeSegment(firstChild, lastChild, target) {
-		var node = firstChild;
-
-		while (node && node != lastChild.nextSibling) {
-			target.appendChild(node);
-			node = node.nextSibling;
-		}
-	}
-
 
 	function RenderedTree(element, childrenIndex) {
 		this.element = element;
@@ -41,7 +30,7 @@ define(['components/rendereddirective'], function(RenderedDirective) {
 			if (indexItem instanceof RenderedTree) {
 				parent.appendChild(indexItem.element);
 			} else if (indexItem instanceof RenderedDirective) {
-				appendNodeSegment(indexItem.firstChild, indexItem.lastChild, parent);
+				misc.appendNodeSegment(indexItem.firstChild, indexItem.lastChild, parent);
 			} else {
 				parent.appendChild(indexItem);
 			}
