@@ -1,16 +1,3 @@
-@if test === "syntax"
-	"{{ syntax error }}"
-	
-@if test === "syntax2"
-	div[attr={{ syntax error }}]
-	
-@if test === "syntax3"
-	div[.prop={{ syntax error }}]
-	
-@if test === "syntax4"
-	@with syntax error
-		div
-	
 @if test === "type"
 	"{{ a.b() }}"
 	

@@ -33,15 +33,15 @@ define([
 
 	/* Deprecated method names */
 	ist.fromScriptTag = function(id) {
-		if (console) console.log('Warning: ist.fromScriptTag is deprecated, use ist.script instead');
+		if (console) (console.warn || console.log)('Warning: ist.fromScriptTag is deprecated, use ist.script instead');
 		return ist.script(id);
 	};
 	ist.registerHelper = function(name, helper) {
-		if (console) console.log('Warning: ist.registerHelper is deprecated, use ist.helper instead');
+		if (console) (console.warn || console.log)('Warning: ist.registerHelper is deprecated, use ist.helper instead');
 		ist.helper(name, helper);
 	};
 	ist.createNode = function(branchSpec, context, doc) {
-		if (console) console.log('Warning: ist.registerHelper is createNode, use ist.create instead');
+		if (console) (console.warn || console.log)('Warning: ist.createNode is deprecated, use ist.create instead');
 		return ist.create(branchSpec, context, doc);
 	};
 
@@ -94,8 +94,8 @@ define([
 	};
 	
 	/* Built-in @include helper */
-	ist.helper('include', function(outer, inner, tmpl, fragment) {
-		var name = inner.value,
+	ist.helper('include', function(ctx, value, tmpl, fragment) {
+		var name = value,
 			what = name.replace(/\.ist$/, ''),
 			found, tryReq;
 
@@ -131,7 +131,7 @@ define([
 
 		if (typeof found.render === 'function') {
 			// Render included template
-			fragment.appendChild(found.render(outer));
+			fragment.appendChild(found.render(ctx));
 		} else {
 			throw new Error('Invalid included template \'' + name + '\'');
 		}

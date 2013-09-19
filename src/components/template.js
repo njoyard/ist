@@ -1,9 +1,10 @@
-/*global define */
+/*global define, console */
 define([
+	'components/codegen',
 	'components/context',
 	'components/renderer'
 ],
-function(Context, Renderer) {
+function(codegen, Context, Renderer) {
 	'use strict';
 
 	var expressionRE = /{{((?:}(?!})|[^}])*)}}/;
@@ -38,22 +39,39 @@ function(Context, Renderer) {
 		this.name = name || '<unknown>';
 		this.nodes = nodes;
 
-		this.nodes.forEach(preRenderRec);
+		this.nodes.forEach(this._preRenderRec, this);
 	}
 	
 	
 	/* Prerender recursion helper */
-	function preRenderRec(node) {
+	Template.prototype._preRenderRec = function(node) {
 		var pr;
-		
-		/* Constant text node */
-		if (typeof node.text !== 'undefined' &&
-				!expressionRE.test(node.text)) {
-			node.pr = document.createTextNode(node.text);
+
+		if ('pr' in node || 'updater' in node) {
+			return;
+		}
+	
+		/* Prerender children */
+		if ('children' in node) {
+			node.children.forEach(this._preRenderRec, this);
+		}
+
+		/* Text node */
+		if ('text' in node) {
+			if (!expressionRE.test(node.text)) {
+				/* Node content is constant */
+				node.pr = document.createTextNode(node.text);
+			} else {
+				try {
+					node.updater = codegen.textUpdater(node);
+				} catch(err) {
+					throw this._completeError(err, node);
+				}
+			}
 		}
 		
 		/* Element node */
-		if (typeof node.tagName !== 'undefined') {
+		if ('tagName' in node) {
 			node.pr = pr = document.createElement(node.tagName);
 			
 			node.classes.forEach(function(cls) {
@@ -63,10 +81,24 @@ function(Context, Renderer) {
 			if (typeof node.id !== 'undefined') {
 				pr.id = node.id;
 			}
+
+			try {
+				node.updater = codegen.elementUpdater(node);
+			} catch(err) {
+				throw this._completeError(err, node);
+			}
 		}
-	
-		if (typeof node.children !== 'undefined') {
-			node.children.forEach(preRenderRec);
+
+		/* Directive node */
+		if ('directive' in node) {
+			try {
+				node.pr = {
+					template: new Template(this.name, node.children),
+					evaluator: codegen.directiveEvaluator(node)
+				};
+			} catch(err) {
+				throw this._completeError(err, node);
+			}
 		}
 	}
 	
@@ -92,7 +124,7 @@ function(Context, Renderer) {
 	/* Look for a node with the given partial name and return a new
 	   Template object if found */
 	Template.prototype.findPartial = function(name) {
-		if (console) console.log("Warning: Template#findPartial is deprecated, use Template#partial instead");
+		if (console) (console.warn || console.log)("Warning: Template#findPartial is deprecated, use Template#partial instead");
 		return this.partial(name);
 	}
 	Template.prototype.partial = function(name) {
@@ -113,50 +145,11 @@ function(Context, Renderer) {
 	
 	/* Render template using 'context' in 'doc' */
 	Template.prototype.render = function(context, doc) {
-		if (!(context instanceof Context)) {
-			context = new Context(context, doc);
-		}
-
 		var template = this,
-			rendered = (new Renderer(template, context)).render();
+			renderer = new Renderer(template);
 
-		/* Add an update method */
-		rendered.update = function(ctx) {
-			/* Update context if present */
-			if (ctx instanceof Context) {
-				context = ctx;
-			} else if (ctx) {
-				context = new Context(ctx, doc);
-			}
-
-			/* Get previously rendered nodes parent and previous sibling */
-			var children = this.update.nodes,
-				child0 = children[0],
-				parent = child0.parentNode,
-				previous = child0.previousSibling;
-
-			/* Put previously rendered nodes in a fragment */
-			var fragment = context.createDocumentFragment();
-			children.forEach(function(child) {
-				fragment.appendChild(child);
-			});
-
-			(new Renderer(template, context)).render(fragment);
-
-			/* Put nodes back where they were */
-			this.update.nodes = [].slice.call(fragment.childNodes);
-
-			if (previous) {
-				parent.insertBefore(fragment, previous.nextSibling);
-			} else {
-				parent.appendChild(fragment);
-			}
-		};
-
-		/* Keep a ref to child nodes */
-		rendered.update.nodes = [].slice.call(rendered.childNodes);
-
-		return rendered;
+		renderer.setContext(context, doc);
+		return renderer.render();
 	};
 
 
@@ -165,7 +158,7 @@ function(Context, Renderer) {
 		return 'new ist.Template(' +
 			JSON.stringify(this.name) + ', ' +
 			JSON.stringify(this.nodes, null, pretty ? 1 : 0) +
-			');';
+		');';
 	};
 	
 	
