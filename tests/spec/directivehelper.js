@@ -277,6 +277,10 @@ define([
 
 						fragment.appendRenderedFragment(template.render(ctx), key);
 						break;
+
+					case "retrieveall":
+						retrieved = fragment.extractRenderedFragments();
+						break;
 				}
 			});
 
@@ -303,6 +307,27 @@ define([
 
 			expect( rendered.firstChild.textContent ).toBe( "3" );
 			expect( rendered.firstChild.nextSibling.textContent ).toBe( "4" );
+
+			test = "save";
+			var rendered = tUpdate.render({ foo: 1, bar: 2 });
+
+			test = "retrieveall";
+			rendered.update({ foo: 3, bar: 4 });
+
+			expect( 'keys' in retrieved ).toBe( true );
+			expect( 'fragments' in retrieved ).toBe( true );
+
+			expect( Array.isArray(retrieved.keys) ).toBe( true );
+			expect( Array.isArray(retrieved.fragments) ).toBe( true );
+
+			expect( retrieved.keys.length ).toBe( 1 );
+			expect( retrieved.fragments.length ).toBe( 1 );
+
+			expect( retrieved.keys[0] ).toBe( key );
+			expect( retrieved.fragments[0].firstChild.textContent ).toBe( "1" );
+			expect( retrieved.fragments[0].firstChild.nextSibling.textContent ).toBe( "2" );
+
+			expect( rendered.hasChildNodes() ).toBe( false );
 		});
 	};
 });

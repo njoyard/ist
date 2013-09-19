@@ -141,6 +141,7 @@ function(Context, directives, RenderedTree, RenderedDirective) {
 				renderer.setContext(ctx);
 			}
 
+			tree.updateParent();
 			renderer._renderNodes(nodes, tree);
 		};
 

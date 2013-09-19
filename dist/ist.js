@@ -579,19 +579,38 @@
 		};
 	
 	
+		RenderedTree.prototype.updateParent = function() {
+			var item = this.childrenIndex[0];
+	
+			// TODO better handle the case where no nodes have been rendered
+			if (item) {
+				this.element = null;
+				if (item instanceof RenderedTree) {
+					this.element = item.element.parentNode;
+				} else if (item instanceof RenderedDirective) {
+					this.element = item.firstChild.parentNode;
+				} else {
+					this.element = item.parentNode;
+				}
+			}
+		};
+	
+	
 		RenderedTree.prototype.appendChildren = function() {
 			var parent = this.element;
 	
-			// TODO do not reappend children if unnecessary
-			this.childrenIndex.forEach(function(indexItem) {
-				if (indexItem instanceof RenderedTree) {
-					parent.appendChild(indexItem.element);
-				} else if (indexItem instanceof RenderedDirective) {
-					misc.appendNodeSegment(indexItem.firstChild, indexItem.lastChild, parent);
-				} else {
-					parent.appendChild(indexItem);
-				}
-			});
+			if (parent) {
+				// TODO do not reappend children if unnecessary
+				this.childrenIndex.forEach(function(indexItem) {
+					if (indexItem instanceof RenderedTree) {
+						parent.appendChild(indexItem.element);
+					} else if (indexItem instanceof RenderedDirective) {
+						misc.appendNodeSegment(indexItem.firstChild, indexItem.lastChild, parent);
+					} else {
+						parent.appendChild(indexItem);
+					}
+				});
+			}
 		};
 	
 		return RenderedTree;
@@ -738,6 +757,7 @@
 					renderer.setContext(ctx);
 				}
 	
+				tree.updateParent();
 				renderer._renderNodes(nodes, tree);
 			};
 	
