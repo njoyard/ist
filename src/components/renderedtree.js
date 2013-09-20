@@ -5,6 +5,7 @@ define(['components/rendereddirective', 'util/misc'], function(RenderedDirective
 	function RenderedTree(element, childrenIndex) {
 		this.element = element;
 		this.childrenIndex = childrenIndex || [];
+		this.appendDone = false;
 	}
 
 
@@ -22,6 +23,7 @@ define(['components/rendereddirective', 'util/misc'], function(RenderedDirective
 	};
 
 
+	// FIXME only used on root tree when updating, maybe move this to Renderer ?
 	RenderedTree.prototype.updateParent = function() {
 		var item = this.childrenIndex[0];
 
@@ -40,19 +42,44 @@ define(['components/rendereddirective', 'util/misc'], function(RenderedDirective
 
 
 	RenderedTree.prototype.appendChildren = function() {
-		var parent = this.element;
+		var parent = this.element,
+			index = this.childrenIndex;
 
 		if (parent) {
-			// TODO do not reappend children if unnecessary
-			this.childrenIndex.forEach(function(indexItem) {
-				if (indexItem instanceof RenderedTree) {
-					parent.appendChild(indexItem.element);
-				} else if (indexItem instanceof RenderedDirective) {
-					misc.appendNodeSegment(indexItem.firstChild, indexItem.lastChild, parent);
-				} else {
-					parent.appendChild(indexItem);
+			if (!this.appendDone) {
+				index.forEach(function(indexItem) {
+					if (indexItem instanceof RenderedTree) {
+						parent.appendChild(indexItem.element);
+					} else if (indexItem instanceof RenderedDirective) {
+						misc.appendNodeSegment(indexItem.firstChild, indexItem.lastChild, parent);
+					} else {
+						parent.appendChild(indexItem);
+					}
+				});
+
+				this.appendDone = true;
+			} else {
+				var nextSibling = null;
+
+				for (var i = index.length - 1; i >= 0; i--) {
+					var indexItem = index[i];
+
+					if (indexItem instanceof RenderedTree) {
+						nextSibling = indexItem.element;
+					} else if (indexItem instanceof RenderedDirective) {
+						misc.insertNodeSegmentBefore(
+							indexItem.firstChild,
+							indexItem.lastChild,
+							parent,
+							nextSibling
+						);
+
+						nextSibling = indexItem.firstChild || nextSibling;
+					} else {
+						nextSibling = indexItem;
+					}
 				}
-			});
+			}
 		}
 	};
 
