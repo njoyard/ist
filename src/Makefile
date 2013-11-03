@@ -6,7 +6,7 @@ DESTDIR=..
 
 RJSCONFIG=ist.build.js
 COMPONENTS=$(wildcard components/*.js)
-PARSER=parser/parser.js parser/preprocessor.js
+PARSER=parser/parsehelpers.js parser/parser.js parser/preprocessor.js
 UTIL=$(wildcard util/*.js)
 PARTS=$(wildcard parts/build.*.part)
 
