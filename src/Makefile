@@ -39,5 +39,3 @@ ist-min: $(DESTDIR)/ist-min.js
 clean:
 	@rm parser/parser.compiled.js
 	@rm parser/parser.js
-	@rm -rf $(DESTDIR) 
-
