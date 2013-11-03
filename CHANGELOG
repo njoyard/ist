@@ -1,3 +1,6 @@
+v0.5.8 - 2013-11-03
+- Added element property paths (div[.path.to.property=value])
+
 v0.5.7 - 2013-09-06
 - Rewrote rendering to use less class-like patterns (boosted rendering
   performance by ~30%); additionnaly the "internal" representation of

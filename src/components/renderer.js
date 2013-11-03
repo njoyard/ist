@@ -65,16 +65,28 @@ define(['components/directives'], function(directives) {
 		}, this);
 	
 		// Set properties
-		Object.keys(node.properties).forEach(function(prop) {
+		node.properties.forEach(function(prop) {
 			var value;
 
 			try {
-				value = ctx.interpolate(node.properties[prop]);
+				value = ctx.interpolate(prop.value);
 			} catch (err) {
 				throw this._completeError(err, node);
 			}
-		
-			elem[prop] = value;
+
+			var current = elem;
+			for (var i = 0, len = prop.path.length; i < len; i++) {
+				var pathElement = prop.path[i];
+				if (i === len - 1) {
+					current[pathElement] = value;
+				} else {
+					if (!(pathElement in current)) {
+						current[pathElement] = {};
+					}
+
+					current = current[pathElement];
+				}
+			}
 		}, this);
 		
 		// Set event handlers

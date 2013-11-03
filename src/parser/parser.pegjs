@@ -30,6 +30,10 @@ identifier "identifier"
 = h:[a-z_]i t:[a-z0-9_-]i*
 { return h + t.join(''); }
 
+dottedpath "dotted path"
+= h:identifier t:("." identifier)*
+{ return t.length ? [h].concat(t.map(function(item) { return item[1]; })) : [h]; }
+
 partial
 = "!" name:identifier
 { return name; }
@@ -51,7 +55,7 @@ elemAttribute
 { return { 'attr': attr, 'value': value }; }
 
 elemProperty
-= "[" "." prop:identifier "=" value:squareBracketsValue "]"
+= "[" "." prop:dottedpath "=" value:squareBracketsValue "]"
 { return { 'prop': prop, 'value': value }; }
 
 elemEventHandler
