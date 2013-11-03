@@ -69,9 +69,12 @@ define([
 		
 		it("should accept escaped characters in property values", function() {
 			expect( propNodes[3].aProperty ).toBe( "\\\"aéé\n]" );
-	//	\\\"\a\u03a9\xe9\n\]]
-		
 		});
+
+        it("should be able to set property paths on elements", function() {
+                expect( typeof propNodes[4].property ).toBe( "object" );
+                expect( propNodes[4].property.path ).toBe( "a value" );
+        });
 		
 		it("should be able to set event handlers on elements", function() {
 			var called = false;

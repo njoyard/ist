@@ -172,7 +172,7 @@ define(function() {
 			line: line,
 			classes: [],
 			attributes: {},
-			properties: {},
+			properties: [],
 			events: {},
 			children: [],
 			toJSON: elemToJSON
@@ -186,7 +186,7 @@ define(function() {
 			} else if (typeof q.attr !== 'undefined') {
 				elem.attributes[q.attr] = q.value;
 			} else if (typeof q.prop !== 'undefined') {
-				elem.properties[q.prop] = q.value;
+				elem.properties.push({ path: q.prop, value: q.value });
 			} else if (typeof q.event !== 'undefined') {
 				if (typeof elem.events[q.event] === 'undefined') {
 					elem.events[q.event] = [];

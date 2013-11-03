@@ -161,10 +161,30 @@
 					);
 				});
 	
-				Object.keys(properties).forEach(function(prop) {
+				properties.forEach(function(prop) {
+					var itcode = [];
+	
+					for (var i = 0, len = prop.path.length; i < len; i++) {
+						var pathElement = prop.path[i];
+						if (i === len - 1) {
+							itcode.push(
+								'current["' + pathElement + '"] = value;'
+							);
+						} else {
+							itcode.push(
+								'if (!("' + pathElement + '" in current)) {' +
+									'current["' + pathElement + '"] = {};' +
+								'}' +
+								'current = current["' + pathElement + '"];'
+							);
+						}
+					}
+	
 					code.push(
-						'element["' + prop + '"]=' +
-							'(' + codegen.interpolation(properties[prop]) + ').call(this,document,_istScope);'
+						'(function(value) {' +
+							'var current = element;' +
+							itcode.join('') +
+						'})((' + codegen.interpolation(prop.value) + ').call(this,document,_istScope));'
 					);
 				});
 	
@@ -1147,7 +1167,7 @@
 				line: line,
 				classes: [],
 				attributes: {},
-				properties: {},
+				properties: [],
 				events: {},
 				children: [],
 				toJSON: elemToJSON
@@ -1161,7 +1181,7 @@
 				} else if (typeof q.attr !== 'undefined') {
 					elem.attributes[q.attr] = q.value;
 				} else if (typeof q.prop !== 'undefined') {
-					elem.properties[q.prop] = q.value;
+					elem.properties.push({ path: q.prop, value: q.value });
 				} else if (typeof q.event !== 'undefined') {
 					if (typeof elem.events[q.event] === 'undefined') {
 						elem.events[q.event] = [];
@@ -1256,6 +1276,7 @@
 	        "newline": parse_newline,
 	        "character": parse_character,
 	        "identifier": parse_identifier,
+	        "dottedpath": parse_dottedpath,
 	        "partial": parse_partial,
 	        "elemId": parse_elemId,
 	        "elemClass": parse_elemClass,
@@ -1655,6 +1676,86 @@
 	        return result0;
 	      }
 	      
+	      function parse_dottedpath() {
+	        var result0, result1, result2, result3;
+	        var pos0, pos1, pos2;
+	        
+	        reportFailures++;
+	        pos0 = clone(pos);
+	        pos1 = clone(pos);
+	        result0 = parse_identifier();
+	        if (result0 !== null) {
+	          result1 = [];
+	          pos2 = clone(pos);
+	          if (input.charCodeAt(pos.offset) === 46) {
+	            result2 = ".";
+	            advance(pos, 1);
+	          } else {
+	            result2 = null;
+	            if (reportFailures === 0) {
+	              matchFailed("\".\"");
+	            }
+	          }
+	          if (result2 !== null) {
+	            result3 = parse_identifier();
+	            if (result3 !== null) {
+	              result2 = [result2, result3];
+	            } else {
+	              result2 = null;
+	              pos = clone(pos2);
+	            }
+	          } else {
+	            result2 = null;
+	            pos = clone(pos2);
+	          }
+	          while (result2 !== null) {
+	            result1.push(result2);
+	            pos2 = clone(pos);
+	            if (input.charCodeAt(pos.offset) === 46) {
+	              result2 = ".";
+	              advance(pos, 1);
+	            } else {
+	              result2 = null;
+	              if (reportFailures === 0) {
+	                matchFailed("\".\"");
+	              }
+	            }
+	            if (result2 !== null) {
+	              result3 = parse_identifier();
+	              if (result3 !== null) {
+	                result2 = [result2, result3];
+	              } else {
+	                result2 = null;
+	                pos = clone(pos2);
+	              }
+	            } else {
+	              result2 = null;
+	              pos = clone(pos2);
+	            }
+	          }
+	          if (result1 !== null) {
+	            result0 = [result0, result1];
+	          } else {
+	            result0 = null;
+	            pos = clone(pos1);
+	          }
+	        } else {
+	          result0 = null;
+	          pos = clone(pos1);
+	        }
+	        if (result0 !== null) {
+	          result0 = (function(offset, line, column, h, t) { return t.length ? [h].concat(t.map(function(i) { return i[1]; })) : [h] })(pos0.offset, pos0.line, pos0.column, result0[0], result0[1]);
+	        }
+	        if (result0 === null) {
+	          pos = clone(pos0);
+	        }
+	        reportFailures--;
+	        if (reportFailures === 0 && result0 === null) {
+	          matchFailed("dotted path");
+	        }
+	        return result0;
+	      }
+	      
 	      function parse_partial() {
 	        var result0, result1;
 	        var pos0, pos1;
@@ -1901,7 +2002,7 @@
 	            }
 	          }
 	          if (result1 !== null) {
-	            result2 = parse_identifier();
+	            result2 = parse_dottedpath();
 	            if (result2 !== null) {
 	              if (input.charCodeAt(pos.offset) === 61) {
 	                result3 = "=";

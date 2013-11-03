@@ -79,10 +79,30 @@ define(['util/misc'], function(misc) {
 				);
 			});
 
-			Object.keys(properties).forEach(function(prop) {
+			properties.forEach(function(prop) {
+				var itcode = [];
+
+				for (var i = 0, len = prop.path.length; i < len; i++) {
+					var pathElement = prop.path[i];
+					if (i === len - 1) {
+						itcode.push(
+							'current["' + pathElement + '"] = value;'
+						);
+					} else {
+						itcode.push(
+							'if (!("' + pathElement + '" in current)) {' +
+								'current["' + pathElement + '"] = {};' +
+							'}' +
+							'current = current["' + pathElement + '"];'
+						);
+					}
+				}
+
 				code.push(
-					'element["' + prop + '"]=' +
-						'(' + codegen.interpolation(properties[prop]) + ').call(this,document,_istScope);'
+					'(function(value) {' +
+						'var current = element;' +
+						itcode.join('') +
+					'})((' + codegen.interpolation(prop.value) + ').call(this,document,_istScope));'
 				);
 			});
 
