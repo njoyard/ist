@@ -993,8 +993,11 @@
 		istComponents.renderer
 	));
 	
+	/*global define */
 	istComponents.parsehelpers = (function() {
-		var UNCHANGED = 'U', INDENT = 'I', DEDENT = 'D', UNDEF,
+		
+	
+		var UNCHANGED = "U", INDENT = "I", DEDENT = "D",
 			textToJSON, elemToJSON, directiveToJSON,
 			helpers = {};
 			
@@ -1014,11 +1017,11 @@
 					children: this.children
 				};
 			
-			if (typeof this.id !== 'undefined') {
+			if (typeof this.id !== "undefined") {
 				o.id = this.id;
 			}
 		
-			if (typeof this.partial !== 'undefined') {
+			if (typeof this.partial !== "undefined") {
 				o.partial = this.partial;
 			}
 		
@@ -1056,14 +1059,40 @@
 				stack.push(node);
 			};
 	
-			popNode = function(lineNumber) {
-				var node;
+			popNode = function() {
+				var node, parent, err;
+	
 				if (stack.length < 2) {
 					throw new Error("Could not pop node from stack");
 				}
 		
 				node = stack.pop();
-				peekNode().children.push(node);
+				parent = peekNode();
+	
+				if (typeof parent.text !== "undefined") {
+					err = new Error("Cannot add children to text node");
+					err.line = node.line;
+					throw err;
+				}
+	
+				if (node.directive === "else") {
+					var prev = parent.children[parent.children.length - 1];
+	
+					if (prev && !prev.wasElse && prev.directive === "if") {
+						node.directive = "unless";
+					} else if (prev && !prev.wasElse && prev.directive === "unless") {
+						node.directive = "if";
+					} else {
+						err = new Error("@else directive has no matching @if or @unless directive");
+						err.line = node.line;
+						throw err;
+					}
+	
+					node.expr = prev.expr;
+					node.wasElse = true;
+				}
+	
+				parent.children.push(node);
 			
 				return node;
 			};
@@ -1072,11 +1101,9 @@
 			lines = tail.map(function(item) { return item.pop(); });
 			lines.unshift(first);
 	
-			lines.forEach(function(line, index) {
+			lines.forEach(function(line) {
 				var indent = line.indent,
-					item = line.item,
-					lineNumber = line.num,
-					err;
+					item = line.item;
 				
 				if (indent[0] instanceof Error) {
 					throw indent[0];
@@ -1084,7 +1111,7 @@
 			
 				if (nodeCount > 0) {
 					if (indent[0] === UNCHANGED) {
-						// Same indent: previous node won't have any children
+						// Same indent: previous node won"t have any children
 						popNode();
 					} else if (indent[0] === DEDENT) {
 						// Pop nodes in their parent
@@ -1094,10 +1121,6 @@
 							indent.pop();
 							popNode();
 						}
-					} else if (indent[0] === INDENT && typeof peekNode().text !== 'undefined') {
-						err = new Error("Cannot add children to text node");
-						err.line = lineNumber;
-						throw err;
 					}
 				}
 			
@@ -1174,16 +1197,16 @@
 			};
 	
 			qualifiers.forEach(function(q) {
-				if (typeof q.id !== 'undefined') {
+				if (typeof q.id !== "undefined") {
 					elem.id = q.id;
-				} else if (typeof q.className !== 'undefined') {
+				} else if (typeof q.className !== "undefined") {
 					elem.classes.push(q.className);
-				} else if (typeof q.attr !== 'undefined') {
+				} else if (typeof q.attr !== "undefined") {
 					elem.attributes[q.attr] = q.value;
-				} else if (typeof q.prop !== 'undefined') {
+				} else if (typeof q.prop !== "undefined") {
 					elem.properties.push({ path: q.prop, value: q.value });
-				} else if (typeof q.event !== 'undefined') {
-					if (typeof elem.events[q.event] === 'undefined') {
+				} else if (typeof q.event !== "undefined") {
+					if (typeof elem.events[q.event] === "undefined") {
 						elem.events[q.event] = [];
 					}
 				
@@ -1191,13 +1214,13 @@
 				}
 			});
 		
-			if (typeof additions !== 'undefined') {
+			if (typeof additions !== "undefined") {
 				if (additions.partial.length > 0) {
 					elem.partial = additions.partial;
 				}
 			
-				if (typeof additions.textnode !== 'undefined'
-					&& typeof additions.textnode.text !== 'undefined') {
+				if (typeof additions.textnode !== "undefined" &&
+					typeof additions.textnode.text !== "undefined") {
 					elem.children.push(additions.textnode);
 				}
 			}
@@ -1221,7 +1244,7 @@
 				// 2 or 4 hex digits coming from \xNN or \uNNNN
 				return String.fromCharCode(parseInt(char, 16));
 			} else {
-				return { 'f': '\f', 'b': '\b', 't': '\t', 'n': '\n', 'r': '\r' }[char] || char;
+				return { "f": "\f", "b": "\b", "t": "\t", "n": "\n", "r": "\r" }[char] || char;
 			}
 		};
 		
@@ -1541,7 +1564,7 @@
 	          pos = clone(pos1);
 	        }
 	        if (result0 !== null) {
-	          result0 = (function(offset, line, column, depth, s) { return { indent: depth, item: s, num: line }; })(pos0.offset, pos0.line, pos0.column, result0[0], result0[1]);
+	          result0 = (function(offset, line, column, depth, s) { return { indent: depth, item: s }; })(pos0.offset, pos0.line, pos0.column, result0[0], result0[1]);
 	        }
 	        if (result0 === null) {
 	          pos = clone(pos0);

@@ -14,7 +14,7 @@ __ "whitespace"
 
 line
 = depth:indent s:(element / textNode / directive) __*
-{ return { indent: depth, item: s, num: line }; }
+{ return { indent: depth, item: s }; }
 
 indent "indent"
 = s:__*
