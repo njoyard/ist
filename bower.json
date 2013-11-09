@@ -6,7 +6,7 @@
     "Nicolas Joyard <joyard.nicolas@gmail.com>"
   ],
   "description": "DOM templating engine with a CSS selector-like syntax",
-  "main": "dist/ist-min.js",
+  "main": "ist-min.js",
   "keywords": [
     "DOM",
     "templating",
