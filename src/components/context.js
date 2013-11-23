@@ -20,7 +20,11 @@ define([], function() {
 	Context.prototype = {
 		/* Node creation aliases */
 		importNode: function(node, deep) {
-			return this.doc.importNode(node, deep);
+			if (node.ownerDocument === this.doc) {
+				return node.cloneNode(deep);
+			} else {
+				return this.doc.importNode(node, deep);
+			}
 		},
 		
 		createDocumentFragment: function() {
