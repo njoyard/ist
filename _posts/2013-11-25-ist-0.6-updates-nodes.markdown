@@ -40,7 +40,7 @@ short method names everywhere.  `Template#findPartial` is now
 `ist.createNode` is now `ist.create`.  The previous methods will still work
 for a few releases.
 
-The syntax for directive helpers has not changed since 0.5.7, but they must
+The syntax for directive helpers has changed a bit since 0.5.7, and they must
 be written a bit differently to cope with updating (as the same helper will be
 called for both rendering and updating).  As always, refer to the
 [documentation][1] for more details and examples.
