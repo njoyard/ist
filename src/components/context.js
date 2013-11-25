@@ -42,6 +42,10 @@ define([], function() {
 		createTextNode: function(text) {
 			return this.doc.createTextNode(text);
 		},
+
+		createComment: function(comment) {
+			return this.doc.createComment(comment);
+		},
 		
 		/* Push an object on the scope stack. All its properties will be
 		   usable inside expressions and hide any previously available

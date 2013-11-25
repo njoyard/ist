@@ -12,7 +12,11 @@ define(['ist!builtins/eachkey/eachkey'], function(tEachKey) {
 		});
 		
 		it("should render an empty document fragment when calling @eachkey with an empty object", function() {
-			expect( eachKeyFragment.querySelector('.empty').childNodes.length ).toBe( 0 );
+			// Empty except for placeholder comment nodes
+
+			expect( [].slice.call(eachKeyFragment.querySelector('.empty').childNodes)
+					  .some(function(child) { return child.nodeType !== document.COMMENT_NODE; })
+				).toBe( false );
 		});
 		
 		it("should enable access to keys as key in eachkey directives", function() {

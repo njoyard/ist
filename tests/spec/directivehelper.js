@@ -295,7 +295,9 @@ define([
 
 			expect( retrieved.firstChild.textContent ).toBe( "1" );
 			expect( retrieved.firstChild.nextSibling.textContent ).toBe( "2" );
-			expect( rendered.hasChildNodes() ).toBe( false );
+
+			// rendered should be empty except for placeholder comment nodes
+			expect( [].slice.call(rendered.childNodes).some(function(child) { return child.nodeType !== document.COMMENT_NODE; }) ).toBe( false );
 
 			test = "update";
 			var rendered = tUpdate.render({ foo: 1, bar: 2 });
@@ -327,7 +329,8 @@ define([
 			expect( retrieved.fragments[0].firstChild.textContent ).toBe( "1" );
 			expect( retrieved.fragments[0].firstChild.nextSibling.textContent ).toBe( "2" );
 
-			expect( rendered.hasChildNodes() ).toBe( false );
+			// rendered should be empty except for placeholder comment nodes
+			expect( [].slice.call(rendered.childNodes).some(function(child) { return child.nodeType !== document.COMMENT_NODE; }) ).toBe( false );
 		});
 	};
 });

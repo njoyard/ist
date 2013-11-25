@@ -230,7 +230,11 @@
 		Context.prototype = {
 			/* Node creation aliases */
 			importNode: function(node, deep) {
-				return this.doc.importNode(node, deep);
+				if (node.ownerDocument === this.doc) {
+					return node.cloneNode(deep);
+				} else {
+					return this.doc.importNode(node, deep);
+				}
 			},
 			
 			createDocumentFragment: function() {
@@ -247,6 +251,10 @@
 		
 			createTextNode: function(text) {
 				return this.doc.createTextNode(text);
+			},
+	
+			createComment: function(comment) {
+				return this.doc.createComment(comment);
 			},
 			
 			/* Push an object on the scope stack. All its properties will be
@@ -760,11 +768,22 @@
 			}
 	
 			var fragment = renderedDirective.createFragment(ctx);
+	
+			if (fragment.firstChild && fragment.firstChild._isISTPlaceHolder) {
+				fragment.removeChild(fragment.firstChild);
+			}
 		
 			try {
 				helper.call(null, ctx, ctx.scopedCall(pr.evaluator), pr.template, fragment);
 			} catch (err) {
 				throw this._completeError(err, node);
+			}
+	
+			if (fragment.childNodes.length === 0) {
+				var placeholder = ctx.createComment('');
+	
+				placeholder._isISTPlaceHolder = true;
+				fragment.appendChild(placeholder);
 			}
 	
 			renderedDirective.updateFromFragment(fragment);

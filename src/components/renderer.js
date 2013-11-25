@@ -85,11 +85,22 @@ function(Context, directives, RenderedTree, RenderedDirective) {
 		}
 
 		var fragment = renderedDirective.createFragment(ctx);
+
+		if (fragment.firstChild && fragment.firstChild._isISTPlaceHolder) {
+			fragment.removeChild(fragment.firstChild);
+		}
 	
 		try {
 			helper.call(null, ctx, ctx.scopedCall(pr.evaluator), pr.template, fragment);
 		} catch (err) {
 			throw this._completeError(err, node);
+		}
+
+		if (fragment.childNodes.length === 0) {
+			var placeholder = ctx.createComment('');
+
+			placeholder._isISTPlaceHolder = true;
+			fragment.appendChild(placeholder);
 		}
 
 		renderedDirective.updateFromFragment(fragment);

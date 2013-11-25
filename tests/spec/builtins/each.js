@@ -21,7 +21,11 @@ define(['ist!builtins/each/each'], function(tEach) {
 		});
 		
 		it("should render an empty document fragment when calling @each with an empty array", function() {
-			expect( eachFragment.querySelector('.empty').childNodes.length ).toBe( 0 );
+			// Empty except for placeholder comment nodes
+
+			expect( [].slice.call(eachFragment.querySelector('.empty').childNodes)
+					  .some(function(child) { return child.nodeType !== document.COMMENT_NODE; })
+				).toBe( false );
 		});
 		
 		it("should narrow down context to array element in @each directives", function() {
