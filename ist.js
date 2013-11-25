@@ -1,6 +1,6 @@
 /**
  * IST: Indented Selector Templating
- * version 0.5.8
+ * version 0.6.0
  *
  * Copyright (c) 2012-2013 Nicolas Joyard
  * Released under the MIT license.
@@ -19,8 +19,200 @@
 
 
 	/*global define */
-	istComponents.context = (function() {
+	istComponents.misc = (function() {
 		
+		
+		return {
+			jsEscape: function (content) {
+				return content.replace(/(['\\])/g, '\\$1')
+					.replace(/[\f]/g, '\\f')
+					.replace(/[\b]/g, '\\b')
+					.replace(/[\t]/g, '\\t')
+					.replace(/[\n]/g, '\\n')
+					.replace(/[\r]/g, '\\r');
+			},
+	
+			findScript: function(id) {
+				var i, len, s, found, scripts;
+	
+				try {
+					scripts = document.querySelectorAll('script#' + id);
+				} catch(e) {
+					// DOM exception when selector is invalid - no <script> tag with this id
+					return;
+				}
+					
+				if (scripts) {
+					for (i = 0, len = scripts.length; i < len; i++) {
+						s = scripts[i];
+						if (s.getAttribute('type') === 'text/x-ist') {
+							return s.innerHTML;
+						}
+					}
+				}
+				
+				return found;
+			},
+	
+			appendNodeSegment: function(firstChild, lastChild, target) {
+				var node = firstChild,
+					end = lastChild ? lastChild.nextSibling : null,
+					next;
+	
+				while (node && node != end) {
+					next = node.nextSibling;
+					target.appendChild(node);
+					node = next;
+				}
+			},
+	
+			insertNodeSegmentBefore: function(firstChild, lastChild, target, ref) {
+				var node = firstChild,
+					end = lastChild ? lastChild.nextSibling : null,
+					next;
+	
+				while (node && node != end) {
+					next = node.nextSibling;
+					target.insertBefore(node, ref);
+					node = next;
+				}
+			}
+		};
+	}());
+	
+	/*jshint evil:true */
+	/*global define*/
+	istComponents.codegen = ( function(misc) {
+		
+	
+		var expressionRE = /{{\s*((?:}(?!})|[^}])*?)\s*}}/,
+			codeCache = {},
+			undef = function() {};
+	
+		return {
+			expression: function(expr) {
+				var cacheKey = '{{ ' + expr + ' }}';
+	
+				if (!(cacheKey in codeCache)) {
+					codeCache[cacheKey] = 'function(document,_istScope){' +
+						'if(this!==null&&this!==undefined){' +
+							'with(this){' +
+								'with(_istScope){' +
+									'return ' + expr + ';' +
+								'}' +
+							'}' +
+						'}else{' +
+							'with(_istScope){' +
+								'return ' + expr + ';' +
+							'}' +
+						'}' +
+					'}';
+				}
+	
+				return codeCache[cacheKey];
+			},
+	
+			interpolation: function(text) {
+				if (!(text in codeCache)) {
+					codeCache[text] = this.expression(
+						text.split(expressionRE)
+						.map(function(part, index) {
+							if (index % 2) {
+								// expression
+								return '(' + part + ')';
+							} else {
+								// text literal
+								return '\'' + misc.jsEscape(part) + '\'';
+							}
+						})
+						.filter(function(part) {
+							return part !== '\'\'';
+						})
+						.join('+')
+					);
+				}
+	
+				return codeCache[text];
+			},
+	
+			directiveEvaluator: function(node) {
+				if ('expr' in node) {
+					return new Function('document,_istScope',
+						'return (' + this.expression(node.expr) + ').call(this,document,_istScope);'
+					);
+				} else {
+					return undef;
+				}
+			},
+	
+			elementUpdater: function(node) {
+				var code = [],
+					codegen = this,
+					attributes = node.attributes,
+					properties = node.properties,
+					events = node.events;
+	
+				Object.keys(attributes).forEach(function(attr) {
+					code.push(
+						'element.setAttribute(' +
+							'"' + attr + '",' +
+							'(' + codegen.interpolation(attributes[attr]) + ').call(this,document,_istScope)' +
+						');'
+					);
+				});
+	
+				properties.forEach(function(prop) {
+					var itcode = [];
+	
+					for (var i = 0, len = prop.path.length; i < len; i++) {
+						var pathElement = prop.path[i];
+						if (i === len - 1) {
+							itcode.push(
+								'current["' + pathElement + '"] = value;'
+							);
+						} else {
+							itcode.push(
+								'if (!("' + pathElement + '" in current)) {' +
+									'current["' + pathElement + '"] = {};' +
+								'}' +
+								'current = current["' + pathElement + '"];'
+							);
+						}
+					}
+	
+					code.push(
+						'(function(value) {' +
+							'var current = element;' +
+							itcode.join('') +
+						'})((' + codegen.interpolation(prop.value) + ').call(this,document,_istScope));'
+					);
+				});
+	
+				Object.keys(events).forEach(function(evt) {
+					code.push(
+						'element.addEventListener(' +
+							'"' + evt + '",' +
+							'(' + codegen.expression(events[evt]) + ').call(this,document,_istScope),' +
+							'false' +
+						');'
+					);
+				});
+	
+				return new Function('document,_istScope,element', code.join(''));
+			},
+	
+			textUpdater: function(node) {
+				return new Function('document,_istScope,textNode',
+					'textNode.textContent=(' + this.interpolation(node.text) + ').call(this,document,_istScope);'
+				);
+			}
+		};
+	}(istComponents.misc));
+	/*jshint evil:true */
+	/*global define */
+	istComponents.context = ( function() {
+		
+	
 	
 		/**
 		 * Context object; holds the rendering context and target document,
@@ -28,19 +220,21 @@
 		 */
 		function Context(object, doc) {
 			this.value = object;
+			this.values = [object];
+	
 			this.doc = doc || document;
-			this.scopes = [ { document: this.doc } ];
-			
-			if (typeof object !== 'undefined') {
-				this.scopes.push(object);
-			}
+			this.rootScope = this.scope = {};
 		}
 	
 	
 		Context.prototype = {
 			/* Node creation aliases */
 			importNode: function(node, deep) {
-				return this.doc.importNode(node, deep);
+				if (node.ownerDocument === this.doc) {
+					return node.cloneNode(deep);
+				} else {
+					return this.doc.importNode(node, deep);
+				}
 			},
 			
 			createDocumentFragment: function() {
@@ -58,72 +252,59 @@
 			createTextNode: function(text) {
 				return this.doc.createTextNode(text);
 			},
-			
-			istData: function(node) {
-				node._ist_data = node._ist_data || {};
-				return node._ist_data;
+	
+			createComment: function(comment) {
+				return this.doc.createComment(comment);
 			},
 			
 			/* Push an object on the scope stack. All its properties will be
 			   usable inside expressions and hide any previously available
 			   property with the same name */
 			pushScope: function(scope) {
-				this.scopes.unshift(scope);
+				var newScope = Object.create(this.scope);
+	
+				Object.keys(scope).forEach(function(key) {
+					newScope[key] = scope[key];
+				});
+	
+				this.scope = newScope;
 			},
 			
 			/* Pop the last object pushed on the scope stack  */
 			popScope: function() {
-				if (this.scopes.length < 3) {
+				var thisScope = this.scope;
+	
+				if (thisScope === this.rootScope) {
 					throw new Error('No scope left to pop out');
 				}
-				
-				return this.scopes.shift();
-			},
-			
-			/* Deprecated, use pushScope */
-			pushEvalVar: function(name, value) {
-				var scope = {};
-				scope[name] = value;
-				this.pushScope(scope);
-			},
-			
-			/* Deprecated, use popScope */
-			popEvalVar: function(name) {
-				var scope = this.scopes[0];
-				
-				if (typeof scope[name] === 'undefined' || Object.keys(scope).length > 1) {
-					throw new Error('Cannot pop variable, does not match topmost scope');
-				}
-				
-				return this.popScope()[name];
-			},
-		
-			/**
-			 * Evaluate `expr` in a scope where the current context is available
-			 * as `this`, all its own properties that are not reserved words are
-			 * available as locals, and the target document is available as `document`.
-			 */
-			evaluate: function(expr) {
-				var fexpr = 'return ' + expr + ';',
-					scopeNames = [],
-					func;
 	
-				this.scopes.forEach(function(scope, index) {
-					scopeNames.push('scope' + index);
-					fexpr = 'with(scope' + index + '){\n' + fexpr + '\n}';
-				});
-				
-				func = new Function(scopeNames.join(','), fexpr);
-				
-				return func.apply(this.value, this.scopes);
+				this.scope = Object.getPrototypeOf(thisScope);
 			},
-		
-			interpolate: function(text) {
-				return text.replace(/{{((?:}(?!})|[^}])*)}}/g, (function(m, p1) { return this.evaluate(p1); }).bind(this));
+	
+			pushValue: function(value) {
+				this.values.unshift(value);
+				this.value = value;
+	
+				if (value !== undefined && value !== null && typeof value !== 'string' && typeof value !== 'number') {
+					this.pushScope(value);
+				} else {
+					this.pushScope({});
+				}
 			},
-		
+	
+			popValue: function() {
+				this.popScope();
+	
+				this.values.shift();
+				this.value = this.values[0];
+			},
+	
 			createContext: function(newValue) {
 				return new Context(newValue, this.doc);
+			},
+	
+			scopedCall: function(fn, target) {
+				return fn.call(this.value, this.doc, this.scope, target);
 			}
 		};
 		
@@ -140,120 +321,174 @@
 		/**
 		 * Conditional helper for @if, @unless
 		 *
-		 * @param {Context} outer outer context
+		 * @param {Context} ctx rendering context
 		 * @param render render template if truthy
 		 * @param {Template} tmpl template to render
 		 * @param {DocumentFragment} fragment target fragment
 		 */
-		function conditionalHelper(outer, render, tmpl, fragment) {
+		function conditionalHelper(ctx, render, tmpl, fragment) {
+			var rendered = fragment.extractRenderedFragment();
+	
 			if (render) {
-				fragment.appendChild(tmpl.render(outer));
+				if (rendered) {
+					rendered.update(ctx);
+				} else {
+					rendered = tmpl.render(ctx);
+				}
+	
+				fragment.appendRenderedFragment(rendered);
 			}
 		}
+	
 		
 		/**
 		 * Iteration helper for @each, @eachkey
 		 *
-		 * @param {Context} outer outer context
+		 * @param {Context} ctx rendering context
 		 * @param {Array} items item array to iterate over
+		 * @param {Array} keys item identifiers
 		 * @param [loopAdd] additional loop properties
 		 * @param {Template} tmpl template to render for each item
 		 * @param {DocumentFragment} fragment target fragment
 		 */
-		function iterationHelper(outer, items, loopAdd, tmpl, fragment) {
-			var outerValue = outer.value;
+		function iterationHelper(ctx, items, keys, loopAdd, tmpl, fragment) {
+			var outerValue = ctx.value;
+	
+			/* Extract previously rendered fragments */
+			var extracted = fragment.extractRenderedFragments(),
+				fragKeys = extracted.keys,
+				fragments = extracted.fragments;
 			
 			/* Loop over array and append rendered fragments */
-			items.forEach(function(item, index) {
-				var sctx = outer.createContext(item),
-					loop = {
-						first: index === 0,
-						index: index,
-						last: index == items.length - 1,
-						length: items.length,
-						outer: outerValue
-					};
+			items.forEach(function itemIterator(item, index) {
+				ctx.pushValue(item);
+	
+				/* Create subcontext */
+				var loop = {
+					first: index === 0,
+					index: index,
+					last: index == items.length - 1,
+					length: items.length,
+					outer: outerValue
+				};
 	
 				if (loopAdd) {
 					Object.keys(loopAdd).forEach(function(key) {
 						loop[key] = loopAdd[key];
-					})
+					});
 				}
 	
-				sctx.pushScope({ loop: loop });
-				fragment.appendChild(tmpl.render(sctx));
+				ctx.pushScope({ loop: loop });
+	
+				/* Render or update fragments */
+				var keyIndex = fragKeys.indexOf(keys[index]),
+					rendered;
+	
+				if (keyIndex === -1) {
+					/* Item was not rendered yet */
+					rendered = tmpl.render(ctx);
+				} else {
+					rendered = fragments[keyIndex];
+					rendered.update(ctx);
+				}
+	
+				ctx.popScope();
+				ctx.popValue();
+	
+				fragment.appendRenderedFragment(rendered, keys[index]);
 			});
 		}
 		
 		
 		/* Built-in directive helpers (except @include) */
 		registered = {
-			'if': function(outer, inner, tmpl, fragment) {
-				conditionalHelper.call(null, outer, inner.value, tmpl, fragment);
+			'if': function ifHelper(ctx, value, tmpl, fragment) {
+				conditionalHelper.call(null, ctx, value, tmpl, fragment);
 			},
 	
-			'unless': function(outer, inner, tmpl, fragment) {
-				conditionalHelper.call(null, outer, !inner.value, tmpl, fragment);
+			'unless': function unlessHelper(ctx, value, tmpl, fragment) {
+				conditionalHelper.call(null, ctx, !value, tmpl, fragment);
 			},
 	
-			'with': function(outer, inner, tmpl, fragment) {
-				fragment.appendChild(tmpl.render(inner));
-			},
+			'with': function withHelper(ctx, value, tmpl, fragment) {
+				var rendered = fragment.extractRenderedFragment();
 	
-			'each': function(outer, inner, tmpl, fragment) {
-				var array = inner.value;
-				
-				if (!Array.isArray(array)) {
-					throw new Error(array + ' is not an array');
-				}
-				
-				iterationHelper(outer, array, null, tmpl, fragment);
-			},
+				ctx.pushValue(value);
 	
-			'eachkey': function(outer, inner, tmpl, fragment) {
-				var object = inner.value,
-					array;
-					
-				array = Object.keys(object).map(function(k) {
-					return { key: k, value: object[k] };
-				});
-				
-				iterationHelper(outer, array, { object: object }, tmpl, fragment);
-			},
-	
-			'dom': function(outer, inner, tmpl, fragment) {
-				var node = inner.value;
-	
-				if (node.ownerDocument !== inner.doc) {
-					node = inner.doc.importNode(node);
+				if (rendered) {
+					rendered.update(ctx);
+				} else {
+					rendered = tmpl.render(ctx);
 				}
 	
-				fragment.appendChild(node);
+				ctx.popValue();
+	
+				fragment.appendChild(tmpl.render(value));
 			},
 	
-			'define': function(outer, inner, tmpl, fragment) {
-				defined[inner.value] = tmpl;
+			'each': function eachHelper(ctx, value, tmpl, fragment) {
+				if (!Array.isArray(value)) {
+					throw new Error(value + ' is not an array');
+				}
+				
+				iterationHelper(ctx, value, value, null, tmpl, fragment);
 			},
 	
-			'use': function(outer, inner, tmpl, fragment) {
-				var name = inner.value,
-					template = defined[name];
+			'eachkey': (function() {
+				function extractItem(k) {
+					return { key: k, value: this[k] };
+				}
+	
+				return function eachkeyHelper(ctx, value, tmpl, fragment) {
+					var keys = Object.keys(value),
+						array;
+						
+					array = keys.map(extractItem, value);
+					iterationHelper(ctx, array, keys, { object: value }, tmpl, fragment);
+				};
+			}()),
+	
+			'dom': function domHelper(ctx, value, tmpl, fragment) {
+				if (value.ownerDocument !== ctx.doc) {
+					value = ctx.doc.importNode(value);
+				}
+	
+				while(fragment.hasChildNodes()) {
+					fragment.removeChild(fragment.firstChild);
+				}
+				fragment.appendChild(value);
+			},
+	
+			'define': function defineHelper(ctx, value, tmpl, fragment) {
+				defined[value] = tmpl;
+			},
+	
+			'use': function useHelper(ctx, value, tmpl, fragment) {
+				var template = defined[value];
 	
 				if (!template) {
-					throw new Error('Template \'' + name + '\' has not been @defined');
+					throw new Error('Template \'' + value + '\' has not been @defined');
 				}
 	
-				fragment.appendChild(template.render(outer));
+				var rendered = fragment.extractRenderedFragment();
+	
+				if (rendered) {
+					rendered.update(ctx);
+				} else {
+					rendered = template.render(ctx);
+				}
+	
+				fragment.appendRenderedFragment(rendered);
 			}
 		};
 		
 		/* Directive manager object */
 		directives = {
-			register: function(name, helper) {
+			register: function registerDirective(name, helper) {
 				registered[name] = helper;
 			},
 	
-			get: function(name) {
+			get: function getDirective(name) {
 				return registered[name];
 			}
 		};
@@ -262,191 +497,357 @@
 	}());
 	
 	/*global define */
-	istComponents.renderer = ( function(directives) {
+	istComponents.rendereddirective = ( function(misc) {
 		
 	
-		function Renderer(template, context) {
-			this.template = template;
-			this.context = context;
+	
+		function appendRenderedFragment(fragment, key) {
+			/*jshint validthis:true */
+			this._istKeyIndex.push(key);
+			this._istFragIndex.push({
+				firstChild: fragment.firstChild,
+				lastChild: fragment.lastChild,
+				update: fragment.update
+			});
+	
+			this.appendChild(fragment);
 		}
 	
 	
+		function extractRenderedFragments() {
+			/*jshint validthis:true */
+			var ctx = this._istContext,
+				keyIndex = this._istKeyIndex,
+				fragIndex = this._istFragIndex,
+				extracted = {
+					keys: keyIndex.slice(),
+					fragments: fragIndex.map(function(item) {
+						var frag = ctx.createDocumentFragment();
+	
+						misc.appendNodeSegment(item.firstChild, item.lastChild, frag);
+						frag.update = item.update;
+	
+						return frag;
+					})
+				};
+	
+			keyIndex.splice(0, keyIndex.length);
+			fragIndex.splice(0, fragIndex.length);
+	
+			return extracted;
+		}
+	
+	
+		function extractRenderedFragment(key) {
+			/*jshint validthis:true */
+			var ctx = this._istContext,
+				keyIndex = this._istKeyIndex,
+				fragIndex = this._istFragIndex,
+				position = keyIndex.indexOf(key),
+				item, fragment;
+	
+			if (position !== -1) {
+				item = fragIndex[position];
+				fragment = ctx.createDocumentFragment();
+	
+				misc.appendNodeSegment(item.firstChild, item.lastChild, fragment);
+				fragment.update = item.update;
+	
+				keyIndex.splice(position, 1);
+				fragIndex.splice(position, 1);
+	
+				return fragment;
+			}
+		}
+	
+	
+	
+		function RenderedDirective() {
+			this.firstChild = null;
+			this.lastChild = null;
+			this.keyIndex = [];
+			this.fragIndex = [];
+		}
+	
+	
+		RenderedDirective.prototype.createFragment = function(ctx) {
+			var fragment = ctx.createDocumentFragment();
+	
+			fragment._istContext = ctx;
+			fragment._istKeyIndex = this.keyIndex;
+			fragment._istFragIndex = this.fragIndex;
+	
+			fragment.appendRenderedFragment = appendRenderedFragment;
+			fragment.extractRenderedFragment = extractRenderedFragment;
+			fragment.extractRenderedFragments = extractRenderedFragments;
+	
+			misc.appendNodeSegment(this.firstChild, this.lastChild, fragment);
+	
+			return fragment;
+		};
+	
+	
+		RenderedDirective.prototype.updateFromFragment = function(fragment) {
+			this.firstChild = fragment.firstChild;
+			this.lastChild = fragment.lastChild;
+		};
+	
+	
+		return RenderedDirective;
+	}(istComponents.misc));
+	/*global define */
+	istComponents.renderedtree = ( function(RenderedDirective, misc) {
+		
+	
+		function RenderedTree(element, childrenIndex) {
+			this.element = element;
+			this.childrenIndex = childrenIndex || [];
+			this.appendDone = false;
+		}
+	
+	
+		/**
+		 * Loop over `templateNodes`, calling `fn` with context `that` with
+		 * each template node and the element from this.childrenIndex at the
+		 * same position
+		 */
+		RenderedTree.prototype.forEach = function(templateNodes, fn, that) {
+			var index = this.childrenIndex;
+	
+			templateNodes.forEach(function(node, i) {
+				index[i] = fn.call(this, node, index[i]);
+			}, that);
+		};
+	
+	
+		// FIXME only used on root tree when updating, maybe move this to Renderer ?
+		RenderedTree.prototype.updateParent = function() {
+			var item = this.childrenIndex[0];
+	
+			// TODO better handle the case where no nodes have been rendered
+			if (item) {
+				this.element = null;
+				if (item instanceof RenderedTree) {
+					this.element = item.element.parentNode;
+				} else if (item instanceof RenderedDirective) {
+					this.element = item.firstChild.parentNode;
+				} else {
+					this.element = item.parentNode;
+				}
+			}
+		};
+	
+	
+		RenderedTree.prototype.appendChildren = function() {
+			var parent = this.element,
+				index = this.childrenIndex;
+	
+			if (parent) {
+				if (!this.appendDone) {
+					index.forEach(function(indexItem) {
+						if (indexItem instanceof RenderedTree) {
+							parent.appendChild(indexItem.element);
+						} else if (indexItem instanceof RenderedDirective) {
+							misc.appendNodeSegment(indexItem.firstChild, indexItem.lastChild, parent);
+						} else {
+							parent.appendChild(indexItem);
+						}
+					});
+	
+					this.appendDone = true;
+				} else {
+					var nextSibling = null;
+	
+					for (var i = index.length - 1; i >= 0; i--) {
+						var indexItem = index[i];
+	
+						if (indexItem instanceof RenderedTree) {
+							nextSibling = indexItem.element;
+						} else if (indexItem instanceof RenderedDirective) {
+							misc.insertNodeSegmentBefore(
+								indexItem.firstChild,
+								indexItem.lastChild,
+								parent,
+								nextSibling
+							);
+	
+							nextSibling = indexItem.firstChild || nextSibling;
+						} else {
+							nextSibling = indexItem;
+						}
+					}
+				}
+			}
+		};
+	
+		return RenderedTree;
+	}(istComponents.rendereddirective, istComponents.misc));
+	/*global define */
+	istComponents.renderer = (
+	function(Context, directives, RenderedTree, RenderedDirective) {
+		
+	
+	
+		function Renderer(template) {
+			this.template = template;
+			this.context = undefined;
+		}
+	
+	
+		Renderer.prototype.setContext = function(context, doc) {
+			doc = doc || (this.context ? this.context.doc : document);
+	
+			if (context instanceof Context) {
+				this.context = context;
+			} else {
+				this.context = new Context(context, doc);
+			}
+		};
+	
+	
+		/* Error completion helper */
 		Renderer.prototype._completeError = function(err, node) {
 			return this.template._completeError(err, node);
 		};
 	
 	
 		/* Text node rendering helper */
-		Renderer.prototype._renderTextNode = function(node) {
-			var ctx = this.context,
-				tnode;
-			
-			if (typeof node.pr !== 'undefined') {
-				tnode = ctx.importNode(node.pr, false);
-			} else {
+		Renderer.prototype._renderTextNode = function(node, textNode) {
+			var ctx = this.context;
+	
+			if (!textNode) {
+				if ('pr' in node) {
+					textNode = ctx.importNode(node.pr, false);
+				} else {
+					textNode = ctx.createTextNode('');
+				}
+			}
+	
+			if (!('pr' in node)) {
 				try {
-					tnode = ctx.createTextNode(ctx.interpolate(node.text));
+					ctx.scopedCall(node.updater, textNode);
 				} catch (err) {
 					throw this._completeError(err, node);
 				}
 			}
-			
-			return tnode;
+	
+			return textNode;
 		};
-		
+	
 		
 		/* Element rendering helper */
-		Renderer.prototype._renderElement = function(node) {
-			var ctx = this.context,
-				elem;
-			
-			if (typeof node.pr !== 'undefined') {
-				elem = ctx.importNode(node.pr, false);
-			} else {
-				elem = ctx.createElement(node.tagName);
+		Renderer.prototype._renderElement = function(node, elementNode) {
+			var ctx = this.context;
 	
-				node.classes.forEach(function(cls) {
-					elem.classList.add(cls);
-				});
-	
-				if (typeof node.id !== 'undefined') {
-					elem.id = node.id;
-				}
+			if (!elementNode) {
+				elementNode = ctx.importNode(node.pr, false);
 			}
 	
-			// Set attributes
-			Object.keys(node.attributes).forEach(function(attr) {
-				var value;
-	
-				try {
-					value = ctx.interpolate(node.attributes[attr]);
-				} catch (err) {
-					throw this._completeError(err, node);
-				}
+			try {
+				ctx.scopedCall(node.updater, elementNode);
+			} catch(err) {
+				throw this._completeError(err, node);
+			}
 			
-				elem.setAttribute(attr, value);
-			}, this);
-		
-			// Set properties
-			node.properties.forEach(function(prop) {
-				var value;
-	
-				try {
-					value = ctx.interpolate(prop.value);
-				} catch (err) {
-					throw this._completeError(err, node);
-				}
-	
-				var current = elem;
-				for (var i = 0, len = prop.path.length; i < len; i++) {
-					var pathElement = prop.path[i];
-					if (i === len - 1) {
-						current[pathElement] = value;
-					} else {
-						if (!(pathElement in current)) {
-							current[pathElement] = {};
-						}
-	
-						current = current[pathElement];
-					}
-				}
-			}, this);
-			
-			// Set event handlers
-			Object.keys(node.events).forEach(function(event) {
-				node.events[event].forEach(function(expr) {
-					var handler;
-	
-					try {
-						handler = ctx.evaluate(expr);
-					} catch(err) {
-						throw this._completeError(err, node);
-					}
-				
-					elem.addEventListener(event, handler, false);
-				}, this);
-			}, this);
-			
-			return elem;
+			return elementNode;
 		};
 		
 		
 		/* Directive rendering helpers */
-		Renderer.prototype._renderDirective = function(node) {
+		Renderer.prototype._renderDirective = function(node, renderedDirective) {
 			var ctx = this.context,
-				tmpl = this.template,
-				Template = tmpl.constructor,
-				subTemplate = new Template(tmpl.name, node.children),
-				helper = directives.get(node.directive),
-				fragment = ctx.createDocumentFragment(),
-				subCtx;
-		
+				pr = node.pr,
+				helper = directives.get(node.directive);
+	
 			if (typeof helper !== 'function') {
 				throw new Error('No directive helper for @' + node.directive + ' has been registered');
 			}
-		
-			if (typeof node.expr !== 'undefined') {
-				try {
-					subCtx = ctx.createContext(ctx.evaluate(node.expr));
-				} catch(err) {
-					throw this._completeError(err, node);
-				}
+	
+			if (!renderedDirective) {
+				renderedDirective = new RenderedDirective();
+			}
+	
+			var fragment = renderedDirective.createFragment(ctx);
+	
+			if (fragment.firstChild && fragment.firstChild._isISTPlaceHolder) {
+				fragment.removeChild(fragment.firstChild);
 			}
 		
 			try {
-				helper.call(null, ctx, subCtx, subTemplate, fragment);
+				helper.call(null, ctx, ctx.scopedCall(pr.evaluator), pr.template, fragment);
 			} catch (err) {
 				throw this._completeError(err, node);
 			}
 	
-			return fragment;
+			if (fragment.childNodes.length === 0) {
+				var placeholder = ctx.createComment('');
+	
+				placeholder._isISTPlaceHolder = true;
+				fragment.appendChild(placeholder);
+			}
+	
+			renderedDirective.updateFromFragment(fragment);
+			return renderedDirective;
 		};
 	
 	
-		Renderer.prototype.renderRec = function(node) {
-			var ctx = this.context,
-				tnode;
-		
-			if (typeof node.text !== 'undefined') {
-				tnode = this._renderTextNode(node);
+	
+	
+		Renderer.prototype._renderRec = function(node, indexEntry) {
+			if ('text' in node) {
+				indexEntry = this._renderTextNode(node, indexEntry);
 			}
 					
-			if (typeof node.tagName !== 'undefined') {
-				tnode = this._renderElement(node);
+			if ('tagName' in node) {
+				if (indexEntry) {
+					indexEntry.element = this._renderElement(node, indexEntry.element);
+				} else {
+					indexEntry = new RenderedTree(this._renderElement(node));
+				}
 	
-				node.children
-				.map(this.renderRec, this)
-				.forEach(function(cnode) {
-					tnode.appendChild(cnode);
-				});
+				this._renderNodes(node.children, indexEntry);
 			}
 			
-			if (typeof node.directive !== 'undefined') {
-				tnode = this._renderDirective(node);
+			if ('directive' in node) {
+				indexEntry = this._renderDirective(node, indexEntry);
 			}
 	
-			return tnode;
+			return indexEntry;
+		};
+	
+	
+		Renderer.prototype._renderNodes = function(nodes, tree) {
+			tree.forEach(nodes, this._renderRec, this);
+			tree.appendChildren();
 		};
 	
 	
 		Renderer.prototype.render = function() {
-			var fragment = this.context.createDocumentFragment();
-		
-			this.template.nodes
-			.map(this.renderRec, this)
-			.forEach(function(node) {
-				fragment.appendChild(node);
-			});
-		
+			var renderer = this,
+				fragment = this.context.createDocumentFragment(),
+				nodes = this.template.nodes,
+				tree = new RenderedTree(fragment);
+	
+			this._renderNodes(nodes, tree);
+	
+			fragment.update = function(ctx) {
+				if (ctx) {
+					renderer.setContext(ctx);
+				}
+	
+				tree.updateParent();
+				renderer._renderNodes(nodes, tree);
+			};
+	
 			return fragment;
 		};
 	
 	
 		return Renderer;
-	}(istComponents.directives));
-	/*global define */
+	}(istComponents.context, istComponents.directives, istComponents.renderedtree, istComponents.rendereddirective));
+	/*global define, console */
 	istComponents.template = (
-	function(Context, Renderer) {
+	function(codegen, Context, Renderer) {
 		
 	
 		var expressionRE = /{{((?:}(?!})|[^}])*)}}/;
@@ -481,22 +882,39 @@
 			this.name = name || '<unknown>';
 			this.nodes = nodes;
 	
-			this.nodes.forEach(preRenderRec);
+			this.nodes.forEach(this._preRenderRec, this);
 		}
 		
 		
 		/* Prerender recursion helper */
-		function preRenderRec(node) {
+		Template.prototype._preRenderRec = function(node) {
 			var pr;
-			
-			/* Constant text node */
-			if (typeof node.text !== 'undefined' &&
-					!expressionRE.test(node.text)) {
-				node.pr = document.createTextNode(node.text);
+	
+			if ('pr' in node || 'updater' in node) {
+				return;
+			}
+		
+			/* Prerender children */
+			if ('children' in node) {
+				node.children.forEach(this._preRenderRec, this);
+			}
+	
+			/* Text node */
+			if ('text' in node) {
+				if (!expressionRE.test(node.text)) {
+					/* Node content is constant */
+					node.pr = document.createTextNode(node.text);
+				} else {
+					try {
+						node.updater = codegen.textUpdater(node);
+					} catch(err) {
+						throw this._completeError(err, node);
+					}
+				}
 			}
 			
 			/* Element node */
-			if (typeof node.tagName !== 'undefined') {
+			if ('tagName' in node) {
 				node.pr = pr = document.createElement(node.tagName);
 				
 				node.classes.forEach(function(cls) {
@@ -506,10 +924,24 @@
 				if (typeof node.id !== 'undefined') {
 					pr.id = node.id;
 				}
+	
+				try {
+					node.updater = codegen.elementUpdater(node);
+				} catch(err) {
+					throw this._completeError(err, node);
+				}
 			}
-		
-			if (typeof node.children !== 'undefined') {
-				node.children.forEach(preRenderRec);
+	
+			/* Directive node */
+			if ('directive' in node) {
+				try {
+					node.pr = {
+						template: new Template(this.name, node.children),
+						evaluator: codegen.directiveEvaluator(node)
+					};
+				} catch(err) {
+					throw this._completeError(err, node);
+				}
 			}
 		}
 		
@@ -535,6 +967,10 @@
 		/* Look for a node with the given partial name and return a new
 		   Template object if found */
 		Template.prototype.findPartial = function(name) {
+			if (console) (console.warn || console.log)("Warning: Template#findPartial is deprecated, use Template#partial instead");
+			return this.partial(name);
+		}
+		Template.prototype.partial = function(name) {
 			var result;
 			
 			if (typeof name === 'undefined') {
@@ -552,33 +988,35 @@
 		
 		/* Render template using 'context' in 'doc' */
 		Template.prototype.render = function(context, doc) {
-			if (!(context instanceof Context)) {
-				context = new Context(context, doc);
-			} else {
-				doc = context.doc;
-			}
-			
-			return (new Renderer(this, context)).render();
+			var template = this,
+				renderer = new Renderer(template);
+	
+			renderer.setContext(context, doc);
+			return renderer.render();
 		};
-		
+	
 	
 		/* Return code to regenerate this template */
 		Template.prototype.getCode = function(pretty) {
 			return 'new ist.Template(' +
 				JSON.stringify(this.name) + ', ' +
 				JSON.stringify(this.nodes, null, pretty ? 1 : 0) +
-				');';
+			');';
 		};
 		
 		
 		return Template;
 	}(
+		istComponents.codegen,
 		istComponents.context,
 		istComponents.renderer
 	));
 	
+	/*global define */
 	istComponents.parsehelpers = (function() {
-		var UNCHANGED = 'U', INDENT = 'I', DEDENT = 'D', UNDEF,
+		
+	
+		var UNCHANGED = "U", INDENT = "I", DEDENT = "D",
 			textToJSON, elemToJSON, directiveToJSON,
 			helpers = {};
 			
@@ -598,11 +1036,11 @@
 					children: this.children
 				};
 			
-			if (typeof this.id !== 'undefined') {
+			if (typeof this.id !== "undefined") {
 				o.id = this.id;
 			}
 		
-			if (typeof this.partial !== 'undefined') {
+			if (typeof this.partial !== "undefined") {
 				o.partial = this.partial;
 			}
 		
@@ -640,14 +1078,40 @@
 				stack.push(node);
 			};
 	
-			popNode = function(lineNumber) {
-				var node;
+			popNode = function() {
+				var node, parent, err;
+	
 				if (stack.length < 2) {
 					throw new Error("Could not pop node from stack");
 				}
 		
 				node = stack.pop();
-				peekNode().children.push(node);
+				parent = peekNode();
+	
+				if (typeof parent.text !== "undefined") {
+					err = new Error("Cannot add children to text node");
+					err.line = node.line;
+					throw err;
+				}
+	
+				if (node.directive === "else") {
+					var prev = parent.children[parent.children.length - 1];
+	
+					if (prev && !prev.wasElse && prev.directive === "if") {
+						node.directive = "unless";
+					} else if (prev && !prev.wasElse && prev.directive === "unless") {
+						node.directive = "if";
+					} else {
+						err = new Error("@else directive has no matching @if or @unless directive");
+						err.line = node.line;
+						throw err;
+					}
+	
+					node.expr = prev.expr;
+					node.wasElse = true;
+				}
+	
+				parent.children.push(node);
 			
 				return node;
 			};
@@ -656,11 +1120,9 @@
 			lines = tail.map(function(item) { return item.pop(); });
 			lines.unshift(first);
 	
-			lines.forEach(function(line, index) {
+			lines.forEach(function(line) {
 				var indent = line.indent,
-					item = line.item,
-					lineNumber = line.num,
-					err;
+					item = line.item;
 				
 				if (indent[0] instanceof Error) {
 					throw indent[0];
@@ -668,7 +1130,7 @@
 			
 				if (nodeCount > 0) {
 					if (indent[0] === UNCHANGED) {
-						// Same indent: previous node won't have any children
+						// Same indent: previous node won"t have any children
 						popNode();
 					} else if (indent[0] === DEDENT) {
 						// Pop nodes in their parent
@@ -678,10 +1140,6 @@
 							indent.pop();
 							popNode();
 						}
-					} else if (indent[0] === INDENT && typeof peekNode().text !== 'undefined') {
-						err = new Error("Cannot add children to text node");
-						err.line = lineNumber;
-						throw err;
 					}
 				}
 			
@@ -758,16 +1216,16 @@
 			};
 	
 			qualifiers.forEach(function(q) {
-				if (typeof q.id !== 'undefined') {
+				if (typeof q.id !== "undefined") {
 					elem.id = q.id;
-				} else if (typeof q.className !== 'undefined') {
+				} else if (typeof q.className !== "undefined") {
 					elem.classes.push(q.className);
-				} else if (typeof q.attr !== 'undefined') {
+				} else if (typeof q.attr !== "undefined") {
 					elem.attributes[q.attr] = q.value;
-				} else if (typeof q.prop !== 'undefined') {
+				} else if (typeof q.prop !== "undefined") {
 					elem.properties.push({ path: q.prop, value: q.value });
-				} else if (typeof q.event !== 'undefined') {
-					if (typeof elem.events[q.event] === 'undefined') {
+				} else if (typeof q.event !== "undefined") {
+					if (typeof elem.events[q.event] === "undefined") {
 						elem.events[q.event] = [];
 					}
 				
@@ -775,13 +1233,13 @@
 				}
 			});
 		
-			if (typeof additions !== 'undefined') {
+			if (typeof additions !== "undefined") {
 				if (additions.partial.length > 0) {
 					elem.partial = additions.partial;
 				}
 			
-				if (typeof additions.textnode !== 'undefined'
-					&& typeof additions.textnode.text !== 'undefined') {
+				if (typeof additions.textnode !== "undefined" &&
+					typeof additions.textnode.text !== "undefined") {
 					elem.children.push(additions.textnode);
 				}
 			}
@@ -805,7 +1263,7 @@
 				// 2 or 4 hex digits coming from \xNN or \uNNNN
 				return String.fromCharCode(parseInt(char, 16));
 			} else {
-				return { 'f': '\f', 'b': '\b', 't': '\t', 'n': '\n', 'r': '\r' }[char] || char;
+				return { "f": "\f", "b": "\b", "t": "\t", "n": "\n", "r": "\r" }[char] || char;
 			}
 		};
 		
@@ -1125,7 +1583,7 @@
 	          pos = clone(pos1);
 	        }
 	        if (result0 !== null) {
-	          result0 = (function(offset, line, column, depth, s) { return { indent: depth, item: s, num: line }; })(pos0.offset, pos0.line, pos0.column, result0[0], result0[1]);
+	          result0 = (function(offset, line, column, depth, s) { return { indent: depth, item: s }; })(pos0.offset, pos0.line, pos0.column, result0[0], result0[1]);
 	        }
 	        if (result0 === null) {
 	          pos = clone(pos0);
@@ -1328,7 +1786,7 @@
 	          pos = clone(pos1);
 	        }
 	        if (result0 !== null) {
-	          result0 = (function(offset, line, column, h, t) { return t.length ? [h].concat(t.map(function(item) { return item[1]; })) : [h]; })(pos0.offset, pos0.line, pos0.column, result0[0], result0[1]);
+	          result0 = (function(offset, line, column, h, t) { return t.length ? [h].concat(t.map(function(i) { return i[1]; })) : [h] })(pos0.offset, pos0.line, pos0.column, result0[0], result0[1]);
 	        }
 	        if (result0 === null) {
 	          pos = clone(pos0);
@@ -2562,44 +3020,6 @@
 		};
 	}());
 	
-	/*global define */
-	istComponents.misc = (function() {
-		
-		
-		return {
-			jsEscape: function (content) {
-				return content.replace(/(['\\])/g, '\\$1')
-					.replace(/[\f]/g, '\\f')
-					.replace(/[\b]/g, '\\b')
-					.replace(/[\t]/g, '\\t')
-					.replace(/[\n]/g, '\\n')
-					.replace(/[\r]/g, '\\r');
-			},
-	
-			findScript: function(id) {
-				var i, len, s, found, scripts;
-	
-				try {
-					scripts = document.querySelectorAll('script#' + id);
-				} catch(e) {
-					// DOM exception when selector is invalid - no <script> tag with this id
-					return;
-				}
-					
-				if (scripts) {
-					for (i = 0, len = scripts.length; i < len; i++) {
-						s = scripts[i];
-						if (s.getAttribute('type') === 'text/x-ist') {
-							return s.innerHTML;
-						}
-					}
-				}
-				
-				return found;
-			}
-		};
-	}());
-	
 	/*global define, isBrowser, isNode, ActiveXObject */
 	istComponents.amdplugin = ( function(require, misc) {
 		
@@ -2784,20 +3204,36 @@
 		}
 		
 		ist.Template = Template;
+	
+	
+		/* Deprecated method names */
+		ist.fromScriptTag = function(id) {
+			if (console) (console.warn || console.log)('Warning: ist.fromScriptTag is deprecated, use ist.script instead');
+			return ist.script(id);
+		};
+		ist.registerHelper = function(name, helper) {
+			if (console) (console.warn || console.log)('Warning: ist.registerHelper is deprecated, use ist.helper instead');
+			ist.helper(name, helper);
+		};
+		ist.createNode = function(branchSpec, context, doc) {
+			if (console) (console.warn || console.log)('Warning: ist.createNode is deprecated, use ist.create instead');
+			return ist.create(branchSpec, context, doc);
+		};
+	
 		
 		/**
 		 * Node creation interface
 		 * Creates nodes with IST template syntax
 		 *
 		 * Several nodes can be created at once using angle brackets, eg.:
-		 *   ist.createNode('div.parent > div#child > "text node")
+		 *   ist.createNode('div.parent > div#child > 'text node')
 		 *
 		 * Supports context variables and an optional alternative document.
 		 * Does not support angle brackets anywhere else than between nodes.
 		 * 
-		 * Directives are supported ("div.parent > @each ctxVar > div.child")
+		 * Directives are supported ('div.parent > @each ctxVar > div.child')
 		 */
-		ist.createNode = function(branchSpec, context, doc) {
+		ist.create = function(branchSpec, context, doc) {
 			var nodes = branchSpec.split('>').map(function(n) { return n.trim(); }),
 				indent = '',
 				template = '',
@@ -2815,7 +3251,7 @@
 		/**
 		 * <script> tag template parser
 		 */
-		ist.fromScriptTag = function(id) {
+		ist.script = function(id) {
 			var template = misc.findScript(id);
 			
 			if (template) {
@@ -2828,17 +3264,17 @@
 		 * IST helper block registration; allows custom iterators/helpers that will
 		 * be called with a new context.
 		 */
-		ist.registerHelper = function(name, helper) {
+		ist.helper = function(name, helper) {
 			directives.register(name, helper);
 		};
 		
 		/* Built-in @include helper */
-		ist.registerHelper('include', function(outer, inner, tmpl, fragment) {
-			var name = inner.value,
+		ist.helper('include', function(ctx, value, tmpl, fragment) {
+			var name = value,
 				what = name.replace(/\.ist$/, ''),
 				found, tryReq;
 	
-			// Try to find a <script type="text/x-ist" id="...">
+			// Try to find a <script type='text/x-ist' id='...'>
 			found = misc.findScript(name);
 	
 			if (isAMD) {
@@ -2870,7 +3306,7 @@
 	
 			if (typeof found.render === 'function') {
 				// Render included template
-				fragment.appendChild(found.render(outer));
+				fragment.appendChild(found.render(ctx));
 			} else {
 				throw new Error('Invalid included template \'' + name + '\'');
 			}

@@ -14,15 +14,11 @@
 	    	@each tests
 		    	dt[style=font-weight: bold;] "{{ name }}"
 		    	dd
-		    		dl
-			    		dt "Total time"
-			    		dd "{{ time }} ms"
-			    		
-			    		dt "Time per run"
-			    		dd "{{ time / loop.outer.runs }} ms"
-			    		
-			    		dt "Runs per second"
-			    		dd "{{ 1000 * loop.outer.runs / time }}"
+		    		ul
+			    		li "Total time: {{ time }} ms"
+			    		li "Time per run: {{ time / loop.outer.runs }} ms"
+			    		li "Previous times per run: {{ prev.map(function(t){ return t/loop.outer.runs + ' ms'; }).join(', ') }}"
+			    		li "Runs per second: {{ 1000 * loop.outer.runs / time }}"
     </script>
     
     <script>
@@ -46,9 +42,18 @@
 		        
 		        	Object.keys(timings).forEach(function(name) {
 		        		var test, i, time, start, end;
+
+		        		var prev = localStorage.getItem("ist test " + name);
+		        		if (prev) { prev = JSON.parse(prev); }
+		        		else { prev = []; }
 		        		
 		        		console.log("Running " + name + "...");
 		        		test = timings[name];
+
+		        		if (test.before) {
+		        			test.before();
+		        		}
+
 		        		start = Date.now();
 		        		for (i = 0; i < runs; i++) {
 		        			test();
@@ -57,15 +62,21 @@
 		        		
 		        		tests.push({
 		        			name: name,
-		        			time: end - start
+		        			time: end - start,
+		        			prev: prev.slice(0)
 		        		});
+
+		        		prev.unshift(end - start);
+		        		while (prev.length > 10) prev.pop();
+
+		        		localStorage.setItem("ist test " + name, JSON.stringify(prev));
 		        	});
 		        	
 		        	console.log("All done.");
 		        };
 		        
 		        window.report = function() {
-		        	document.body.appendChild(ist.fromScriptTag("timingTemplate").render({ tests: tests, runs: runs }));
+		        	document.body.appendChild(ist.script("timingTemplate").render({ tests: tests, runs: runs }));
 		        };
 		        
 		        run(); report();

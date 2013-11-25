@@ -1,9 +1,10 @@
-/*global define */
+/*global define, console */
 define([
+	'components/codegen',
 	'components/context',
 	'components/renderer'
 ],
-function(Context, Renderer) {
+function(codegen, Context, Renderer) {
 	'use strict';
 
 	var expressionRE = /{{((?:}(?!})|[^}])*)}}/;
@@ -38,22 +39,39 @@ function(Context, Renderer) {
 		this.name = name || '<unknown>';
 		this.nodes = nodes;
 
-		this.nodes.forEach(preRenderRec);
+		this.nodes.forEach(this._preRenderRec, this);
 	}
 	
 	
 	/* Prerender recursion helper */
-	function preRenderRec(node) {
+	Template.prototype._preRenderRec = function(node) {
 		var pr;
-		
-		/* Constant text node */
-		if (typeof node.text !== 'undefined' &&
-				!expressionRE.test(node.text)) {
-			node.pr = document.createTextNode(node.text);
+
+		if ('pr' in node || 'updater' in node) {
+			return;
+		}
+	
+		/* Prerender children */
+		if ('children' in node) {
+			node.children.forEach(this._preRenderRec, this);
+		}
+
+		/* Text node */
+		if ('text' in node) {
+			if (!expressionRE.test(node.text)) {
+				/* Node content is constant */
+				node.pr = document.createTextNode(node.text);
+			} else {
+				try {
+					node.updater = codegen.textUpdater(node);
+				} catch(err) {
+					throw this._completeError(err, node);
+				}
+			}
 		}
 		
 		/* Element node */
-		if (typeof node.tagName !== 'undefined') {
+		if ('tagName' in node) {
 			node.pr = pr = document.createElement(node.tagName);
 			
 			node.classes.forEach(function(cls) {
@@ -63,10 +81,24 @@ function(Context, Renderer) {
 			if (typeof node.id !== 'undefined') {
 				pr.id = node.id;
 			}
+
+			try {
+				node.updater = codegen.elementUpdater(node);
+			} catch(err) {
+				throw this._completeError(err, node);
+			}
 		}
-	
-		if (typeof node.children !== 'undefined') {
-			node.children.forEach(preRenderRec);
+
+		/* Directive node */
+		if ('directive' in node) {
+			try {
+				node.pr = {
+					template: new Template(this.name, node.children),
+					evaluator: codegen.directiveEvaluator(node)
+				};
+			} catch(err) {
+				throw this._completeError(err, node);
+			}
 		}
 	}
 	
@@ -92,6 +124,10 @@ function(Context, Renderer) {
 	/* Look for a node with the given partial name and return a new
 	   Template object if found */
 	Template.prototype.findPartial = function(name) {
+		if (console) (console.warn || console.log)("Warning: Template#findPartial is deprecated, use Template#partial instead");
+		return this.partial(name);
+	}
+	Template.prototype.partial = function(name) {
 		var result;
 		
 		if (typeof name === 'undefined') {
@@ -109,22 +145,20 @@ function(Context, Renderer) {
 	
 	/* Render template using 'context' in 'doc' */
 	Template.prototype.render = function(context, doc) {
-		if (!(context instanceof Context)) {
-			context = new Context(context, doc);
-		} else {
-			doc = context.doc;
-		}
-		
-		return (new Renderer(this, context)).render();
+		var template = this,
+			renderer = new Renderer(template);
+
+		renderer.setContext(context, doc);
+		return renderer.render();
 	};
-	
+
 
 	/* Return code to regenerate this template */
 	Template.prototype.getCode = function(pretty) {
 		return 'new ist.Template(' +
 			JSON.stringify(this.name) + ', ' +
 			JSON.stringify(this.nodes, null, pretty ? 1 : 0) +
-			');';
+		');';
 	};
 	
 	

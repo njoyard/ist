@@ -1,10 +1,11 @@
 define([
+	'ist',
 	'ist!interpolation/base',
 	'ist!interpolation/properties',
 	'ist!interpolation/this',
 	'ist!interpolation/expressions',
 	'ist!interpolation/errors'
-], function(tBase, tProperties, tThis, tExpressions, tErrors) {
+], function(ist, tBase, tProperties, tThis, tExpressions, tErrors) {
 	return function() {
 		var obj = { a: 1, b: '2', aNumber: 1234 },
 			propObj = {
@@ -74,77 +75,80 @@ define([
 		it("should execute arbitrary JS code inside expressions", function() {
 			expect( exprNodes[3].textContent ).toBe( '' + (Math.PI + (function(arg) { return Array.isArray(arg); })([1, 2])) );
 		});
-		
-		it("should report errors thrown by expressions in strings when rendering", function() {
-			expect( function() { tErrors.render({ test: 'syntax' }); } )
+
+		it("should report syntax error in expressions when compiling", function() {
+			expect( function() { ist('"{{ syntax error }}"'); })
 				.toThrowAny([
-					"Unexpected identifier in 'interpolation/errors' on line 2",
-					"missing ; before statement in 'interpolation/errors' on line 2",
-					"Expected an identifier but found 'error' instead in 'interpolation/errors' on line 2"
+					"Unexpected identifier in '<unknown>' on line 1",
+					"missing ; before statement in '<unknown>' on line 1",
+					"Expected an identifier but found 'error' instead in '<unknown>' on line 1"
+				]);
+
+			expect( function() { ist('div[attr={{ syntax error }}]'); } )
+				.toThrowAny([
+					"Unexpected identifier in '<unknown>' on line 1",
+					"missing ; before statement in '<unknown>' on line 1",
+					"Expected an identifier but found 'error' instead in '<unknown>' on line 1"
+				]);
+
+			expect( function() { ist('div[.prop={{ syntax error }}]'); } )
+				.toThrowAny([
+					"Unexpected identifier in '<unknown>' on line 1",
+					"missing ; before statement in '<unknown>' on line 1",
+					"Expected an identifier but found 'error' instead in '<unknown>' on line 1"
+				]);
+			
+			expect( function() { ist('@with syntax error\n "test"'); } )
+				.toThrowAny([
+					"Unexpected identifier in '<unknown>' on line 1",
+					"missing ; before statement in '<unknown>' on line 1",
+					"Expected an identifier but found 'error' instead in '<unknown>' on line 1"
 				]);
 				
+		});
+		
+		it("should report errors thrown by expressions in strings when rendering", function() {
 			expect( function() { tErrors.render({ test: 'type' }); } )
 				.toThrowAny([
-					"a is not defined in 'interpolation/errors' on line 15",
-					"Can't find variable: a in 'interpolation/errors' on line 15"
+					"a is not defined in 'interpolation/errors' on line 2",
+					"Can't find variable: a in 'interpolation/errors' on line 2"
 				]);
 				
 			expect( function() { tErrors.render({ test: 'throw' }); } )
-				.toThrow("custom error in 'interpolation/errors' on line 28");
+				.toThrow("custom error in 'interpolation/errors' on line 15");
 		});
 		
 		it("should report errors thrown by expressions in attributes when rendering", function() {
-			expect( function() { tErrors.render({ test: 'syntax2' }); } )
-				.toThrowAny([
-					"Unexpected identifier in 'interpolation/errors' on line 5",
-					"missing ; before statement in 'interpolation/errors' on line 5",
-					"Expected an identifier but found 'error' instead in 'interpolation/errors' on line 5"
-				]);
-				
 			expect( function() { tErrors.render({ test: 'type2' }); } )
 				.toThrowAny([
-					"a is not defined in 'interpolation/errors' on line 18",
-					"Can't find variable: a in 'interpolation/errors' on line 18"
+					"a is not defined in 'interpolation/errors' on line 5",
+					"Can't find variable: a in 'interpolation/errors' on line 5"
 				]);
 				
 			expect( function() { tErrors.render({ test: 'throw2' }); } )
-				.toThrow("custom error in 'interpolation/errors' on line 31");
+				.toThrow("custom error in 'interpolation/errors' on line 18");
 		});
 		
 		it("should report errors thrown by expressions in properties when rendering", function() {
-			expect( function() { tErrors.render({ test: 'syntax3' }); } )
-				.toThrowAny([
-					"Unexpected identifier in 'interpolation/errors' on line 8",
-					"missing ; before statement in 'interpolation/errors' on line 8",
-					"Expected an identifier but found 'error' instead in 'interpolation/errors' on line 8"
-				]);
-				
 			expect( function() { tErrors.render({ test: 'type3' }); } )
 				.toThrowAny([
-					"a is not defined in 'interpolation/errors' on line 21",
-					"Can't find variable: a in 'interpolation/errors' on line 21"
+					"a is not defined in 'interpolation/errors' on line 8",
+					"Can't find variable: a in 'interpolation/errors' on line 8"
 				]);
 				
 			expect( function() { tErrors.render({ test: 'throw3' }); } )
-				.toThrow("custom error in 'interpolation/errors' on line 34");
+				.toThrow("custom error in 'interpolation/errors' on line 21");
 		});
 		
-		it("should report errors thrown by expressions in directive when rendering", function() {
-			expect( function() { tErrors.render({ test: 'syntax4' }); } )
-				.toThrowAny([
-					"Unexpected identifier in 'interpolation/errors' on line 11",
-					"missing ; before statement in 'interpolation/errors' on line 11",
-					"Expected an identifier but found 'error' instead in 'interpolation/errors' on line 11"
-				]);
-				
+		it("should report errors thrown by expressions in directives when rendering", function() {
 			expect( function() { tErrors.render({ test: 'type4' }); } )
 				.toThrowAny([
-					"a is not defined in 'interpolation/errors' on line 24",
-					"Can't find variable: a in 'interpolation/errors' on line 24"
+					"a is not defined in 'interpolation/errors' on line 11",
+					"Can't find variable: a in 'interpolation/errors' on line 11"
 				]);
 				
 			expect( function() { tErrors.render({ test: 'throw4' }); } )
-				.toThrow("custom error in 'interpolation/errors' on line 37");
+				.toThrow("custom error in 'interpolation/errors' on line 24");
 		});
 	};
 });

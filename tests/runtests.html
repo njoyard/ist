@@ -12,6 +12,12 @@
 					div.conditional
 	</script>
 	
+	<!--[if IE 8]>
+	<script src="shims/classList.min.js"></script>
+	<script src="shims/augment.min.js"></script>
+	<script src="shims/importNode.js"></script>
+	<![endif]-->
+
     <script src="lib/jasmine/jasmine.js"></script>
     <script src="lib/jasmine/jasmine-html.js"></script>
     <script src="lib/requirejs/require.js"></script>
@@ -22,7 +28,7 @@
             paths: {
             	'text': '../lib/requirejs/text',
             	'order': '../lib/requirejs/order',
-            	'ist': '../../dist/ist'
+            	'ist': '../../ist'
             },
             waitSeconds: 3600
         });
@@ -31,10 +37,10 @@
             [
             	'ist',
             	'nodetypes', 'qualifiers', 'syntax', 'interpolation', 'builtins',
-            	'directivehelper', 'createnode', 'usage'
+            	'directivehelper', 'createnode', 'update', 'usage'
             ],
             function(ist, nodetypes, qualifiers, syntax, interpolation, builtins,
-            	directivehelper, createnode, usage){
+            	directivehelper, createnode, update, usage){
             	/* IST specific matchers */
 				beforeEach(function() {
 					var matchers = {};
@@ -209,6 +215,7 @@
             	describe('directivehelper', directivehelper);
             	describe('builtins', builtins);
             	describe('createnode', createnode);
+            	describe('update', update);
             
             	/* Run Jasmine */
                 jasmine.getEnv().addReporter(new jasmine.TrivialReporter());

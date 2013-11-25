@@ -1,180 +1,161 @@
 /*global define */
-define(['components/directives'], function(directives) {
+define(
+['components/context', 'components/directives', 'components/renderedtree', 'components/rendereddirective'],
+function(Context, directives, RenderedTree, RenderedDirective) {
 	'use strict';
 
-	function Renderer(template, context) {
+
+	function Renderer(template) {
 		this.template = template;
-		this.context = context;
+		this.context = undefined;
 	}
 
 
+	Renderer.prototype.setContext = function(context, doc) {
+		doc = doc || (this.context ? this.context.doc : document);
+
+		if (context instanceof Context) {
+			this.context = context;
+		} else {
+			this.context = new Context(context, doc);
+		}
+	};
+
+
+	/* Error completion helper */
 	Renderer.prototype._completeError = function(err, node) {
 		return this.template._completeError(err, node);
 	};
 
 
 	/* Text node rendering helper */
-	Renderer.prototype._renderTextNode = function(node) {
-		var ctx = this.context,
-			tnode;
-		
-		if (typeof node.pr !== 'undefined') {
-			tnode = ctx.importNode(node.pr, false);
-		} else {
+	Renderer.prototype._renderTextNode = function(node, textNode) {
+		var ctx = this.context;
+
+		if (!textNode) {
+			if ('pr' in node) {
+				textNode = ctx.importNode(node.pr, false);
+			} else {
+				textNode = ctx.createTextNode('');
+			}
+		}
+
+		if (!('pr' in node)) {
 			try {
-				tnode = ctx.createTextNode(ctx.interpolate(node.text));
+				ctx.scopedCall(node.updater, textNode);
 			} catch (err) {
 				throw this._completeError(err, node);
 			}
 		}
-		
-		return tnode;
+
+		return textNode;
 	};
-	
+
 	
 	/* Element rendering helper */
-	Renderer.prototype._renderElement = function(node) {
-		var ctx = this.context,
-			elem;
-		
-		if (typeof node.pr !== 'undefined') {
-			elem = ctx.importNode(node.pr, false);
-		} else {
-			elem = ctx.createElement(node.tagName);
+	Renderer.prototype._renderElement = function(node, elementNode) {
+		var ctx = this.context;
 
-			node.classes.forEach(function(cls) {
-				elem.classList.add(cls);
-			});
-
-			if (typeof node.id !== 'undefined') {
-				elem.id = node.id;
-			}
+		if (!elementNode) {
+			elementNode = ctx.importNode(node.pr, false);
 		}
 
-		// Set attributes
-		Object.keys(node.attributes).forEach(function(attr) {
-			var value;
-
-			try {
-				value = ctx.interpolate(node.attributes[attr]);
-			} catch (err) {
-				throw this._completeError(err, node);
-			}
+		try {
+			ctx.scopedCall(node.updater, elementNode);
+		} catch(err) {
+			throw this._completeError(err, node);
+		}
 		
-			elem.setAttribute(attr, value);
-		}, this);
-	
-		// Set properties
-		node.properties.forEach(function(prop) {
-			var value;
-
-			try {
-				value = ctx.interpolate(prop.value);
-			} catch (err) {
-				throw this._completeError(err, node);
-			}
-
-			var current = elem;
-			for (var i = 0, len = prop.path.length; i < len; i++) {
-				var pathElement = prop.path[i];
-				if (i === len - 1) {
-					current[pathElement] = value;
-				} else {
-					if (!(pathElement in current)) {
-						current[pathElement] = {};
-					}
-
-					current = current[pathElement];
-				}
-			}
-		}, this);
-		
-		// Set event handlers
-		Object.keys(node.events).forEach(function(event) {
-			node.events[event].forEach(function(expr) {
-				var handler;
-
-				try {
-					handler = ctx.evaluate(expr);
-				} catch(err) {
-					throw this._completeError(err, node);
-				}
-			
-				elem.addEventListener(event, handler, false);
-			}, this);
-		}, this);
-		
-		return elem;
+		return elementNode;
 	};
 	
 	
 	/* Directive rendering helpers */
-	Renderer.prototype._renderDirective = function(node) {
+	Renderer.prototype._renderDirective = function(node, renderedDirective) {
 		var ctx = this.context,
-			tmpl = this.template,
-			Template = tmpl.constructor,
-			subTemplate = new Template(tmpl.name, node.children),
-			helper = directives.get(node.directive),
-			fragment = ctx.createDocumentFragment(),
-			subCtx;
-	
+			pr = node.pr,
+			helper = directives.get(node.directive);
+
 		if (typeof helper !== 'function') {
 			throw new Error('No directive helper for @' + node.directive + ' has been registered');
 		}
-	
-		if (typeof node.expr !== 'undefined') {
-			try {
-				subCtx = ctx.createContext(ctx.evaluate(node.expr));
-			} catch(err) {
-				throw this._completeError(err, node);
-			}
+
+		if (!renderedDirective) {
+			renderedDirective = new RenderedDirective();
+		}
+
+		var fragment = renderedDirective.createFragment(ctx);
+
+		if (fragment.firstChild && fragment.firstChild._isISTPlaceHolder) {
+			fragment.removeChild(fragment.firstChild);
 		}
 	
 		try {
-			helper.call(null, ctx, subCtx, subTemplate, fragment);
+			helper.call(null, ctx, ctx.scopedCall(pr.evaluator), pr.template, fragment);
 		} catch (err) {
 			throw this._completeError(err, node);
 		}
 
-		return fragment;
+		if (fragment.childNodes.length === 0) {
+			var placeholder = ctx.createComment('');
+
+			placeholder._isISTPlaceHolder = true;
+			fragment.appendChild(placeholder);
+		}
+
+		renderedDirective.updateFromFragment(fragment);
+		return renderedDirective;
 	};
 
 
-	Renderer.prototype.renderRec = function(node) {
-		var ctx = this.context,
-			tnode;
-	
-		if (typeof node.text !== 'undefined') {
-			tnode = this._renderTextNode(node);
+
+
+	Renderer.prototype._renderRec = function(node, indexEntry) {
+		if ('text' in node) {
+			indexEntry = this._renderTextNode(node, indexEntry);
 		}
 				
-		if (typeof node.tagName !== 'undefined') {
-			tnode = this._renderElement(node);
+		if ('tagName' in node) {
+			if (indexEntry) {
+				indexEntry.element = this._renderElement(node, indexEntry.element);
+			} else {
+				indexEntry = new RenderedTree(this._renderElement(node));
+			}
 
-			node.children
-			.map(this.renderRec, this)
-			.forEach(function(cnode) {
-				tnode.appendChild(cnode);
-			});
+			this._renderNodes(node.children, indexEntry);
 		}
 		
-		if (typeof node.directive !== 'undefined') {
-			tnode = this._renderDirective(node);
+		if ('directive' in node) {
+			indexEntry = this._renderDirective(node, indexEntry);
 		}
 
-		return tnode;
+		return indexEntry;
+	};
+
+
+	Renderer.prototype._renderNodes = function(nodes, tree) {
+		tree.forEach(nodes, this._renderRec, this);
+		tree.appendChildren();
 	};
 
 
 	Renderer.prototype.render = function() {
-		var fragment = this.context.createDocumentFragment();
-	
-		this.template.nodes
-		.map(this.renderRec, this)
-		.forEach(function(node) {
-			fragment.appendChild(node);
-		});
-	
+		var renderer = this,
+			fragment = this.context.createDocumentFragment(),
+			nodes = this.template.nodes,
+			tree = new RenderedTree(fragment);
+
+		this._renderNodes(nodes, tree);
+
+		fragment.update = function(ctx) {
+			if (ctx) {
+				renderer.setContext(ctx);
+			}
+
+			tree.updateParent();
+			renderer._renderNodes(nodes, tree);
+		};
+
 		return fragment;
 	};
 

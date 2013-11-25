@@ -8,120 +8,174 @@ define(function() {
 	/**
 	 * Conditional helper for @if, @unless
 	 *
-	 * @param {Context} outer outer context
+	 * @param {Context} ctx rendering context
 	 * @param render render template if truthy
 	 * @param {Template} tmpl template to render
 	 * @param {DocumentFragment} fragment target fragment
 	 */
-	function conditionalHelper(outer, render, tmpl, fragment) {
+	function conditionalHelper(ctx, render, tmpl, fragment) {
+		var rendered = fragment.extractRenderedFragment();
+
 		if (render) {
-			fragment.appendChild(tmpl.render(outer));
+			if (rendered) {
+				rendered.update(ctx);
+			} else {
+				rendered = tmpl.render(ctx);
+			}
+
+			fragment.appendRenderedFragment(rendered);
 		}
 	}
+
 	
 	/**
 	 * Iteration helper for @each, @eachkey
 	 *
-	 * @param {Context} outer outer context
+	 * @param {Context} ctx rendering context
 	 * @param {Array} items item array to iterate over
+	 * @param {Array} keys item identifiers
 	 * @param [loopAdd] additional loop properties
 	 * @param {Template} tmpl template to render for each item
 	 * @param {DocumentFragment} fragment target fragment
 	 */
-	function iterationHelper(outer, items, loopAdd, tmpl, fragment) {
-		var outerValue = outer.value;
+	function iterationHelper(ctx, items, keys, loopAdd, tmpl, fragment) {
+		var outerValue = ctx.value;
+
+		/* Extract previously rendered fragments */
+		var extracted = fragment.extractRenderedFragments(),
+			fragKeys = extracted.keys,
+			fragments = extracted.fragments;
 		
 		/* Loop over array and append rendered fragments */
-		items.forEach(function(item, index) {
-			var sctx = outer.createContext(item),
-				loop = {
-					first: index === 0,
-					index: index,
-					last: index == items.length - 1,
-					length: items.length,
-					outer: outerValue
-				};
+		items.forEach(function itemIterator(item, index) {
+			ctx.pushValue(item);
+
+			/* Create subcontext */
+			var loop = {
+				first: index === 0,
+				index: index,
+				last: index == items.length - 1,
+				length: items.length,
+				outer: outerValue
+			};
 
 			if (loopAdd) {
 				Object.keys(loopAdd).forEach(function(key) {
 					loop[key] = loopAdd[key];
-				})
+				});
 			}
 
-			sctx.pushScope({ loop: loop });
-			fragment.appendChild(tmpl.render(sctx));
+			ctx.pushScope({ loop: loop });
+
+			/* Render or update fragments */
+			var keyIndex = fragKeys.indexOf(keys[index]),
+				rendered;
+
+			if (keyIndex === -1) {
+				/* Item was not rendered yet */
+				rendered = tmpl.render(ctx);
+			} else {
+				rendered = fragments[keyIndex];
+				rendered.update(ctx);
+			}
+
+			ctx.popScope();
+			ctx.popValue();
+
+			fragment.appendRenderedFragment(rendered, keys[index]);
 		});
 	}
 	
 	
 	/* Built-in directive helpers (except @include) */
 	registered = {
-		'if': function(outer, inner, tmpl, fragment) {
-			conditionalHelper.call(null, outer, inner.value, tmpl, fragment);
+		'if': function ifHelper(ctx, value, tmpl, fragment) {
+			conditionalHelper.call(null, ctx, value, tmpl, fragment);
 		},
 
-		'unless': function(outer, inner, tmpl, fragment) {
-			conditionalHelper.call(null, outer, !inner.value, tmpl, fragment);
+		'unless': function unlessHelper(ctx, value, tmpl, fragment) {
+			conditionalHelper.call(null, ctx, !value, tmpl, fragment);
 		},
 
-		'with': function(outer, inner, tmpl, fragment) {
-			fragment.appendChild(tmpl.render(inner));
-		},
+		'with': function withHelper(ctx, value, tmpl, fragment) {
+			var rendered = fragment.extractRenderedFragment();
 
-		'each': function(outer, inner, tmpl, fragment) {
-			var array = inner.value;
-			
-			if (!Array.isArray(array)) {
-				throw new Error(array + ' is not an array');
-			}
-			
-			iterationHelper(outer, array, null, tmpl, fragment);
-		},
+			ctx.pushValue(value);
 
-		'eachkey': function(outer, inner, tmpl, fragment) {
-			var object = inner.value,
-				array;
-				
-			array = Object.keys(object).map(function(k) {
-				return { key: k, value: object[k] };
-			});
-			
-			iterationHelper(outer, array, { object: object }, tmpl, fragment);
-		},
-
-		'dom': function(outer, inner, tmpl, fragment) {
-			var node = inner.value;
-
-			if (node.ownerDocument !== inner.doc) {
-				node = inner.doc.importNode(node);
+			if (rendered) {
+				rendered.update(ctx);
+			} else {
+				rendered = tmpl.render(ctx);
 			}
 
-			fragment.appendChild(node);
+			ctx.popValue();
+
+			fragment.appendChild(tmpl.render(value));
 		},
 
-		'define': function(outer, inner, tmpl, fragment) {
-			defined[inner.value] = tmpl;
+		'each': function eachHelper(ctx, value, tmpl, fragment) {
+			if (!Array.isArray(value)) {
+				throw new Error(value + ' is not an array');
+			}
+			
+			iterationHelper(ctx, value, value, null, tmpl, fragment);
 		},
 
-		'use': function(outer, inner, tmpl, fragment) {
-			var name = inner.value,
-				template = defined[name];
+		'eachkey': (function() {
+			function extractItem(k) {
+				return { key: k, value: this[k] };
+			}
+
+			return function eachkeyHelper(ctx, value, tmpl, fragment) {
+				var keys = Object.keys(value),
+					array;
+					
+				array = keys.map(extractItem, value);
+				iterationHelper(ctx, array, keys, { object: value }, tmpl, fragment);
+			};
+		}()),
+
+		'dom': function domHelper(ctx, value, tmpl, fragment) {
+			if (value.ownerDocument !== ctx.doc) {
+				value = ctx.doc.importNode(value);
+			}
+
+			while(fragment.hasChildNodes()) {
+				fragment.removeChild(fragment.firstChild);
+			}
+			fragment.appendChild(value);
+		},
+
+		'define': function defineHelper(ctx, value, tmpl, fragment) {
+			defined[value] = tmpl;
+		},
+
+		'use': function useHelper(ctx, value, tmpl, fragment) {
+			var template = defined[value];
 
 			if (!template) {
-				throw new Error('Template \'' + name + '\' has not been @defined');
+				throw new Error('Template \'' + value + '\' has not been @defined');
 			}
 
-			fragment.appendChild(template.render(outer));
+			var rendered = fragment.extractRenderedFragment();
+
+			if (rendered) {
+				rendered.update(ctx);
+			} else {
+				rendered = template.render(ctx);
+			}
+
+			fragment.appendRenderedFragment(rendered);
 		}
 	};
 	
 	/* Directive manager object */
 	directives = {
-		register: function(name, helper) {
+		register: function registerDirective(name, helper) {
 			registered[name] = helper;
 		},
 
-		get: function(name) {
+		get: function getDirective(name) {
 			return registered[name];
 		}
 	};

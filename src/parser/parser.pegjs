@@ -14,7 +14,7 @@ __ "whitespace"
 
 line
 = depth:indent s:(element / textNode / directive) __*
-{ return { indent: depth, item: s, num: line }; }
+{ return { indent: depth, item: s }; }
 
 indent "indent"
 = s:__*
@@ -32,7 +32,7 @@ identifier "identifier"
 
 dottedpath "dotted path"
 = h:identifier t:("." identifier)*
-{ return t.length ? [h].concat(t.map(function(item) { return item[1]; })) : [h]; }
+{ return t.length ? [h].concat(t.map(function(i) { return i[1]; })) : [h] }
 
 partial
 = "!" name:identifier

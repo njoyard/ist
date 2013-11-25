@@ -32,6 +32,30 @@ define(function() {
 			}
 			
 			return found;
+		},
+
+		appendNodeSegment: function(firstChild, lastChild, target) {
+			var node = firstChild,
+				end = lastChild ? lastChild.nextSibling : null,
+				next;
+
+			while (node && node != end) {
+				next = node.nextSibling;
+				target.appendChild(node);
+				node = next;
+			}
+		},
+
+		insertNodeSegmentBefore: function(firstChild, lastChild, target, ref) {
+			var node = firstChild,
+				end = lastChild ? lastChild.nextSibling : null,
+				next;
+
+			while (node && node != end) {
+				next = node.nextSibling;
+				target.insertBefore(node, ref);
+				node = next;
+			}
 		}
 	};
 });

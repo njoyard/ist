@@ -15,8 +15,8 @@ define([], function() {
 				
 					var ist = ifw.testIstPresent();
 					expect( typeof ist ).toBe( 'function' );
-					expect( typeof ist.createNode ).toBe( 'function' );
-					expect( typeof ist.registerHelper ).toBe( 'function' );
+					expect( typeof ist.create ).toBe( 'function' );
+					expect( typeof ist.helper ).toBe( 'function' );
 					
 					var template = ifw.testTemplate();
 					expect( typeof template.render ).toBe( 'function' );

@@ -1,15 +1,17 @@
+/*global define, it, expect */
 define([
 	'ist',
 	'text!directivehelper/directivehelper.ist',
 	'text!directivehelper/string.ist',
 	'text!directivehelper/none.ist',
-	'ist!directivehelper/errors'
-], function(ist, textDirectivehelper, textString, textNone, tErrors) {
+	'ist!directivehelper/errors',
+	'ist!directivehelper/update'
+], function(ist, textDirectivehelper, textString, textNone, tErrors, tUpdate) {
 	return function() {
 		it("should allow parsing templates with unknown @directives", function() {
 			var thrown = false;
 			
-			ist.registerHelper('testDirective', undefined);
+			ist.helper('testDirective', undefined);
 			
 			try {
 				ist(textDirectivehelper);
@@ -23,7 +25,7 @@ define([
 		it("should fail to render templates with unknown @directives", function() {
 			var context = { context: { value: 'context' } };
 			
-			ist.registerHelper('testDirective', undefined);
+			ist.helper('testDirective', undefined);
 			
 			expect( function() { ist(textDirectivehelper).render(context); } ).toThrow('No directive helper for @testDirective has been registered');
 		});
@@ -33,7 +35,7 @@ define([
 				context = { context: { value: 'context' } };
 				
 				
-			ist.registerHelper('testDirective', function() {
+			ist.helper('testDirective', function() {
 				called = true;
 			});
 			ist(textDirectivehelper).render(context);
@@ -46,32 +48,32 @@ define([
 				context = { context: { value: 'context' } };
 				
 				
-			ist.registerHelper('testDirective', function(outer) {
-				param = outer;
+			ist.helper('testDirective', function(ctx) {
+				param = ctx;
 			});
 			ist(textDirectivehelper).render(context);
 			
 			expect( param.value ).toBe( context );
 		});
 		
-		it("should pass the narrowed down context to helpers as 2nd argument", function() {
+		it("should pass the narrowed down context value to helpers as 2nd argument", function() {
 			var param,
 				context = { context: { value: 'context' } };
 				
 				
-			ist.registerHelper('testDirective', function(inner, outer) {
-				param = outer;
+			ist.helper('testDirective', function(ctx, value) {
+				param = value;
 			});
 			ist(textDirectivehelper).render(context);
 			
-			expect( param.value ).toBe( context.context );
+			expect( param ).toBe( context.context );
 		});
 		
-		it("should allow helpers to create document fragments in the rendering document with outer.createDocumentFragment", function() {
+		it("should allow helpers to create document fragments in the rendering document with ctx.createDocumentFragment", function() {
 			var frag, context = { context: { value: 'context' } };
 			
-			ist.registerHelper('testDirective', function(outer, inner, subtemplate) {
-				frag = outer.createDocumentFragment();
+			ist.helper('testDirective', function(ctx, value, subtemplate) {
+				frag = ctx.createDocumentFragment();
 			});
 			ist(textDirectivehelper).render(context);
 			
@@ -79,11 +81,11 @@ define([
 			expect( frag.ownerDocument ).toBe( document );
 		});
 		
-		it("should allow helpers to create elements in the rendering document with outer.createElement", function() {
+		it("should allow helpers to create elements in the rendering document with ctx.createElement", function() {
 			var elem, context = { context: { value: 'context' } };
 			
-			ist.registerHelper('testDirective', function(outer, inner, subtemplate) {
-				elem = outer.createElement('div');
+			ist.helper('testDirective', function(ctx, value, subtemplate) {
+				elem = ctx.createElement('div');
 			});
 			ist(textDirectivehelper).render(context);
 			
@@ -92,11 +94,11 @@ define([
 			expect( elem.nodeName.toLowerCase() ).toBe( 'div' );
 		});
 		
-		it("should allow helpers to create text nodes in the rendering document with outer.createTextNode", function() {
+		it("should allow helpers to create text nodes in the rendering document with ctx.createTextNode", function() {
 			var text, context = { context: { value: 'context' } };
 			
-			ist.registerHelper('testDirective', function(outer, inner, subtemplate) {
-				text = outer.createTextNode('text value');
+			ist.helper('testDirective', function(ctx, value, subtemplate) {
+				text = ctx.createTextNode('text value');
 			});
 			ist(textDirectivehelper).render(context);
 			
@@ -109,7 +111,7 @@ define([
 			var result,
 				context = { context: { value: 'context' } };
 				
-			ist.registerHelper('testDirective', function(outer, inner, subtemplate) {
+			ist.helper('testDirective', function(ctx, value, subtemplate) {
 				result = subtemplate.render({ value: 'my value' });
 			});
 			ist(textDirectivehelper).render(context);
@@ -123,7 +125,7 @@ define([
 			var frag,
 				context = { context: { value: 'context' } };
 			
-			ist.registerHelper('testDirective', function(outer, inner, tmpl, fragment) {
+			ist.helper('testDirective', function(ctx, value, tmpl, fragment) {
 				frag = fragment;
 			});
 			ist(textDirectivehelper).render(context);
@@ -134,8 +136,8 @@ define([
 		it("should insert what helpers insert in their LiveFragment into the parent template node", function() {
 			var node, frag;
 				
-			ist.registerHelper('testDirective', function(outer, inner, subtemplate, fragment) {
-				node = outer.createElement('div');
+			ist.helper('testDirective', function(ctx, value, subtemplate, fragment) {
+				node = ctx.createElement('div');
 				node.className = 'generated';
 				fragment.appendChild(node);
 			});
@@ -146,22 +148,22 @@ define([
 		});
 		
 		it("should allow passing a quoted string instead of a context path", function() {
-			var value;
+			var val;
 			
-			ist.registerHelper('otherDirective', function(outer, inner, subtemplate) {
-				value = inner.value;
+			ist.helper('otherDirective', function(ctx, value, subtemplate) {
+				val = value;
 			});
 			
 			ist(textString).render({});
-			expect( value ).toBe( "direct string value" );
+			expect( val ).toBe( "direct string value" );
 		});
 		
 		it("should pass undefined when no narrowed down context is present", function() {
 			var arg = 'defined', arg2 = 'defined', options,
 				context = { context: { value: 'context' } };
 				
-			ist.registerHelper('noParamDirective', function(outer, inner) {
-				arg = inner;
+			ist.helper('noParamDirective', function(ctx, value) {
+				arg = value;
 			});
 			ist(textNone).render(context);
 			
@@ -169,38 +171,42 @@ define([
 		});
 		
 		it("should allow pushing variables to a rendering context", function() {
-			ist.registerHelper('pushDirective', function(outer, inner, subtemplate, fragment) {
-				inner.pushScope({ variable: "value" });
-				fragment.appendChild(subtemplate.render(inner));
+			ist.helper('pushDirective', function(ctx, value, subtemplate, fragment) {
+				ctx.pushScope({ variable: "value" });
+				fragment.appendChild(subtemplate.render(ctx));
+				ctx.popScope();
 			});
 			expect(
-				ist("@pushDirective this\n '{{ variable }}'").render({}).childNodes[0]
+				ist("@pushDirective\n '{{ variable }}'").render({}).childNodes[0]
 			).toHaveTextContent( "value" );
 		});
 		
 		it("should allow overwriting existing rendering context properties when pushing variables", function() {
-			ist.registerHelper('pushDirective', function(outer, inner, subtemplate, fragment) {
-				inner.pushScope({ variable: "new value" });
-				fragment.appendChild(subtemplate.render(inner));
+			ist.helper('pushDirective', function(ctx, value, subtemplate, fragment) {
+				ctx.pushScope({ variable: "new value" });
+				fragment.appendChild(subtemplate.render(ctx));
+				ctx.popScope();
 			});
 			expect(
-				ist("@pushDirective this\n '{{ variable }}'").render({ variable: "value" }).childNodes[0]
+				ist("@pushDirective\n '{{ variable }}'").render({ variable: "value" }).childNodes[0]
 			).toHaveTextContent( "new value" );
 		});
 		
 		it("should allow stacking pushed variables in rendering contexts", function() {
 			var frag;
 			
-			ist.registerHelper('pushDirective1', function(outer, inner, subtemplate, fragment) {
-				inner.pushScope({ variable: "value 1" });
-				fragment.appendChild(subtemplate.render(inner));
+			ist.helper('pushDirective1', function(ctx, value, subtemplate, fragment) {
+				ctx.pushScope({ variable: "value 1" });
+				fragment.appendChild(subtemplate.render(ctx));
+				ctx.popScope();
 			});
-			ist.registerHelper('pushDirective2', function(outer, inner, subtemplate, fragment) {
-				inner.pushScope({ variable: "value 2" });
-				fragment.appendChild(subtemplate.render(inner));
+			ist.helper('pushDirective2', function(ctx, value, subtemplate, fragment) {
+				ctx.pushScope({ variable: "value 2" });
+				fragment.appendChild(subtemplate.render(ctx));
+				ctx.popScope();
 			});
 			
-			frag = ist("@pushDirective1 this\n '0 {{ variable }}'\n @pushDirective2 this\n  '1 {{ variable }}'\n '2 {{ variable }}'").render({});
+			frag = ist("@pushDirective1\n '0 {{ variable }}'\n @pushDirective2\n  '1 {{ variable }}'\n '2 {{ variable }}'").render({});
 			
 			expect( frag.childNodes[0] ).toHaveTextContent( "0 value 1" );
 			expect( frag.childNodes[1] ).toHaveTextContent( "1 value 2" );
@@ -208,32 +214,123 @@ define([
 		});
 		
 		it("should allow popping pushed variables from rendering contexts", function() {
-			ist.registerHelper('pushDirective', function(outer, inner, subtemplate, fragment) {
-				inner.pushScope({ variable: "new value" });
-				inner.popScope();
-				fragment.appendChild(subtemplate.render(inner));
+			ist.helper('pushDirective', function(ctx, value, subtemplate, fragment) {
+				ctx.pushScope({ variable: "new value" });
+				ctx.popScope();
+				fragment.appendChild(subtemplate.render(ctx));
 			});
 			expect(
-				ist("@pushDirective this\n '{{ variable }}'").render({ variable: "value" }).childNodes[0]
+				ist("@pushDirective\n '{{ variable }}'").render({ variable: "value" }).childNodes[0]
 			).toHaveTextContent( "value" );
 		});
 		
 		it("should report errors thrown by expressions when rendering", function() {
-			expect( function() { tErrors.render({ test: 'syntax' }); } )
-				.toThrowAny([
-					"Unexpected identifier in 'directivehelper/errors' on line 2",
-					"missing ; before statement in 'directivehelper/errors' on line 2",
-					"Expected an identifier but found 'error' instead in 'directivehelper/errors' on line 2"
-				]);
-				
 			expect( function() { tErrors.render({ test: 'type' }); } )
 				.toThrowAny([
-					"a is not defined in 'directivehelper/errors' on line 6",
-					"Can't find variable: a in 'directivehelper/errors' on line 6"
+					"a is not defined in 'directivehelper/errors' on line 2",
+					"Can't find variable: a in 'directivehelper/errors' on line 2"
 				]);
 				
 			expect( function() { tErrors.render({ test: 'throw' }); } )
-				.toThrow("custom error in 'directivehelper/errors' on line 10");
+				.toThrow("custom error in 'directivehelper/errors' on line 6");
+		});
+
+		it("should report errors thrown by helpers when rendering", function() {
+			ist.helper("throwingHelper", function() {
+				throw new Error("Helper error");
+			});
+
+			expect( function() { tErrors.render({ test: 'throwingHelper' }); } )
+				.toThrow("Helper error in 'directivehelper/errors' on line 10");
+		});
+
+		it("should allow helpers to save and retrieve rendered templates with arbitrary keys across updates", function() {
+			var frag;
+			ist.helper("test", function(ctx, value, template, fragment) {
+				frag = fragment;
+			});
+
+			ist("@test").render();
+			expect( typeof frag.extractRenderedFragment ).toBe( "function" );
+			expect( typeof frag.appendRenderedFragment ).toBe( "function" );
+
+			var key = { a: 1, b: "2" },
+				test, retrieved;
+
+			ist.helper("test", function(ctx, value, template, fragment) {
+				switch (test) {
+					case "save":
+						fragment.appendRenderedFragment(template.render(ctx), key);
+						break;
+
+					case "retrieve":
+						retrieved = fragment.extractRenderedFragment(key);
+						break;
+
+					case "update":
+						retrieved = fragment.extractRenderedFragment(key);
+
+						if (retrieved)
+							retrieved.update(ctx);
+						else
+							retrieved = template.render(ctx);
+
+						fragment.appendRenderedFragment(template.render(ctx), key);
+						break;
+
+					case "retrieveall":
+						retrieved = fragment.extractRenderedFragments();
+						break;
+				}
+			});
+
+			test = "save";
+			var rendered = tUpdate.render({ foo: 1, bar: 2 });
+
+			expect( rendered.firstChild.textContent ).toBe( "1" );
+			expect( rendered.firstChild.nextSibling.textContent ).toBe( "2" );
+
+			test = "retrieve";
+			rendered.update({ foo: 3, bar: 4 });
+
+			expect( retrieved.firstChild.textContent ).toBe( "1" );
+			expect( retrieved.firstChild.nextSibling.textContent ).toBe( "2" );
+
+			// rendered should be empty except for placeholder comment nodes
+			expect( [].slice.call(rendered.childNodes).some(function(child) { return child.nodeType !== document.COMMENT_NODE; }) ).toBe( false );
+
+			test = "update";
+			var rendered = tUpdate.render({ foo: 1, bar: 2 });
+
+			expect( rendered.firstChild.textContent ).toBe( "1" );
+			expect( rendered.firstChild.nextSibling.textContent ).toBe( "2" );
+
+			rendered.update({ foo: 3, bar: 4 });
+
+			expect( rendered.firstChild.textContent ).toBe( "3" );
+			expect( rendered.firstChild.nextSibling.textContent ).toBe( "4" );
+
+			test = "save";
+			var rendered = tUpdate.render({ foo: 1, bar: 2 });
+
+			test = "retrieveall";
+			rendered.update({ foo: 3, bar: 4 });
+
+			expect( 'keys' in retrieved ).toBe( true );
+			expect( 'fragments' in retrieved ).toBe( true );
+
+			expect( Array.isArray(retrieved.keys) ).toBe( true );
+			expect( Array.isArray(retrieved.fragments) ).toBe( true );
+
+			expect( retrieved.keys.length ).toBe( 1 );
+			expect( retrieved.fragments.length ).toBe( 1 );
+
+			expect( retrieved.keys[0] ).toBe( key );
+			expect( retrieved.fragments[0].firstChild.textContent ).toBe( "1" );
+			expect( retrieved.fragments[0].firstChild.nextSibling.textContent ).toBe( "2" );
+
+			// rendered should be empty except for placeholder comment nodes
+			expect( [].slice.call(rendered.childNodes).some(function(child) { return child.nodeType !== document.COMMENT_NODE; }) ).toBe( false );
 		});
 	};
 });

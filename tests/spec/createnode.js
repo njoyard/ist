@@ -1,7 +1,7 @@
 define(['ist'], function(ist) {
 	return function() {
-		it("should be able to create single nodes using the createNode interface", function() {
-			var node = ist.createNode('div.class#id[attr=val][.prop=val]');
+		it("should be able to create single nodes using the create interface", function() {
+			var node = ist.create('div.class#id[attr=val][.prop=val]');
 			
 			expect( node ).toNotBe( null );
 			expect( node.tagName.toLowerCase() ).toBe( 'div' );
@@ -12,14 +12,14 @@ define(['ist'], function(ist) {
 		});
 		
 		it("should be able to create several nodes when using angle brackets", function() {
-			var node = ist.createNode('div.parent > div.child > div.subchild');
+			var node = ist.create('div.parent > div.child > div.subchild');
 			
 			expect( node.querySelector('.child') ).toNotBe( null );
 			expect( node.querySelector('.child .subchild') ).toNotBe( null );
 		});
 		
 		it("should support context rendering", function() {
-			var node = ist.createNode(
+			var node = ist.create(
 				'div.parent[prop={{ prop }}] > "{{ text }}"',
 				{ prop: 'val', text: 'text content' }
 			);
@@ -30,7 +30,7 @@ define(['ist'], function(ist) {
 		
 		it("should support directives", function() {
 			var ctx = { people: [ { name: 'alice' }, { name: 'bob' }, { name: 'carl' } ] },
-				node = ist.createNode('div.parent > @each people > "{{ name }}"', ctx);
+				node = ist.create('div.parent > @each people > "{{ name }}"', ctx);
 				
 			expect( node.childNodes.length ).toBe( ctx.people.length );
 			Array.prototype.slice.call(node.childNodes).forEach(function(node, i) {
@@ -39,8 +39,8 @@ define(['ist'], function(ist) {
 		});
 		
 		it("should return a document fragment when rendering anything else than 1 root node", function() {
-			var zero = ist.createNode(''),
-				mult = ist.createNode('@each arr > "{{ this }}"', { arr: [ 'a', 'b', 'c' ] });
+			var zero = ist.create(''),
+				mult = ist.create('@each arr > "{{ this }}"', { arr: [ 'a', 'b', 'c' ] });
 				
 			expect( zero.toString().indexOf('DocumentFragment') ).toNotBe( -1 );
 			expect( mult.toString().indexOf('DocumentFragment') ).toNotBe( -1 );
