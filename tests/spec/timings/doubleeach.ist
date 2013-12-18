@@ -1,9 +1,0 @@
-ul
-@each list
-	@unless doLoop
-		li "Disabled"
-	@if loop
-		ul
-		@each sublist
-			li "{{ this }}"
-			
