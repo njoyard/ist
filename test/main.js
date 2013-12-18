@@ -6,10 +6,16 @@
 
 	/* List test specs */
 	var tests = [];
+	var built = [];
+
 	for (var file in window.__karma__.files) {
 		if (window.__karma__.files.hasOwnProperty(file)) {
 			if (/-spec\.js$/.test(file)) {
 				tests.push(file);
+			}
+
+			if (/build\/.*.out.js$/.test(file)) {
+				built.push(file);
 			}
 		}
 	}

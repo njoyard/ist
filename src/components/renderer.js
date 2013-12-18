@@ -1,6 +1,10 @@
 /*global define */
-define(
-['components/context', 'components/directives', 'components/renderedtree', 'components/rendereddirective'],
+define([
+	'components/context',
+	'components/directives',
+	'components/renderedtree',
+	'components/rendereddirective'
+],
 function(Context, directives, RenderedTree, RenderedDirective) {
 	'use strict';
 

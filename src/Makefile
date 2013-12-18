@@ -1,6 +1,6 @@
-PEGJS=pegjs
+PEGJS=../node_modules/.bin/pegjs
 PEGJSFLAGS=--export-var pegjsParser --track-line-and-column
-RJS=r.js
+RJS=../node_modules/.bin/r.js
 
 DESTDIR=..
 

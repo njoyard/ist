@@ -1,0 +1,7 @@
+{
+	"devDependencies": {
+		"karma": "*",
+		"pegjs": "*",
+		"requirejs": "*"
+	}
+}     

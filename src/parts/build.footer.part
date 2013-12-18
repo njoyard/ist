@@ -1,6 +1,6 @@
 	
-	if (isAMD) {
-		global.define("ist", [], function() { return istComponents.ist; });
+	if (isAMD || isNode) {
+		define("ist", [], function() { return istComponents.ist; });
 	} else {
 		previous = global.ist;
 		

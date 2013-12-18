@@ -20,7 +20,8 @@ module.exports = function(config) {
       {pattern: 'test/**/*.ist', included: false},
       {pattern: 'test/usage/standalone.html', included: false},
       {pattern: 'test/**/included_*.js', included: false},
-      {pattern: 'test/**/*-spec.js', included: false}
+      {pattern: 'test/**/*-spec.js', included: false},
+      {pattern: 'test/build/*.out.js', included: false}
     ],
 
     preprocessors: {
@@ -29,13 +30,12 @@ module.exports = function(config) {
 
     // list of files to exclude
     exclude: [
-      
     ],
 
 
     // test results reporter to use
     // possible values: 'dots', 'progress', 'junit', 'growl', 'coverage'
-    reporters: ['progress'],
+    reporters: ['dots'],
 
 
     // web server port
@@ -52,7 +52,7 @@ module.exports = function(config) {
 
 
     // enable / disable watching file and executing tests whenever any file changes
-    autoWatch: true,
+    autoWatch: false,
 
 
     // Start these browsers, currently available:
@@ -72,6 +72,6 @@ module.exports = function(config) {
 
     // Continuous Integration mode
     // if true, it capture browsers, run tests and exit
-    singleRun: false
+    singleRun: true
   });
 };

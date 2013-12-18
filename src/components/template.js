@@ -39,7 +39,8 @@ function(codegen, Context, Renderer) {
 		this.name = name || '<unknown>';
 		this.nodes = nodes;
 
-		this.nodes.forEach(this._preRenderRec, this);
+		if (typeof document !== 'undefined')
+			this.nodes.forEach(this._preRenderRec, this);
 	}
 	
 	

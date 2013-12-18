@@ -1,5 +1,5 @@
 /*global define, isBrowser, isNode, ActiveXObject */
-define(['require', 'util/misc'], function(require, misc) {
+define(['util/misc'], function(misc) {
 	'use strict';
 
 	function pluginify(ist) {
