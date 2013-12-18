@@ -159,7 +159,7 @@ function(codegen, Context, Renderer) {
 		return 'new ist.Template(' +
 			JSON.stringify(this.name) + ', ' +
 			JSON.stringify(this.nodes, null, pretty ? 1 : 0) +
-		');';
+		')';
 	};
 	
 	
