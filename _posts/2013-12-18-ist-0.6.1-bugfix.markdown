@@ -1,0 +1,22 @@
+---
+layout: post
+title: ist.js v0.6.1 bugfix release
+---
+
+{% assign opencurly = '{{' %}
+{% assign closecurly = '}}' %}
+
+I just released ist.js 0.6.1, which fixes problems when building projects that
+use `ist!path/to/template` dependencies with r.js.
+
+Additionnaly, ist.js now uses [Karma][1] as a testing framework.  All tests have
+been adapted to Karma and I added a bunch of new tests (including r.js build
+tests).  Karma is a very nice framework, which is able to serve files on a
+webserver and automatically launch web browsers (including PhantomJS for example)
+to run test suites.  It also paves the way to setting up continuous integration
+for ist.js.
+
+Also, the download links on the home page have been fixed to point to the correct
+path on github.
+
+[1]: http://karma-runner.github.io/

@@ -17,6 +17,9 @@ Documentation
 * <a href="#Usage">Usage</a>
     * <a href="#Standalone usage">Standalone usage</a>
     * <a href="#AMD usage">AMD usage</a>
+    * <a href="#Compiling">Compiling</a>
+    * <a href="#Rendering">Rendering</a>
+    * <a href="#Updating">Updating</a>
 * <a href="#Template Syntax">Template Syntax</a>
     * <a href="#Node tree">Node tree</a>
     * <a href="#Comments">Comments</a>
@@ -34,9 +37,9 @@ Documentation
     * <a href="#Partials">Partials</a>
 * <a href="#Single node creation">Single node creation</a>
 * <a href="#Custom directives">Custom directives</a>
+    * <a href="#Definition and syntax">Definition and syntax</a>
+    * <a href="#Handling updates">Handling updates</a>
     * <a href="#Context objects">Context objects</a>
-    * <a href="#Simple examples">Simple examples</a>
-    * <a href="#Built-in directives">Built-in directives</a>
 * <a href="#Version">Version</a>
 
 </section>
@@ -84,20 +87,20 @@ You can deliver templates to the browser using a `<script>` tag.
 <section class="doc-item">
 <section class="doc-desc">
 You can then call `ist()` with the content of this tag, or you can use
-`ist.fromScriptTag()`.
+`ist.script()`.
 
 </section>
 <section class="doc-code">
 {% highlight js %}
 var template = ist($("#example-template").html());
-var template = ist.fromScriptTag("example-template");
+var template = ist.script("example-template");
 {% endhighlight %}
 </section>
 </section>
 
 <section class="doc-item">
 <section class="doc-desc">
-You can also directly use strings.
+You can also directly pass a string to `ist()`.
 
 </section>
 <section class="doc-code">
@@ -109,9 +112,9 @@ var template = ist('h1 "{{ opencurly }} title {{ closecurly }}"');
 
 <section class="doc-item">
 <section class="doc-desc">
-The variable `template` in the examples above is a compiled template.  Passing a
-context object to the `render()` method of a compiled template renders it into a
-DOM node tree.
+The variable `template` in the examples above is called a compiled template.
+Passing a context object to the `render()` method of a compiled template renders
+it into a DOM node tree.
 
 </section>
 <section class="doc-code">
@@ -130,9 +133,9 @@ document.body.appendChild(node);
 
 <section class="doc-item">
 <section class="doc-desc">
-Additionnaly, you can pass a DOM document as the second argument to `render()` to
-render nodes into an other document.  This is mainly useful when using multiple
-windows or frames.
+Additionnaly, you can pass a DOM document as the second argument to `render()`
+to render nodes into an other document.  This is mainly useful when using
+multiple windows or frames.
 
 </section>
 <section class="doc-code">
@@ -209,13 +212,39 @@ ul.menu
 
 <section class="doc-item">
 <section class="doc-desc">
-ist.js also allows easy [single node creation](#Single node creation) using
-`ist.createNode()`.
+You can update what ist.js rendered by calling the `update()` method.
 
 </section>
 <section class="doc-code">
 {% highlight js %}
-var myLink = ist.createNode("a.link[href=#]");
+var context = {
+        isAdmin: true,
+        menuItems: [
+            { url: "home.html", label: "Home" },
+            { url: "news.html", label: "News" },
+            { url: "contact.html", label: "Contact" }
+        ]
+    };
+    
+var rendered = menuTemplate.render(context);
+document.body.appendChild(rendered);
+
+context.isAdmin = false;
+context.menuItems.push({ url: "shop.html", label: "Shop" });
+rendered.update();
+{% endhighlight %}
+</section>
+</section>
+
+<section class="doc-item">
+<section class="doc-desc">
+ist.js also allows easy [single node creation](#Single node creation) using
+`ist.create()`.
+
+</section>
+<section class="doc-code">
+{% highlight js %}
+var myLink = ist.create("a.link[href=#]");
 {% endhighlight %}
 </section>
 </section>
@@ -289,6 +318,182 @@ require(['ist!path/to/template'], function(template) {
         
     document.body.appendChild(node);
 });
+{% endhighlight %}
+</section>
+</section>
+
+### <a class="nohover" name="Compiling">Compiling</a>
+
+<section class="doc-item">
+<section class="doc-desc">
+Calling `ist()` with a template string compiles it and returns the compiled
+template.
+
+</section>
+<section class="doc-code">
+{% highlight js %}
+var compiled = ist('h1 "{{ opencurly }} title {{ closecurly }}"');
+{% endhighlight %}
+</section>
+</section>
+
+<section class="doc-item">
+<section class="doc-desc">
+Templates stored in a `<script>` tag are compiled when you get them using
+`ist.script()`.
+
+</section>
+<section class="doc-code">
+{% highlight html %}
+<script id="example-template" type="text/x-ist">
+    article
+        h1 "{{ opencurly }} title {{ closecurly }}"
+        p "{{ opencurly }} text {{ closecurly }}"    
+</script>
+
+<script>
+    var compiled = ist.script("example-template");
+</script>
+{% endhighlight %}
+</section>
+</section>
+
+<section class="doc-item">
+<section class="doc-desc">
+When loading templates with the `ist!` AMD plugin, what you get are also
+compiled templates.
+
+</section>
+<section class="doc-code">
+{% highlight js %}
+define(['ist!path/to/template'], function(compiledTemplate) {
+    /* ... */ 
+});
+{% endhighlight %}
+</section>
+</section>
+
+### <a class="nohover" name="Rendering">Rendering</a>
+
+<section class="doc-item">
+<section class="doc-desc">
+Rendering a compiled template is done by calling its `render()` method.  When
+your template uses [expressions](#Expressions), you can pass a context object to
+use as an argument.
+
+</section>
+<section class="doc-code">
+{% highlight js %}
+var compiled = ist('h1 "{{ opencurly }} title {{ closecurly }}"'),
+    rendered = compiled.render({ title: "Hello, world !" });
+{% endhighlight %}
+</section>
+</section>
+
+<section class="doc-item">
+<section class="doc-desc">
+You can also pass a DOM document as a second argument when the rendered nodes
+are to be put in a separate window or frame.
+
+</section>
+<section class="doc-code">
+{% highlight js %}
+var popup = window.open(),
+    compiled = ist('h1 "{{ opencurly }} title {{ closecurly }}"'),
+    rendered = compiled.render(
+        { title: "Hello, world !" },
+        popup.document
+    );
+{% endhighlight %}
+</section>
+</section>
+
+<section class="doc-item">
+<section class="doc-desc">
+The result from `render()` is a DOM DocumentFragment.  If you are not familiar
+with them, a DocumentFragment is a transparent container node that can contain
+child nodes as any other DOM node, but that disappears once you insert it in an
+other node.
+
+</section>
+<section class="doc-code">
+{% highlight html %}
+<!-- DocumentFragment content -->
+    <h1>Hello, world !</h1>
+
+<!-- Document content -->
+<div id="container"></div>
+
+<!-- After calling container.appendChild(fragment): -->
+<div id="container">
+    <!-- The fragment still exists, but outside of
+    the document, and it is now empty -->
+    <h1>Hello, world !</h1>
+</div>
+{% endhighlight %}
+</section>
+</section>
+
+<section class="doc-item">
+<section class="doc-desc">
+As such, you can directly insert what `render()` returns into your document.
+
+</section>
+<section class="doc-code">
+{% highlight js %}
+var container = document.querySelector("#container"),
+    compiled = ist('h1 "{{ opencurly }} title {{ closecurly }}"'),
+    rendered = compiled.render({ title: "Hello, world !" });
+
+container.appendChild(rendered);
+{% endhighlight %}
+</section>
+</section>
+
+### <a class="nohover" name="Updating">Updating</a>
+
+<section class="doc-item">
+<section class="doc-desc">
+The DocumentFragment returned by `render()` has an additional `update()` method.
+If you keep a reference to the fragment even after having inserted it in your
+document, you can use this method to update the rendered nodes by passing it
+an updated context object.
+
+</section>
+<section class="doc-code">
+{% highlight js %}
+var container = document.querySelector("#container"),
+    compiled = ist('h1 "{{ opencurly }} title {{ closecurly }}"'),
+    rendered = compiled.render({ title: "Hello, world !" });
+
+container.appendChild(rendered);
+// <h1>Hello, world !</h1>
+
+rendered.update({ title: "My Web App" });
+// <h1>My Web App</h1>
+{% endhighlight %}
+</section>
+</section>
+
+<section class="doc-item">
+<section class="doc-desc">
+You can also call `update()` without any argument, in which case it will reuse
+the same context object.
+
+</section>
+<section class="doc-code">
+{% highlight js %}
+var container = document.querySelector("#container"),
+    compiled = ist('h1 "{{ opencurly }} title {{ closecurly }}"'),
+    context = { title: "Hello, world !" },
+    rendered = compiled.render(context);
+
+container.appendChild(rendered);
+// <h1>Hello, world !</h1>
+
+context.title = "My Web App";
+rendered.update();
+// <h1>My Web App</h1>
 {% endhighlight %}
 </section>
 </section>
@@ -703,13 +908,29 @@ depending on the value of an expression.
 
 <section class="doc-item">
 <section class="doc-desc">
-The `@unless` directives has the same goal, just reversed.
+The `@unless` directive has the same goal, just reversed.
 
 </section>
 <section class="doc-code">
 {% highlight css %}
 @unless user.isRegistered
     a[href=register.html] "Sign up now !"
+{% endhighlight %}
+</section>
+</section>
+
+<section class="doc-item">
+<section class="doc-desc">
+The `@else` directive can be used just after a `@if` or `@unless` directive to
+match the opposite condition.
+
+</section>
+<section class="doc-code">
+{% highlight css %}
+@if user.isAdmin
+    a[href=admin.html] "Administration zone"
+@else
+    "No admin zone for you :("
 {% endhighlight %}
 </section>
 </section>
@@ -806,7 +1027,8 @@ with details about the iteration.
 	@if loop.first
 		"First item"
 		
-	"Item {{ opencurly }} loop.index + 1 {{ closecurly }} of {{ opencurly }} loop.length {{ closecurly }} is {{ opencurly }} this {{ closecurly }}"
+    "Item {{ opencurly }} loop.index + 1 {{ closecurly }} of {{ opencurly }} loop.length {{ closecurly }}"
+    " is {{ opencurly }} this {{ closecurly }}"
 	
 	@if loop.last
 		"Last item"
@@ -934,7 +1156,7 @@ definition of `<script>` tags does not matter.
 
 <script type="text/javascript">
 	function renderMenu() {
-		ist.fromScriptTag("menu").render([
+		ist.script("menu").render([
 			{ label: "Home", url: "index.html" },
 			{ label: "News", url: "news.html" },
 			{ label: "Contact", url: "contact.html" }
@@ -1023,7 +1245,7 @@ define("included-template", ["ist!some/template"], function(tmpl) {
 });
 
 require(["ist", "included-template"], function(ist) {
-	ist.fromScriptTag("main").render(/* ... */);
+	ist.script("main").render(/* ... */);
 });
 {% endhighlight %}
 </section>
@@ -1041,7 +1263,7 @@ define("included-template", [], function() {
 });
 
 require(["ist", "included-template"], function(ist) {
-	ist.fromScriptTag("main").render(/* ... */);
+	ist.script("main").render(/* ... */);
 });
 {% endhighlight %}
 </section>
@@ -1078,9 +1300,9 @@ Partial names must be specified last on an element line, and must be preceded by
 at least one space or tab character.  If an inline text node is present, the
 partial name must be placed after it.
 
-They can be accessed using the `findPartial()` method of a compiled template,
-which takes the partial name as argument.  It returns the first matching
-partial, which can be manipulated as any other compiled template.
+They can be accessed using the `partial()` method of a compiled template, which
+takes the partial name as argument.  It returns the first matching partial,
+which can be manipulated as any other compiled template.
 
 </section>
 <section class="doc-code">
@@ -1095,7 +1317,7 @@ function initialRender(tweets) {
 
 function addNewTweet(author, text) {
     var container = document.querySelector(".liveTweets"),
-        partial = myTemplate.findPartial("tweet");
+        partial = myTemplate.partial("tweet");
         
     container.appendChild(
         partial.render({ author: author, text: text })
@@ -1110,43 +1332,43 @@ function addNewTweet(author, text) {
 <section class="doc-item">
 <section class="doc-desc">
 ist.js provides a shortcut "single node" creation interface that support the
-same syntax as full template files.  Just call `ist.createNode()` and pass it
-an element selector.
+same syntax as full template files.  Just call `ist.create()` and pass it an
+element selector.
 
 </section>
 <section class="doc-code">
 {% highlight js %}
-var myDiv = ist.createNode(
+var myDiv = ist.create(
 		"div.class#id[attribute=Value]"
 	);
 {% endhighlight %}
 </section>
 </section>
+    
 <section class="doc-item">
 <section class="doc-desc">
-    
 It also supports rendering with context.
 
 </section>
 <section class="doc-code">
 {% highlight js %}
-var myDiv = ist.createNode(
+var myDiv = ist.create(
 		"div[class={{ opencurly }} cls {{ closecurly }}]",
 		{ cls: 'myclass' }
 	);
 {% endhighlight %}
 </section>
 </section>
+    
 <section class="doc-item">
 <section class="doc-desc">
-    
-Actually `ist.createNode()` is able to create several nodes at once using a
-CSS-like angle-bracket syntax.
+`ist.create()` is also able to create several nodes at once using a CSS-like
+angle-bracket syntax.
 
 </section>
 <section class="doc-code">
 {% highlight js %}
-var myParentDiv = ist.createNode(
+var myParentDiv = ist.create(
 		'div.parent > div.child > "{{ opencurly }} text {{ closecurly }}"',
 		{ text: "Text node content" }
 	);
@@ -1158,14 +1380,14 @@ var myParentDiv = ist.createNode(
 <section class="doc-desc">
 And you can even use directives.
 
-Please note however that `createNode` has a quite naive angle-bracket parser,
-and as such does not support angle brackets anywhere else than between nodes.
+Please note however that `create` has a quite naive angle-bracket parser, and as
+such does not support angle brackets anywhere else than between nodes.
 Therefore you should only use it for trivial node tree creation.
 
 </section>
 <section class="doc-code">
 {% highlight js %}
-var myParentDiv = ist.createNode(
+var myParentDiv = ist.create(
 		'div.parent > @each children > "{{ opencurly }} name {{ closecurly }}"',
 		{
 			children: [
@@ -1186,7 +1408,7 @@ argument.
 </section>
 <section class="doc-code">
 {% highlight js %}
-var popupDiv = ist.createNode(
+var popupDiv = ist.create(
 		'div.inPopup', 
 		{},
 		popup.document
@@ -1197,20 +1419,22 @@ var popupDiv = ist.createNode(
 
 ## <a class="nohover" name="Custom directives">Custom directives</a>
 
+### <a class="nohover" name="Definition and syntax">Definition and syntax</a>
+
 <section class="doc-item">
 <section class="doc-desc">
 ist.js allows defining custom directives, and built-in directives are actually
 defined the same way.  If you're used to [handlebars block helpers][1], you'll
 find that ist.js directives work in a very similar way.
 
-A directive helper is registered by calling `ist.registerHelper()` and passing
-it a directive name (case-sensitive) and a helper function.
+A directive helper is registered by calling `ist.helper()` and passing it a
+directive name (case-sensitive) and a helper function.
 
 </section>
 <section class="doc-code">
 {% highlight js %}
 /* Helper for '@foo' */
-ist.registerHelper("foo", function(outer, inner, template, fragment) {
+ist.helper("foo", function(context, value, template, fragment) {
 	/* Do stuff */
 });
 {% endhighlight %}
@@ -1221,15 +1445,15 @@ ist.registerHelper("foo", function(outer, inner, template, fragment) {
 <section class="doc-desc">
 The arguments passed to helpers are:
 
-* `outer`: a [Context object](#Context objects) for the outer rendering context,
-  ie. the value of the rendering context where the directive is called;
-* `inner`: a [Context object](#Context objects) for the inner rendering context,
-  ie. the value that is passed as an argument to the directive; this argument
-  is undefined when no parameter is passed;
+* `context`: a [Context object](#Context objects) for the outer rendering
+  context, ie. the value of the rendering context where the directive is called;
+* `value`: the value that is passed as an argument to the directive; this
+  argument is undefined when no parameter is passed;
 * `template`: an ist compiled template that enables access to nodes defined as
   children of the directive;
-* `fragment`: an empty DocumentFragment where the directive should add the nodes
-  it creates.
+* `fragment`: a DocumentFragment where the directive should render nodes.  When
+  updating a previously rendered template, it contains all nodes the directive
+  rendered; otherwise it is empty.
 
 Here are some example calls to `@foo` with the parameters the helper receives:
 
@@ -1238,8 +1462,8 @@ Here are some example calls to `@foo` with the parameters the helper receives:
 {% highlight css %}
 @with { hello: "world" }
     /* Call with a parameter, the handler receives:
-        - outer: a Context object for { hello: "world" }
-        - inner: a Context object for "world" (ie. the value of hello)
+        - context: a Context object for { hello: "world" }
+        - value: "world"
         - template: a compiled ist template for
                 div.childA
                 div.childB
@@ -1249,8 +1473,8 @@ Here are some example calls to `@foo` with the parameters the helper receives:
         div.childB
 
     /* Call with a parameter, the handler receives:
-        - outer: a Context object for { hello: "world" }
-        - inner: undefined
+        - context: a Context object for { hello: "world" }
+        - value: undefined
         - template: a compiled ist template for
                 div.child
                     div.grandChild
@@ -1266,53 +1490,169 @@ Here are some example calls to `@foo` with the parameters the helper receives:
 <section class="doc-desc">
 To create nodes from a directive helper, you should not use `document` or any of
 its methods, as you don't know which DOM document your directive will be used
-to create nodes in.  You can use helper properties and methods on any of the
-[Context object](#Context objects) arguments instead (you may prefer always
-using `outer` as it is always present).
+to create nodes in.  You can use helper properties and methods of the context
+argument instead.
 
 </section>
 <section class="doc-code">
 {% highlight js %}
-/* Always create a text node containing "foo", ignoring context values and
+/* Always create a text node containing the value passed as argument, ignoring
    children template nodes */
-ist.registerHelper("foo", function(outer, inner, template, fragment) {
-	var node = outer.createTextNode("foo");
-    fragment.appendChild("foo");
-});
+ist.helper(
+    "echo",
+    function(context, value, template, fragment) {
+    	var node = context.createTextNode(
+                value || "no value passed to @echo !"
+            );
+
+        fragment.appendChild(node);
+    }
+);
+{% endhighlight %}
+</section>
+</section>
+
+### <a class="nohover" name="Handling updates">Handling updates</a>
+
+<section class="doc-item">
+<section class="doc-desc">
+When rendering a template, the `fragment` argument to directive helpers is
+empty.  However, when updating, it contains previously rendered nodes.  When the
+helper returns, whatever the fragment contains will be added to the rendered
+node tree.  It is up to directive helpers to decide what to do based on the
+fragment contents.
+
+A naive approach to handling node updates is to just empty the fragment and
+render nodes in all cases.  This approach works, but it is not very efficient.
+Here is how the `@echo` directive above could handle updates using this
+approach.
+
+</section>
+<section class="doc-code">
+{% highlight js %}
+ist.helper(
+    'echo',
+    function(context, value, template, fragment) {
+        /* Empty the fragment first */
+        while (fragment.hasChildNodes()) {
+            fragment.removeChild(fragment.firstChild);
+        }
+
+        /* Render node */
+        var node = context.createTextNode(
+                value || "no value passed to @echo !"
+            );
+
+        fragment.appendChild(node);
+    }
+);
 {% endhighlight %}
 </section>
 </section>
 
 <section class="doc-item">
 <section class="doc-desc">
-You can access the value wrapped by a [Context object](#Context objects) with
-its `value` property.  Here is a simple `@echo` directive that creates a single
-text node with the string passed as a parameter.
+A better approach is to reuse already rendered nodes and update them.
 
 </section>
 <section class="doc-code">
 {% highlight js %}
-/* Example: @echo "foo" */
-ist.registerHelper("echo", function(outer, inner, template, fragment) {
-    var node = outer.createTextNode(inner ? inner.value : "no value passed to @echo !");
-    fragment.appendChild(node);
-});
+ist.helper(
+    'echo',
+    function(context, value, template, fragment) {
+        var node = fragment.firstChild;
+
+        if (!node) {
+            /* No previously rendered node available */
+            node = context.createTextNode("");
+            fragment.appendChild(node);
+        }
+
+        /* Update node content */
+        node.textContent = value || "no value passed to @echo !";
+    }
+);
 {% endhighlight %}
 </section>
 </section>
 
 <section class="doc-item">
 <section class="doc-desc">
-Here is another simple example showing how the built-in `@with` directive could
-be defined.  It simply renders its child template using the inner context value.
+Helpers that render templates need access to the rendered template `update()`
+method when updating.  Therefore they need to save the rendered fragment
+returned by calling `render()` and retrieve it when updating.  The `fragment`
+argument to helpers comes with two additional methods to help with that:
+
+* `fragment.appendRenderedFragment(rendered)` appends the contents from
+  `rendered` (just like calling `fragment.appendChild(rendered)`) to the
+  fragment, but also saves `rendered` itself for later retrieval.
+* `fragment.extractRenderedFragment()` looks for a previously saved rendered
+  fragment, and returns it.  When no rendered fragment has been saved, it
+  returns `undefined`.  Otherwise, all previously rendered nodes are removed
+  from `fragment` and returned in the resulting rendered fragment.  In that
+  case, you will need to re-append the nodes to `fragment` after updating.
+
+Here is an example showing how this works with the `@with` directive.
 
 </section>
 <section class="doc-code">
 {% highlight js %}
-ist.registerHelper("with", function(outer, inner, template, fragment) {
-    var nodes = template.render(inner.value);
-    fragment.appendChild(nodes);
-}
+ist.helper(
+    'with',
+    function(context, value, template, fragment) {
+        /* Retrieve previously saved rendered fragment */
+        var rendered = fragment.extractRenderedFragment();
+
+        if (rendered) {
+            /* A rendered fragment was found, update it */
+            rendered.update(value);
+        } else {
+            /* Nothing was saved, render the template */
+            rendered = template.render(value);
+        }
+
+        /* Put nodes back in the fragment */
+        fragment.appendRenderedFragment(rendered);
+    }
+);
+{% endhighlight %}
+</section>
+</section>
+
+<section class="doc-item">
+<section class="doc-desc">
+When a helper renders multiple templates at once, you can pass an additional key
+argument to both `appendRenderedFragment` and `extractRenderedFragment` to
+distinguish them.  Keys can be any Javascript value.
+
+Here is an example of a `doubleWith` directive that renders its inner template
+twice and is able to update correctly.
+
+</section>
+<section class="doc-code">
+{% highlight js %}
+ist.helper(
+    'doubleWith',
+    function(context, value, template, fragment) {
+        var first = fragment.extractRenderedFragment("first"),
+            second = fragment.extractRenderedFragment("second");
+
+        if (first) {
+            first.update(value);
+        } else {
+            first = template.render(value);
+        }
+
+        if (second) {
+            second.update(value);
+        } else {
+            second = template.render(value);
+        }
+
+        fragment.appendRenderedFragment(first, "first");
+        fragment.appendRenderedFragment(second, "second");
+    }
+);
 {% endhighlight %}
 </section>
 </section>
@@ -1326,16 +1666,28 @@ Here is a more robust version of `@with`.
 </section>
 <section class="doc-code">
 {% highlight js %}
-ist.registerHelper("with", function(outer, inner, template, fragment) {
-    if (!inner) {
-        throw new Error("No data passed to @with");
+ist.helper(
+    "with",
+    function(context, value, template, fragment) {
+        if (!value) {
+            throw new Error("No data passed to @with");
+        }
+
+        /* Retrieve previously saved rendered fragment */
+        var rendered = fragment.extractRenderedFragment();
+
+        if (rendered) {
+            /* A rendered fragment was found, update it */
+            rendered.update(value);
+        } else {
+            /* Nothing was saved, render the template */
+            rendered = template.render(value);
+        }
+
+        /* Put nodes back in the fragment */
+        fragment.appendRenderedFragment(rendered);
     }
-
-    /* You can directly pass Context objects to the render() method of templates */
-    var nodes = template.render(inner);
-
-    fragment.appendChild(nodes);    
-});
+);
 {% endhighlight %}
 </section>
 </section>
@@ -1362,41 +1714,22 @@ give access to the DOM document where the template is being rendered:
 </section>
 <section class="doc-code">
 {% highlight js %}
-/* Creates a <div> with a text child node containing the value passed as a 
-   parameter, ie @divtext "foo" renders to <div>foo</div> */
-ist.registerHelper("divtext", function(outer, inner, template, fragment) {
-	var div = outer.createElement("div");
-	var text = outer.createTextNode(inner.value);
-	
-	div.appendChild(text);
-	fragment.appendChild(div);
-});
-{% endhighlight %}
-</section>
-</section>
+/* Creates a <div> with a text child node containing
+   the value passed as a  parameter, ie @divtext "foo"
+   renders to <div>foo</div>.
 
-<section class="doc-item">
-<section class="doc-desc">
-`Context` objects can be passed directly to any compiled template `render()`
-method.
-
-</section>
-<section class="doc-code">
-{% highlight js %}
-ist.registerHelper('with', function(outer, inner, template, fragment) {
-	fragment.appendChild(
-        template.render(inner)
-     );
-	
-	/* Would be the same as :
-		fragment.appendChild(
-            template.render(
-    			inner.value,
-    			inner.document
-    		)
-        );
-	*/
-});
+   Note: for the sake of simplicity, this example does
+   not handle updates */
+ist.helper(
+    "divtext",
+    function(context, value, template, fragment) {
+    	var div = context.createElement("div");
+    	var text = context.createTextNode(value);
+    	
+    	div.appendChild(text);
+    	fragment.appendChild(div);
+    }
+);
 {% endhighlight %}
 </section>
 </section>
@@ -1412,35 +1745,15 @@ The following members can be used to create new contexts and access their value:
 </section>
 <section class="doc-code">
 {% highlight js %}
-ist.registerHelper('test', function(outer, inner, template, fragment) {
-	var testValue = { foo: "bar" },
-		testCtx = outer.createContext(testValue);
-	
-	assert(testValue === testCtx.value);
-});
-{% endhighlight %}
-</section>
-</section>
-
-<section class="doc-item">
-<section class="doc-desc">
-The following members can be used to help evaluate expressions:
-
-* `Context#interpolate(string)` replaces expressions in double curly braces
-  inside `string` by their value in the rendering context.
-* `Context#evaluate(string)` returns the result of evaluating `string` in the
-  rendering context.  This method is called by `Context#interpolate()` for each
-  double curly braces expression.
-  
-</section>
-<section class="doc-code">
-{% highlight js %}
-ist.registerHelper('test', function(outer, inner, template, fragment) {
-	var testCtx = outer.createContext({ foo: "bar" });
-	
-    assert(textCtx.evaluate("foo.toUpperCase()") === "BAR");
-	assert(testCtx.interpolate("foo={{ opencurly }} foo {{ closecurly }}") === "foo=bar");
-});
+ist.helper(
+    'test',
+    function(context, value, template, fragment) {
+    	var testValue = { foo: "bar" },
+    		ctx = context.createContext(testValue);
+    	
+    	assert(testValue === ctx.value);
+    }
+);
 {% endhighlight %}
 </section>
 </section>
@@ -1456,213 +1769,34 @@ evaluated:
   rendering context).
 * `Context#popScope()` undoes what pushScope did, popping the last pushed scope
   object.
+* `Context#pushValue(value)` (documentation pending)
   
 </section>
 <section class="doc-code">
 {% highlight js %}
-ist.registerHelper('test', function(outer, inner, template, fragment) {
-	var testCtx = outer.createContext({ foo: "bar" });
-	
-    assert(testCtx.evaluate("foo.toUpperCase()") === "BAR");
-	
-	testCtx.pushScope({ foo: "baz", hello: "world" });
-    assert(testCtx.evaluate("foo.toUpperCase()") === "BAZ");
-    assert(testCtx.evaluate("hello") === "world");
+ist.helper(
+    'test',
+    function(outer, inner, template, fragment) {
+    	var ctx = outer.createContext({ foo: "bar" });
+    	
+        assert(ctx.evaluate("foo.toUpperCase()") === "BAR");
+    	
+    	ctx.pushScope({ foo: "baz", hello: "world" });
+        assert(ctx.evaluate("foo.toUpperCase()") === "BAZ");
+        assert(ctx.evaluate("hello") === "world");
 
-	testCtx.pushScope({ foo: "ding" });
-    assert(testCtx.evaluate("foo.toUpperCase()") === "DING");
-    assert(testCtx.evaluate("hello") === "world");
+    	ctx.pushScope({ foo: "ding" });
+        assert(ctx.evaluate("foo.toUpperCase()") === "DING");
+        assert(ctx.evaluate("hello") === "world");
 
-	testCtx.popScope();
-    assert(testCtx.evaluate("foo.toUpperCase()") === "BAZ");
-    assert(testCtx.evaluate("hello") === "world");
-	
-	testCtx.popScope();
-    assert(testCtx.evaluate("foo.toUpperCase()") === "BAR");
-});
-{% endhighlight %}
-</section>
-</section>
-
-### <a class="nohover" name="Simple examples">Simple examples</a>
-
-<section class="doc-item">
-<section class="doc-desc">
-You can define a `@noop` directive that simply renders the inner template
-without any context switching as follows:
-
-</section>
-<section class="doc-code">
-{% highlight js %}
-ist.registerHelper('noop', function(outer, inner, template, fragment) {
-	// Render inner template with the current context
-    fragment.appendChild(template.render(outer));
-});
-{% endhighlight %}
-</section>
-</section>
-
-<section class="doc-item">
-<section class="doc-desc">
-The following example allows disabling part of a tree with a `@disable`
-directive.  It simply does not insert any nodes in the fragment parameter.
-
-</section>
-<section class="doc-code">
-{% highlight js %}
-ist.registerHelper('disabled', function() {
-});
-{% endhighlight %}
-</section>
-</section>
-
-<section class="doc-item">
-<section class="doc-desc">
-Say you have a markdown library that sets a `parseMarkdown()` method to turn
-markdown code into HTML code.  You could define a `@markdown` directive to
-insert rendered markdown in your tree.
-
-</section>
-<section class="doc-code">
-{% highlight js %}
-ist.registerHelper('markdown', function(outer, inner, template, fragment) {
-    // Create temporary container
-	var container = outer.createElement('div');
-
-    // Render markdown
-	container.innerHTML = parseMarkdown(inner.value);
-
-    // Dump container children into fragment
-    while (container.hasChildNodes()) {
-        fragment.appendChild(container.firstChild);
+    	ctx.popScope();
+        assert(ctx.evaluate("foo.toUpperCase()") === "BAZ");
+        assert(ctx.evaluate("hello") === "world");
+    	
+    	ctx.popScope();
+        assert(ctx.evaluate("foo.toUpperCase()") === "BAR");
     }
-});
-{% endhighlight %}
-</section>
-</section>
-
-<section class="doc-item">
-<section class="doc-desc">
-You could then use it as follows:
-
-</section>
-<section class="doc-code">
-{% highlight html %}
-<script type="text/x-ist" id="template">
-	@each articles
-		article
-			@markdown content
-</script>
-
-<script type="text/javascript">
-ist.fromScriptTag("template")
-   .render({
-   	articles: [
-   		{ content: "# Title\n## Subtitle" },
-   		/* ... */
-   	]
-   });
-</script>
-{% endhighlight %}
-</section>
-</section>
-
-### <a class="nohover" name="Built-in directives">Built-in directives</a>
-
-<section class="doc-item">
-<section class="doc-desc">
-Here is how the `@if` directive can be defined.
-
-</section>
-<section class="doc-code">
-{% highlight js %}
-ist.registerHelper('if', function(outer, inner, template, fragment) {
-	if (inner.value) {
-        fragment.appendChild(template.render(outer));
-	}
-});
-{% endhighlight %}
-</section>
-</section>
-
-<section class="doc-item">
-<section class="doc-desc">
-Of course the `@unless` directive is very similar.
-
-</section>
-<section class="doc-code">
-{% highlight js %}
-ist.registerHelper('unless', function(outer, inner, template, fragment) {
-    if (!inner.value) {
-        fragment.appendChild(template.render(outer));
-    }
-});
-{% endhighlight %}
-</section>
-</section>
-
-<section class="doc-item">
-<section class="doc-desc">
-Here is how the `@each` directive can be defined.  Note the use of `pushScope`
-to define the `loop` variable.  Calling `popScope` is not necessary, as `subCtx`
-is used only once.  Additionnaly, the directive could throw an exception when
-its argument is not an array.
-
-</section>
-<section class="doc-code">
-{% highlight js %}
-ist.registerHelper('each', function(outer, inner, template, fragment) {
-	var outerValue = outer.value,
-        innerValue = inner.value;
-
-	if (Array.isArray(innerValue)) {
-		innerValue.forEach(function(item, index) {
-			var subCtx = outer.createContext(item);
-		
-			subCtx.pushScope({
-                loop: {
-    				first: index === 0,
-    				index: index,
-    				last: index === innerValue.length - 1,
-    				length: innerValue.length,
-    				outer: outerValue
-    			}
-            });
-
-			fragment.appendChild(template.render(subCtx));
-		});
-	}
-
-	return fragment;
-});
-{% endhighlight %}
-</section>
-</section>
-
-<section class="doc-item">
-<section class="doc-desc">
-Finally, here is how `@define` and `@use` are defined.  The helper code for
-these is really simple.
-
-</section>
-<section class="doc-code">
-{% highlight js %}
-// Component store
-var defined = {};
-
-ist.registerHelper('define', function(outer, inner, template, fragment) {
-    defined[inner.value] = template;
-});
-
-ist.registerHelper('use', function(outer, inner, template, fragment) {
-    var t = defined[inner.value];
-
-    if (!t) {
-        throw new Error("Component " + inner.value + " was not @define-d");
-    }
-
-    fragment.appendChild(t.render(outer));
-});
+);
 {% endhighlight %}
 </section>
 </section>
@@ -1671,7 +1805,7 @@ ist.registerHelper('use', function(outer, inner, template, fragment) {
 
 <section class="doc-item">
 <section class="doc-desc">
-This documentation was last updated for ist.js version 0.5.7.
+This documentation was last updated for ist.js version 0.6.1.
 
 [1]: http://handlebarsjs.com/block_helpers.html
 </section>
