@@ -18,32 +18,34 @@ define([], function() {
 		built.forEach(function(file) {
 			it('should run ' + file, function() {
 				var complete = false;
-				function done() { complete = true; }
+
+				var iframe = document.createElement('iframe');
+				iframe.name = file;
+				iframe.src = 'about:blank';
+				document.body.appendChild(iframe);
+
+				var iframeWindow = window.frames[file];
+				var iframeDoc = iframeWindow.document;
+
+				iframeWindow.__run__ = function(testRunner) {
+					testRunner(expect, function() {
+						document.body.removeChild(iframe);
+						complete = true;
+					});
+				};
+
+				var istScript = iframeDoc.createElement('script');
+				istScript.type = 'text/x-ist';
+				istScript.id = 'scriptTag';
+				istScript.innerHTML = 'div\n "{{ foo }}"';
+
+				iframeDoc.body.appendChild(istScript);
+
+				var requireScript = iframeDoc.createElement('script');
+				requireScript.src = '/base/node_modules/requirejs/require.js';
+				requireScript.dataset.main = file;
 
 				runs(function() {
-					var iframe = document.createElement('iframe');
-					iframe.name = file;
-					iframe.src = 'about:blank';
-					document.body.appendChild(iframe);
-
-					var iframeWindow = window.frames[file];
-					var iframeDoc = iframeWindow.document;
-
-					iframeWindow.__run__ = function(testRunner) {
-						testRunner(expect, done);
-					};
-
-					var istScript = iframeDoc.createElement('script');
-					istScript.type = 'text/x-ist';
-					istScript.id = 'scriptTag';
-					istScript.innerHTML = 'div\n "{{ foo }}"';
-
-					iframeDoc.body.appendChild(istScript);
-
-					var requireScript = iframeDoc.createElement('script');
-					requireScript.src = '/base/node_modules/requirejs/require.js';
-					requireScript.dataset.main = file;
-
 					iframeDoc.body.appendChild(requireScript);
 				});
 

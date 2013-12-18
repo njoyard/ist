@@ -3,3 +3,6 @@ node_modules
 # Do not track compiled parser
 src/parser/parser.compiled.js
 src/parser/parser.js
+
+# Do not track compiled r.js tests
+test/build/*.out.js
