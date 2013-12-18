@@ -1,3 +1,8 @@
+v0.6.1
+- Fixed r.js builds with "ist!path/to/template" dependencies
+- Moved tests to Karma
+- Added r.js build tests
+
 v0.6.0 - 2013-11-25
 - Rewrote rendering to enable updating
 - Added @else

@@ -1,6 +1,6 @@
 /**
  * IST: Indented Selector Templating
- * version 0.6.0
+ * version 0.6.1
  *
  * Copyright (c) 2012-2013 Nicolas Joyard
  * Released under the MIT license.
@@ -844,7 +844,12 @@
 	
 	
 		return Renderer;
-	}(istComponents.context, istComponents.directives, istComponents.renderedtree, istComponents.rendereddirective));
+	}(
+		istComponents.context,
+		istComponents.directives,
+		istComponents.renderedtree,
+		istComponents.rendereddirective
+	));
 	/*global define, console */
 	istComponents.template = (
 	function(codegen, Context, Renderer) {
@@ -882,7 +887,8 @@
 			this.name = name || '<unknown>';
 			this.nodes = nodes;
 	
-			this.nodes.forEach(this._preRenderRec, this);
+			if (typeof document !== 'undefined')
+				this.nodes.forEach(this._preRenderRec, this);
 		}
 		
 		
@@ -1001,7 +1007,7 @@
 			return 'new ist.Template(' +
 				JSON.stringify(this.name) + ', ' +
 				JSON.stringify(this.nodes, null, pretty ? 1 : 0) +
-			');';
+			')';
 		};
 		
 		
@@ -3021,7 +3027,7 @@
 	}());
 	
 	/*global define, isBrowser, isNode, ActiveXObject */
-	istComponents.amdplugin = ( function(require, misc) {
+	istComponents.amdplugin = ( function(misc) {
 		
 	
 		function pluginify(ist) {
@@ -3178,7 +3184,7 @@
 		}
 		
 		return pluginify;
-	}(istComponents.require, istComponents.misc));
+	}(istComponents.misc));
 	
 	/*global define, requirejs, isAMD, isNode, isBrowser */
 	istComponents.ist = ( function(Template, directives, pegjsParser, preprocess, pluginify, misc) {
@@ -3327,8 +3333,8 @@
 		istComponents.misc
 	));
 		
-	if (isAMD) {
-		global.define("ist", [], function() { return istComponents.ist; });
+	if (isAMD || isNode) {
+		define("ist", [], function() { return istComponents.ist; });
 	} else {
 		previous = global.ist;
 		
