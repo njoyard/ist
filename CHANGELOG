@@ -1,4 +1,7 @@
-v0.6.1
+v0.6.2 - 2014-01-06
+- Update to PEGjs version 0.8.0
+
+v0.6.1 - 2013-12-18
 - Fixed r.js builds with "ist!path/to/template" dependencies
 - Moved tests to Karma
 - Added r.js build tests

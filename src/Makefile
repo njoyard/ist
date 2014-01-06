@@ -1,5 +1,5 @@
 PEGJS=../node_modules/.bin/pegjs
-PEGJSFLAGS=--export-var pegjsParser --track-line-and-column
+PEGJSFLAGS=--export-var pegjsParser --allowed-start-rules templateLines
 RJS=../node_modules/.bin/r.js
 
 DESTDIR=..

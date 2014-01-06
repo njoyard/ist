@@ -220,11 +220,11 @@ define(function() {
 		});
 	
 		if (typeof additions !== "undefined") {
-			if (additions.partial.length > 0) {
+			if (additions.partial) {
 				elem.partial = additions.partial;
 			}
 		
-			if (typeof additions.textnode !== "undefined" &&
+			if (additions.textnode &&
 				typeof additions.textnode.text !== "undefined") {
 				elem.children.push(additions.textnode);
 			}

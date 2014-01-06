@@ -18,7 +18,7 @@ line
 
 indent "indent"
 = s:__*
-{ return helpers.parseIndent(depths, s, line); }
+{ return helpers.parseIndent(depths, s, line()); }
 
 newline "new line"
 = "\n"
@@ -70,11 +70,11 @@ element "element"
 
 implicitElement
 = qualifiers:elemQualifier+ additions:elementAdditions
-{ return helpers.createElement('div', qualifiers, additions, line); }
+{ return helpers.createElement('div', qualifiers, additions, line()); }
 
 explicitElement
 = tagName:identifier qualifiers:elemQualifier* additions:elementAdditions
-{ return helpers.createElement(tagName, qualifiers, additions, line); }
+{ return helpers.createElement(tagName, qualifiers, additions, line()); }
 
 elementAdditions
 = t:(__+ t:textNode { return t; } )? p:(__+ p:partial { return p; } )?
@@ -82,7 +82,7 @@ elementAdditions
 
 textNode "text node"
 = text:quotedText
-{ return helpers.createTextNode(text, line); }
+{ return helpers.createTextNode(text, line()); }
 
 escapedUnicode
 = "u" a:[0-9a-z]i b:[0-9a-z]i c:[0-9a-z]i d:[0-9a-z]i
@@ -112,9 +112,9 @@ directive "directive"
 
 simpleDirective
 = "@" name:identifier
-{ return helpers.createDirective(name, undefined, line); }
+{ return helpers.createDirective(name, undefined, line()); }
 
 exprDirective
 = "@" name:identifier __+ expr:character+
-{ return helpers.createDirective(name, expr.join(''), line); }
+{ return helpers.createDirective(name, expr.join(''), line()); }
 
