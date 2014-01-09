@@ -24,36 +24,38 @@ define([], function() {
 				iframe.src = 'about:blank';
 				document.body.appendChild(iframe);
 
-				var iframeWindow = window.frames[file];
-				var iframeDoc = iframeWindow.document;
+				iframe.addEventListener('load', function() {
+					var iframeWindow = window.frames[file];
+					var iframeDoc = iframeWindow.document;
 
-				iframeWindow.__run__ = function(testRunner) {
-					testRunner(expect, function() {
-						document.body.removeChild(iframe);
-						complete = true;
+					iframeWindow.__run__ = function(testRunner) {
+						testRunner(expect, function() {
+							document.body.removeChild(iframe);
+							complete = true;
+						});
+					};
+
+					var istScript = iframeDoc.createElement('script');
+					istScript.type = 'text/x-ist';
+					istScript.id = 'scriptTag';
+					istScript.innerHTML = 'div\n "{{ foo }}"';
+
+					iframeDoc.body.appendChild(istScript);
+
+					var requireScript = iframeDoc.createElement('script');
+					requireScript.src = '/base/node_modules/requirejs/require.js';
+					requireScript.dataset.main = file;
+
+					runs(function() {
+						iframeDoc.body.appendChild(requireScript);
 					});
-				};
 
-				var istScript = iframeDoc.createElement('script');
-				istScript.type = 'text/x-ist';
-				istScript.id = 'scriptTag';
-				istScript.innerHTML = 'div\n "{{ foo }}"';
-
-				iframeDoc.body.appendChild(istScript);
-
-				var requireScript = iframeDoc.createElement('script');
-				requireScript.src = '/base/node_modules/requirejs/require.js';
-				requireScript.dataset.main = file;
-
-				runs(function() {
-					iframeDoc.body.appendChild(requireScript);
+					waitsFor(
+						function() { return complete; },
+						1000,
+						'built script ' + file
+					);
 				});
-
-				waitsFor(
-					function() { return complete; },
-					1000,
-					'built script ' + file
-				);
 			});
 		});
 	});
