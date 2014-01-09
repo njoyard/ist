@@ -17,8 +17,10 @@ clean:
 
 ## Tests
 
-@PHONY: tests
-tests: buildtests functests
+test: buildtests functests
+
+@PHONY: test-dev
+test-dev: buildtests functests-dev
 
 # r.js building tests
 
@@ -41,3 +43,7 @@ KARMACONF=test/karma-conf.js
 @PHONY: functests
 functests:
 	$(KARMA) start $(KARMACONF)
+
+@PHONY: functests-dev
+functests-dev:
+	$(KARMA) start $(KARMACONF) --single-run=false --auto-watch=true --browsers= 
