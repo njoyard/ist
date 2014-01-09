@@ -232,7 +232,8 @@ define([
 			expect( function() { tErrors.render({ test: 'type' }); } )
 				.toThrowAny([
 					'a is not defined in \'test/directivehelper/errors\' on line 2',
-					'Can\'t find variable: a in \'test/directivehelper/errors\' on line 2'
+					'Can\'t find variable: a in \'test/directivehelper/errors\' on line 2',
+					'Undefined variable: a in \'test/directivehelper/errors\' on line 2'
 				]);
 				
 			expect( function() { tErrors.render({ test: 'throw' }); } )
