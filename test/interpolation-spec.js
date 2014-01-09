@@ -87,7 +87,8 @@ define([
 					'Unexpected identifier in \'<unknown>\' on line 1',
 					'missing ; before statement in \'<unknown>\' on line 1',
 					'Expected an identifier but found \'error\' instead in \'<unknown>\' on line 1',
-					'Parse error in \'<unknown>\' on line 1'
+					'Parse error in \'<unknown>\' on line 1',
+					'missing ) in parenthetical in \'<unknown>\' on line 1'
 				]);
 
 			expect( function() { ist('div[attr={{ syntax error }}]'); } )
@@ -95,7 +96,8 @@ define([
 					'Unexpected identifier in \'<unknown>\' on line 1',
 					'missing ; before statement in \'<unknown>\' on line 1',
 					'Expected an identifier but found \'error\' instead in \'<unknown>\' on line 1',
-					'Parse error in \'<unknown>\' on line 1'
+					'Parse error in \'<unknown>\' on line 1',
+					'missing ) in parenthetical in \'<unknown>\' on line 1'
 				]);
 
 			expect( function() { ist('div[.prop={{ syntax error }}]'); } )
@@ -103,7 +105,8 @@ define([
 					'Unexpected identifier in \'<unknown>\' on line 1',
 					'missing ; before statement in \'<unknown>\' on line 1',
 					'Expected an identifier but found \'error\' instead in \'<unknown>\' on line 1',
-					'Parse error in \'<unknown>\' on line 1'
+					'Parse error in \'<unknown>\' on line 1',
+					'missing ) in parenthetical in \'<unknown>\' on line 1'
 				]);
 			
 			expect( function() { ist('@with syntax error\n \'test\''); } )
@@ -111,7 +114,8 @@ define([
 					'Unexpected identifier in \'<unknown>\' on line 1',
 					'missing ; before statement in \'<unknown>\' on line 1',
 					'Expected an identifier but found \'error\' instead in \'<unknown>\' on line 1',
-					'Parse error in \'<unknown>\' on line 1'
+					'Parse error in \'<unknown>\' on line 1',
+					'missing ) in parenthetical in \'<unknown>\' on line 1'
 				]);
 				
 		});
