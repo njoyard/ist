@@ -121,7 +121,7 @@ define(['util/misc'], function(misc) {
 
 		textUpdater: function(node) {
 			return new Function('document,_istScope,textNode',
-				'textNode.textContent=(' + this.interpolation(node.text) + ').call(this,document,_istScope);'
+				'textNode.textContent=""+(' + this.interpolation(node.text) + ').call(this,document,_istScope);'
 			);
 		}
 	};
