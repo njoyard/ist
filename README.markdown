@@ -2,6 +2,7 @@ ist.js - Indented Selector Templating
 =====================================
 
 [![Build Status](https://travis-ci.org/njoyard/ist.png?branch=master)](http://travis-ci.org/njoyard/ist)
+
 [![Selenium Test Status](https://saucelabs.com/browser-matrix/istjs.svg)](https://saucelabs.com/u/istjs)
 
 Introduction
@@ -43,13 +44,6 @@ setting your editor to highlight CSS syntax will give nice results.
 
 ist.js can be used either as a standalone script, as an AMD module or as a
 RequireJS plugin.
-
-Compatibility
--------------
-
-ist.js has been successfully tested with the following browsers:
-- Chrome 30
-- Firefox 23
 
 Feedback
 --------
