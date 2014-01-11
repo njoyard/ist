@@ -2,6 +2,7 @@ ist.js - Indented Selector Templating
 =====================================
 
 [![Build Status](https://travis-ci.org/njoyard/ist.png?branch=master)](http://travis-ci.org/njoyard/ist)
+[![Selenium Test Status](https://saucelabs.com/browser-matrix/istjs.svg)](https://saucelabs.com/u/istjs)
 
 Introduction
 ------------
