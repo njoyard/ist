@@ -1,0 +1,8 @@
+addons:
+  sauce_connect:
+    username: "njoyard"
+    access_key: "e638079d-9f6d-437e-95d4-0279c58ebb61"
+language: node_js
+node_js:
+  - "0.10"
+script: "make test-travis"

@@ -1,6 +1,8 @@
 ist.js - Indented Selector Templating
 =====================================
 
+[![Build Status](https://travis-ci.org/njoyard/ist.png?branch=master)](http://travis-ci.org/njoyard/ist)
+
 Introduction
 ------------
 

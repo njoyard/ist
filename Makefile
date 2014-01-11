@@ -22,6 +22,9 @@ test: buildtests functests
 @PHONY: test-dev
 test-dev: buildtests functests-dev
 
+@PHONY: test-travis
+test-travis: buildtests functests-travis
+
 # r.js building tests
 
 RJS=node_modules/.bin/r.js
@@ -39,6 +42,7 @@ $(RJSOUTS): %.out.js:%.build.js ist.js
 
 KARMA=node_modules/.bin/karma
 KARMACONF=test/karma-conf.js
+KARMASAUCECONF=test/karma-sauce-conf.js
 
 @PHONY: functests
 functests: ist
@@ -47,3 +51,13 @@ functests: ist
 @PHONY: functests-dev
 functests-dev: ist
 	$(KARMA) start $(KARMACONF) --single-run=false --auto-watch=true --browsers= 
+
+# Test browsers separately
+SAUCEBROWSERS=chrome_linux chrome_windows chrome_osx firefox_linux firefox_windows firefox_osx opera_linux opera_windows
+
+@PHONY: $(SAUCEBROWSERS)
+$(SAUCEBROWSERS):
+	$(KARMA) start $(KARMASAUCECONF) --browsers=sl_$@
+
+@PHONY: functests-travis
+functests-travis: ist $(SAUCEBROWSERS)

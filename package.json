@@ -2,6 +2,7 @@
 	"devDependencies": {
 		"karma": "*",
 		"karma-opera-launcher": "*",
+		"karma-sauce-launcher": "*",
 		"pegjs": "*",
 		"requirejs": "*"
 	}
