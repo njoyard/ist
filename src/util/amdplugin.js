@@ -54,10 +54,12 @@ define(['util/misc'], function(misc) {
 
 			fetchText = function(url, callback) {
 				var file = fs.readFileSync(url, 'utf8');
+
 				//Remove BOM (Byte Mark Order) from utf8 files if it is there.
 				if (file.indexOf('\uFEFF') === 0) {
 				    file = file.substring(1);
 				}
+				
 				callback(file);
 			};
 		}
@@ -72,14 +74,10 @@ define(['util/misc'], function(misc) {
 		};
 
 		ist.load = function (name, parentRequire, load, config) {
-			var path, dirname, doParse = true;
-			
-			if (/!bare$/.test(name)) {
-				doParse = false;
-				name = name.replace(/!bare$/, '');
-			}
+			var path, dirname;
 			
 			path = parentRequire.toUrl(name + '.ist');
+
 			dirname = name.indexOf('/') === -1 ? '.' : name.replace(/\/[^\/]*$/, '');
 
 			fetchText(path, function (text) {
@@ -109,29 +107,12 @@ define(['util/misc'], function(misc) {
 					}
 				);
 				
-				if (doParse) {
-					/* Get parsed code */
-					code = ist(text, name).getCode(true);
-					text = 'define(\'ist!' + name + '\',' + JSON.stringify(deps) + ', function(ist) {\n' +
-						   '  return ' + code + ';\n' +
-						   '});\n';
-				} else {
-					if (config.isBuild) {
-						text = misc.jsEscape(text);
-						text = 'define(\'ist!' + name + '\',' + JSON.stringify(deps) + ',function(ist){' +
-							   'var template=\'' + text + '\';' +
-							   'return ist(template,\'' + name + '\');' +
-							   '});';
-					} else {
-						/* "Pretty-print" template text */
-						text = misc.jsEscape(text).replace(/\\n/g, '\\n\' +\n\t               \'');
-						text = 'define(\'ist!' + name + '\',' + JSON.stringify(deps) + ', function(ist){ \n' +
-							   '\tvar template = \'' + text + '\';\n' +
-							   '\treturn ist(template, \'' + name + '\');\n' +
-							   '});\n';
-					}
-				}
-					   
+				/* Get parsed code */
+				code = ist(text, name).getCode(true);
+				text = 'define(\'ist!' + name + '\',' + JSON.stringify(deps) + ', function(ist) {\n' +
+					   '  return ' + code + ';\n' +
+					   '});\n';
+				   
 				//Hold on to the transformed text if a build.
 				if (config.isBuild) {
 					buildMap['ist!' + name] = text;
