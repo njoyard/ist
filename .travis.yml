@@ -1,8 +1,9 @@
-addons:
-  sauce_connect:
-    username: "istjs"
-    access_key: "51465978-455e-45f1-b5fa-4acdfc2b49e3"
+env:
+  SAUCE_USERNAME: "istjs"
+  SAUCE_ACCESS_KEY: "51465978-455e-45f1-b5fa-4acdfc2b49e3"
 language: node_js
 node_js:
   - "0.10"
-script: "make test-travis"
+script:
+  - "bash test/sauce_connect_setup.sh"
+  - "IST_BUILD_ID=$RANDOM make test-travis"

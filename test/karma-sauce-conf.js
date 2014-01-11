@@ -23,7 +23,7 @@ module.exports = function(config) {
     },
 
     exclude: [],
-    reporters: ['dots'],
+    reporters: ['dots','saucelabs'],
     port: 9876,
     colors: true,
     logLevel: config.LOG_INFO,
@@ -35,7 +35,7 @@ module.exports = function(config) {
     singleRun: true,
 
     sauceLabs: {
-      build: 'Travis #' + process.env.TRAVIS_BUILD_NUMBER + ' (' + process.env.TRAVIS_BUILD_ID + ')',
+      build: ['travis', process.env.TRAVIS_BUILD_NUMBER, process.env.TRAVIS_BUILD_ID, process.env.IST_BUILD_ID].join('-'),
       startConnect: false,
       testName: 'ist.js',
       tunnelIdentifier: process.env.TRAVIS_JOB_NUMBER
