@@ -1,40 +1,13 @@
-/*global define, isBrowser, isNode, ActiveXObject */
+/*global define, require, isBrowser, isNode */
 define(['util/misc'], function(misc) {
 	'use strict';
 
 	function pluginify(ist) {
-		var getXhr, fetchText,
-			progIds = ['Msxml2.XMLHTTP', 'Microsoft.XMLHTTP', 'Msxml2.XMLHTTP.4.0'],
-			buildMap = {};
+		var fetchText, buildMap = {};
 
 		if (isBrowser) {
-			getXhr = function() {
-				var xhr, i, progId;
-				if (typeof XMLHttpRequest !== 'undefined') {
-					return new XMLHttpRequest();
-				} else {
-					for (i = 0; i < 3; i++) {
-						progId = progIds[i];
-						try {
-							xhr = new ActiveXObject(progId);
-						} catch (e) {}
-
-						if (xhr) {
-							progIds = [progId];  // faster next time
-							break;
-						}
-					}
-				}
-
-				if (!xhr) {
-					throw new Error('getXhr(): XMLHttpRequest not available');
-				}
-
-				return xhr;
-			};
-
 			fetchText = function(url, callback) {
-				var xhr = getXhr();
+				var xhr = new XMLHttpRequest();
 				xhr.open('GET', url, true);
 				xhr.onreadystatechange = function () {
 					//Do not explicitly handle errors, those should be
@@ -59,7 +32,7 @@ define(['util/misc'], function(misc) {
 				if (file.indexOf('\uFEFF') === 0) {
 				    file = file.substring(1);
 				}
-				
+
 				callback(file);
 			};
 		}
