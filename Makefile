@@ -29,7 +29,7 @@ RJSCONFS=$(wildcard test/build/*.build.js)
 RJSOUTS=$(patsubst %.build.js,%.out.js,$(RJSCONFS))
 
 @PHONY: buildtests
-buildtests: $(RJSOUTS)
+buildtests: ist $(RJSOUTS)
 
 $(RJSOUTS): %.out.js:%.main.js
 $(RJSOUTS): %.out.js:%.build.js ist.js
@@ -41,9 +41,9 @@ KARMA=node_modules/.bin/karma
 KARMACONF=test/karma-conf.js
 
 @PHONY: functests
-functests:
+functests: ist
 	$(KARMA) start $(KARMACONF)
 
 @PHONY: functests-dev
-functests-dev:
+functests-dev: ist
 	$(KARMA) start $(KARMACONF) --single-run=false --auto-watch=true --browsers= 
