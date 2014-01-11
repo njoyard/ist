@@ -1,6 +1,6 @@
 /**
  * IST: Indented Selector Templating
- * version 0.6.2
+ * version 0.6.3
  *
  * Copyright (c) 2012-2013 Nicolas Joyard
  * Released under the MIT license.
@@ -203,7 +203,7 @@
 	
 			textUpdater: function(node) {
 				return new Function('document,_istScope,textNode',
-					'textNode.textContent=(' + this.interpolation(node.text) + ').call(this,document,_istScope);'
+					'textNode.textContent=""+(' + this.interpolation(node.text) + ').call(this,document,_istScope);'
 				);
 			}
 		};
@@ -2899,43 +2899,16 @@
 		};
 	}());
 	
-	/*global define, isBrowser, isNode, ActiveXObject */
+	/*global define, require, isBrowser, isNode */
 	istComponents.amdplugin = ( function(misc) {
 		
 	
 		function pluginify(ist) {
-			var getXhr, fetchText,
-				progIds = ['Msxml2.XMLHTTP', 'Microsoft.XMLHTTP', 'Msxml2.XMLHTTP.4.0'],
-				buildMap = {};
+			var fetchText, buildMap = {};
 	
 			if (isBrowser) {
-				getXhr = function() {
-					var xhr, i, progId;
-					if (typeof XMLHttpRequest !== 'undefined') {
-						return new XMLHttpRequest();
-					} else {
-						for (i = 0; i < 3; i++) {
-							progId = progIds[i];
-							try {
-								xhr = new ActiveXObject(progId);
-							} catch (e) {}
-	
-							if (xhr) {
-								progIds = [progId];  // faster next time
-								break;
-							}
-						}
-					}
-	
-					if (!xhr) {
-						throw new Error('getXhr(): XMLHttpRequest not available');
-					}
-	
-					return xhr;
-				};
-	
 				fetchText = function(url, callback) {
-					var xhr = getXhr();
+					var xhr = new XMLHttpRequest();
 					xhr.open('GET', url, true);
 					xhr.onreadystatechange = function () {
 						//Do not explicitly handle errors, those should be
@@ -2955,10 +2928,12 @@
 	
 				fetchText = function(url, callback) {
 					var file = fs.readFileSync(url, 'utf8');
+	
 					//Remove BOM (Byte Mark Order) from utf8 files if it is there.
 					if (file.indexOf('\uFEFF') === 0) {
 					    file = file.substring(1);
 					}
+	
 					callback(file);
 				};
 			}
@@ -2973,14 +2948,10 @@
 			};
 	
 			ist.load = function (name, parentRequire, load, config) {
-				var path, dirname, doParse = true;
-				
-				if (/!bare$/.test(name)) {
-					doParse = false;
-					name = name.replace(/!bare$/, '');
-				}
+				var path, dirname;
 				
 				path = parentRequire.toUrl(name + '.ist');
+	
 				dirname = name.indexOf('/') === -1 ? '.' : name.replace(/\/[^\/]*$/, '');
 	
 				fetchText(path, function (text) {
@@ -3010,29 +2981,12 @@
 						}
 					);
 					
-					if (doParse) {
-						/* Get parsed code */
-						code = ist(text, name).getCode(true);
-						text = 'define(\'ist!' + name + '\',' + JSON.stringify(deps) + ', function(ist) {\n' +
-							   '  return ' + code + ';\n' +
-							   '});\n';
-					} else {
-						if (config.isBuild) {
-							text = misc.jsEscape(text);
-							text = 'define(\'ist!' + name + '\',' + JSON.stringify(deps) + ',function(ist){' +
-								   'var template=\'' + text + '\';' +
-								   'return ist(template,\'' + name + '\');' +
-								   '});';
-						} else {
-							/* "Pretty-print" template text */
-							text = misc.jsEscape(text).replace(/\\n/g, '\\n\' +\n\t               \'');
-							text = 'define(\'ist!' + name + '\',' + JSON.stringify(deps) + ', function(ist){ \n' +
-								   '\tvar template = \'' + text + '\';\n' +
-								   '\treturn ist(template, \'' + name + '\');\n' +
-								   '});\n';
-						}
-					}
-						   
+					/* Get parsed code */
+					code = ist(text, name).getCode(true);
+					text = 'define(\'ist!' + name + '\',' + JSON.stringify(deps) + ', function(ist) {\n' +
+						   '  return ' + code + ';\n' +
+						   '});\n';
+					   
 					//Hold on to the transformed text if a build.
 					if (config.isBuild) {
 						buildMap['ist!' + name] = text;

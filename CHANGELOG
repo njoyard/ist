@@ -1,3 +1,10 @@
+v0.6.3 - 2014-01-11
+- Automated tests are now run with Firefox and Opera in addition to Chrome
+- Fixed text node contents being set to non-string
+- Removed 'ist!path/to/template!bare' syntax which has no use case
+- Removed ActiveX XMLHttpRequest support for ist! plugin, supported browsers
+  all have a builtin XMLHttpRequest object anyway.
+
 v0.6.2 - 2014-01-06
 - Update to PEGjs version 0.8.0
 
