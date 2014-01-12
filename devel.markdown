@@ -16,12 +16,35 @@ You can also directly grab the source code as a [zip archive][zip] or a [tar.gz 
 Building
 --------
 
-You will need [nodejs][nodejs] and npm to build ist.js.  Just clone the repository or download a source tarball, run `npm install` from the repository root to install build dependencies, and then `make` to build ist.js.
+### Installing build dependencies
 
-Testing
--------
+You will need make, [nodejs][nodejs] and npm to build or test ist.js.  Just clone the repository or download a source tarball, and run `npm install` from the repository root to install build dependencies.  The following dependencies are installed:
 
-ist.js includes a thorough test suite which uses [Karma][karma] and [Jasmine][jasmine]. To launch the test suite, run `make tests` from the repository root.
+* [pegjs][pegjs] to build the template parser
+* [requirejs][requirejs] to build ist.js components into a single file and to run tests
+* [karma][karma] to run the test suite, including support for Chrome and Firefox
+* [karma-opera-launcher][karma-opera-launcher] to run the test suite on Opera
+* [karma-sauce-launcher][karma-sauce-launcher] to run the test suite on [Sauce Labs][saucelabs].  This is only used when running tests from [Travis][travis].
+
+### Building
+
+Run `make` from the repository root to build both ist.js and the minified version.  You can also run `make ist` or `make ist-min` to only build one version at a time.  Output files are created in the repository root.
+
+### Testing
+
+ist.js includes a thorough test suite which uses [Karma][karma] and [Jasmine][jasmine].  There are two ways to run the test suite from a local repository clone:
+
+* `make test` runs the test suite with Chrome, Firefox and Opera, and then exits.  You must have both those browsers installed for this to succeed.
+* `make test-dev` launches Karma but does not launch any browsers.  You can then point any browser to http://localhost:9876/ to run the test suite with this browser.
+
+Compatibility
+-------------
+
+ist.js builds are tested automatically on [Travis][travis] with [Sauce Labs][saucelabs].
+
+[![Build Status](https://travis-ci.org/njoyard/ist.png?branch=master)][travis]
+
+[![Selenium Test Status](https://saucelabs.com/browser-matrix/istjs.svg)][saucelabs]
 
 Contributing
 ------------
@@ -36,6 +59,10 @@ Don't hesitate to [report bugs][issues] on GitHub, even the little hitches _do_ 
 [twitter]: http://twitter.com/njoyard
 [nodejs]: http://nodejs.org/
 [pegjs]: http://pegjs.majda.cz/
-[uglifyjs]: https://github.com/mishoo/UglifyJS
+[requirejs]: http://requirejs.org/
 [jasmine]: http://pivotal.github.com/jasmine/
 [karma]: http://karma-runner.github.io/
+[karma-opera-launcher]: https://github.com/karma-runner/karma-opera-launcher
+[karma-sauce-launcher]: https://github.com/karma-runner/karma-sauce-launcher
+[saucelabs]: https://saucelabs.com/u/istjs
+[travis]: https://travis-ci.org/njoyard/ist
