@@ -42,6 +42,8 @@ module.exports = function(config) {
     },
 
     customLaunchers: {
+      sl_ie10:            { base: 'SauceLabs', browserName: 'internet explorer',  platform: 'Windows 2012', version: '10' },
+      sl_ie11:            { base: 'SauceLabs', browserName: 'internet explorer',  platform: 'Windows 8.1', version: '11' },
       sl_chrome_linux:    { base: 'SauceLabs', browserName: 'chrome',  platform: 'linux' },
       sl_chrome_windows:  { base: 'SauceLabs', browserName: 'chrome',  platform: 'windows' },
       sl_chrome_osx:      { base: 'SauceLabs', browserName: 'chrome',  platform: 'OSX 10.9' },
@@ -53,6 +55,8 @@ module.exports = function(config) {
     },
 
     browsers: [
+      'sl_ie10',
+      'sl_ie11',
       'sl_chrome_linux',
       'sl_chrome_windows',
       'sl_chrome_osx',

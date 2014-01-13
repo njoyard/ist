@@ -53,7 +53,7 @@ functests-dev: ist
 	$(KARMA) start $(KARMACONF) --single-run=false --auto-watch=true --browsers= 
 
 # Test browsers separately
-SAUCEBROWSERS=chrome_linux chrome_windows chrome_osx firefox_linux firefox_windows firefox_osx opera_linux opera_windows
+SAUCEBROWSERS=ie10 ie11 chrome_linux chrome_windows chrome_osx firefox_linux firefox_windows firefox_osx opera_linux opera_windows
 
 @PHONY: $(SAUCEBROWSERS)
 $(SAUCEBROWSERS):
