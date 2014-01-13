@@ -58,12 +58,8 @@ define([
 		
 		it('should fail to render when accessing properties of undefined context parts', function() {
 			propObj.access = {};
-			expect( function() { tProperties.render(propObj); } ).toThrowAny([
-				'Cannot read property \'deeply\' of undefined in \'test/interpolation/properties\' on line 2',
-				'access.to is undefined in \'test/interpolation/properties\' on line 2',
-				'\'undefined\' is not an object (evaluating \'access.to.deeply\') in \'test/interpolation/properties\' on line 2',
-				'Cannot convert \'access.to\' to object in \'test/interpolation/properties\' on line 2'
-			]);
+			expect( function() { tProperties.render(propObj); } )
+				.toThrowRefError('deeply', 'access.to', 'test/interpolation/properties', 2);
 		});
 		
 		document.myClassValue = 'document property value';
@@ -84,54 +80,22 @@ define([
 
 		it('should report syntax error in expressions when compiling', function() {
 			expect( function() { ist('\'{{ syntax error }}\''); })
-				.toThrowAny([
-					'Unexpected identifier in \'<unknown>\' on line 1',
-					'missing ; before statement in \'<unknown>\' on line 1',
-					'Expected an identifier but found \'error\' instead in \'<unknown>\' on line 1',
-					'Parse error in \'<unknown>\' on line 1',
-					'missing ) in parenthetical in \'<unknown>\' on line 1',
-					'Function constructor: failed to compile function in \'<unknown>\' on line 1'
-				]);
+				.toThrowSyntaxError('error', '<unknown>', 1);
 
 			expect( function() { ist('div[attr={{ syntax error }}]'); } )
-				.toThrowAny([
-					'Unexpected identifier in \'<unknown>\' on line 1',
-					'missing ; before statement in \'<unknown>\' on line 1',
-					'Expected an identifier but found \'error\' instead in \'<unknown>\' on line 1',
-					'Parse error in \'<unknown>\' on line 1',
-					'missing ) in parenthetical in \'<unknown>\' on line 1',
-					'Function constructor: failed to compile function in \'<unknown>\' on line 1'
-				]);
+				.toThrowSyntaxError('error', '<unknown>', 1);
 
 			expect( function() { ist('div[.prop={{ syntax error }}]'); } )
-				.toThrowAny([
-					'Unexpected identifier in \'<unknown>\' on line 1',
-					'missing ; before statement in \'<unknown>\' on line 1',
-					'Expected an identifier but found \'error\' instead in \'<unknown>\' on line 1',
-					'Parse error in \'<unknown>\' on line 1',
-					'missing ) in parenthetical in \'<unknown>\' on line 1',
-					'Function constructor: failed to compile function in \'<unknown>\' on line 1'
-				]);
+				.toThrowSyntaxError('error', '<unknown>', 1);
 			
 			expect( function() { ist('@with syntax error\n \'test\''); } )
-				.toThrowAny([
-					'Unexpected identifier in \'<unknown>\' on line 1',
-					'missing ; before statement in \'<unknown>\' on line 1',
-					'Expected an identifier but found \'error\' instead in \'<unknown>\' on line 1',
-					'Parse error in \'<unknown>\' on line 1',
-					'missing ) in parenthetical in \'<unknown>\' on line 1',
-					'Function constructor: failed to compile function in \'<unknown>\' on line 1'
-				]);
+				.toThrowSyntaxError('error', '<unknown>', 1);
 				
 		});
 		
 		it('should report errors thrown by expressions in strings when rendering', function() {
 			expect( function() { tErrors.render({ test: 'type' }); } )
-				.toThrowAny([
-					'a is not defined in \'test/interpolation/errors\' on line 2',
-					'Can\'t find variable: a in \'test/interpolation/errors\' on line 2',
-					'Undefined variable: a in \'test/interpolation/errors\' on line 2'
-				]);
+				.toThrowUndefined('a', 'test/interpolation/errors', 2);
 				
 			expect( function() { tErrors.render({ test: 'throw' }); } )
 				.toThrow('custom error in \'test/interpolation/errors\' on line 15');
@@ -139,11 +103,7 @@ define([
 		
 		it('should report errors thrown by expressions in attributes when rendering', function() {
 			expect( function() { tErrors.render({ test: 'type2' }); } )
-				.toThrowAny([
-					'a is not defined in \'test/interpolation/errors\' on line 5',
-					'Can\'t find variable: a in \'test/interpolation/errors\' on line 5',
-					'Undefined variable: a in \'test/interpolation/errors\' on line 5'
-				]);
+				.toThrowUndefined('a', 'test/interpolation/errors', 5);
 				
 			expect( function() { tErrors.render({ test: 'throw2' }); } )
 				.toThrow('custom error in \'test/interpolation/errors\' on line 18');
@@ -151,11 +111,7 @@ define([
 		
 		it('should report errors thrown by expressions in properties when rendering', function() {
 			expect( function() { tErrors.render({ test: 'type3' }); } )
-				.toThrowAny([
-					'a is not defined in \'test/interpolation/errors\' on line 8',
-					'Can\'t find variable: a in \'test/interpolation/errors\' on line 8',
-					'Undefined variable: a in \'test/interpolation/errors\' on line 8'
-				]);
+				.toThrowUndefined('a', 'test/interpolation/errors', 8);
 				
 			expect( function() { tErrors.render({ test: 'throw3' }); } )
 				.toThrow('custom error in \'test/interpolation/errors\' on line 21');
@@ -163,11 +119,7 @@ define([
 		
 		it('should report errors thrown by expressions in directives when rendering', function() {
 			expect( function() { tErrors.render({ test: 'type4' }); } )
-				.toThrowAny([
-					'a is not defined in \'test/interpolation/errors\' on line 11',
-					'Can\'t find variable: a in \'test/interpolation/errors\' on line 11',
-					'Undefined variable: a in \'test/interpolation/errors\' on line 11'
-				]);
+				.toThrowUndefined('a', 'test/interpolation/errors', 11);
 				
 			expect( function() { tErrors.render({ test: 'throw4' }); } )
 				.toThrow('custom error in \'test/interpolation/errors\' on line 24');

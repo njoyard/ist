@@ -230,11 +230,7 @@ define([
 		
 		it('should report errors thrown by expressions when rendering', function() {
 			expect( function() { tErrors.render({ test: 'type' }); } )
-				.toThrowAny([
-					'a is not defined in \'test/directivehelper/errors\' on line 2',
-					'Can\'t find variable: a in \'test/directivehelper/errors\' on line 2',
-					'Undefined variable: a in \'test/directivehelper/errors\' on line 2'
-				]);
+				.toThrowUndefined('a', 'test/directivehelper/errors', 2);
 				
 			expect( function() { tErrors.render({ test: 'throw' }); } )
 				.toThrow('custom error in \'test/directivehelper/errors\' on line 6');

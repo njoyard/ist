@@ -40,6 +40,37 @@
 		beforeEach(function() {
 			var matchers = {};
 
+			matchers.toThrowRefError = function(property, owner, template, line) {
+				return matchers.toThrowAny.call(this, [
+					'Cannot read property \'' + property + '\' of undefined in \'' + template + '\' on line ' + line,
+					owner + ' is undefined in \'' + template + '\' on line ' + line,
+					'\'undefined\' is not an object (evaluating \'' + owner + '.' + property + '\') in \'' + template + '\' on line ' + line,
+					'Cannot convert \'' + owner + '\' to object in \'' + template + '\' on line ' + line,
+					'Unable to get property \'' + property + '\' of undefined or null reference in \'' + template + '\' on line ' + line
+				]);
+			};
+
+			matchers.toThrowSyntaxError = function(token, template, line) {
+				return matchers.toThrowAny.call(this, [
+					'Unexpected identifier in \'' + template + '\' on line ' + line,
+					'missing ; before statement in \'' + template + '\' on line ' + line,
+					'Expected an identifier but found \'' + token + '\' instead in \'' + template + '\' on line ' + line,
+					'Parse error in \'' + template + '\' on line ' + line,
+					'missing ) in parenthetical in \'' + template + '\' on line ' + line,
+					'Function constructor: failed to compile function in \'' + template + '\' on line ' + line,
+					'Expected \')\' in \'' + template + '\' on line ' + line
+				]);
+			};
+
+			matchers.toThrowUndefined = function(identifier, template, line) {
+				return matchers.toThrowAny.call(this, [
+					identifier + ' is not defined in \'' + template + '\' on line ' + line,
+					'Can\'t find variable: ' + identifier + ' in \'' + template + '\' on line ' + line,
+					'Undefined variable: ' + identifier + ' in \'' + template + '\' on line ' + line,
+					'\'' + identifier + '\' is undefined in \'' + template + '\' on line ' + line
+				]);
+			};
+
 			matchers.toThrowAny = function(messages) {
 				var thrown;
 				
