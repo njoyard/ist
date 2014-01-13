@@ -968,7 +968,7 @@ Here are some example calls to `@foo` with the parameters the helper receives:
 
 ```css
 @with { hello: "world" }
-    /* Call with a parameter, the handler receives:
+    /* @foo called with a parameter, the handler receives:
         - context: a Context object for { hello: "world" }
         - value: "world"
         - template: a compiled ist template for
@@ -979,7 +979,7 @@ Here are some example calls to `@foo` with the parameters the helper receives:
         div.childA
         div.childB
 
-    /* Call with a parameter, the handler receives:
+    /* @foo called without a parameter, the handler receives:
         - context: a Context object for { hello: "world" }
         - value: undefined
         - template: a compiled ist template for

@@ -1,0 +1,17 @@
+---
+layout: post
+title: ist.js v0.6.3
+---
+
+{% assign opencurly = '{{' %}
+{% assign closecurly = '}}' %}
+
+I just released ist.js version 0.6.3.  This release does not introduce any new feature, but ist.js is now tested thoroughly with multiple browsers on multiple platforms using [Travis][travis] and [Sauce Labs][saucelabs].  For now, only Chrome, Firefox and Opera are tested but I plan to add IE, Safari, iOS and Android support soon.  About IE, I'm not sure which versions to support yet, but my goal is to support at least IE10, even maybe IE9 (it seems IE8 would be too much work, but it is not completely excluded yet).
+
+Under the hood, ist.js now uses [PEGjs][pegjs] version 0.8.0, which should speed up template parsing and also allows size optimization, thus I may release size-optimized versions in the near future.
+
+I also fixed a small inconsistency where rendering text nodes with undefined content would not have the same result on different browsers.
+
+[travis]: https://travis-ci.org/njoyard/ist
+[saucelabs]: https://saucelabs.com/u/istjs
+[pegjs]: http://pegjs.majda.cz/

@@ -38,12 +38,17 @@ a:link, a:active, a:visited {
 	color: #5c5c5c;
 }
 
-a:hover {
+a:hover, a.docActive:link, a.docActive:active, a.docActive:visited {
 	color: #b00;
 }
 
 a.nohover:hover {
 	color: black;
+}
+
+a.toplink {
+	font-size: 9pt;
+	float: right;
 }
 
 textarea, .highlight, code {
@@ -298,15 +303,27 @@ span.button a {
 
 /* Documentation specifics */
 
+.doc {
+	margin-left: 15em;
+}
+
 .doc h2 {
 	border-bottom: 1px solid #ccc;
 }
 
-.doc-toc {	
+.doc-toc {
+	float: left;
+	width: 15em;
+
+	position: relative;
 }
 
 .doc-toc ul {
-	padding-left: 1.5em;
+	padding-left: 1em;
+}
+
+.doc-toc > ul {
+	padding-left: 0;
 }
 
 .doc-toc li {
@@ -326,12 +343,12 @@ span.button a {
 }
 
 .doc-desc {
-	width: 49%;
+	width: 39%;
 	padding: 1em 1em 1em 0;
 }
 
 .doc-code {
-	width: 50%;
+	width: 60%;
 }
 
 .doc-code > p {
@@ -380,6 +397,18 @@ span.button a {
 	/* Reduce menu separators */
 	nav li {
 		margin: 0 1em;
+	}
+
+	/* Put documentation TOC on top */
+	.doc {
+		margin-left: 0;
+	}
+
+	.doc-toc {
+		float: none;
+		width: 100%;
+
+		position: inherit;
 	}
 }
 

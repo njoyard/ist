@@ -20,9 +20,55 @@
 		  })();
 
 		</script>
+		<script type="text/javascript">
+			// Documentation TOC auto-follow
+			(function() {
+				var initialTop, docToc, tocLinks, currentLink;
+				window.addEventListener("scroll", function() {
+					if (typeof initialTop === "undefined") {
+						docToc = document.querySelector(".doc-toc");
+						if (!docToc) {
+							initialTop = -1;
+							return;
+						}
+
+						initialTop = docToc.offsetTop;
+
+						tocLinks = [].slice.call(document.querySelectorAll(".doc-toc a"))
+							.map(function(tocLink) {
+								var hash = tocLink.href.split("#")[1];
+
+								return {
+									link: tocLink,
+									anchor: document.querySelector("a[name=\"" + hash + "\"]")
+								}
+							});
+					}
+
+					if (!docToc) {
+						return;
+					}
+
+					docToc.style.top = Math.max(0, window.scrollY - initialTop) + "px";
+
+					for (var i = 0, len = tocLinks.length; i < len; i++) {
+						if (tocLinks[i].anchor.offsetTop >= window.scrollY) {
+							if (currentLink !== tocLinks[i].link) {
+								if (currentLink) currentLink.className = "";
+
+								currentLink = tocLinks[i].link;
+								currentLink.className = "docActive";
+							}
+
+							break;
+						}
+					}
+				});
+			}());
+		</script>
 	</head>
 	<body>
-		<a href="https://github.com/njoyard/ist"><img style="position: absolute; top: 0; right: 0; border: 0;" src="https://s3.amazonaws.com/github/ribbons/forkme_right_darkblue_121621.png" alt="Fork me on GitHub"></a>
+		<a name="top" href="https://github.com/njoyard/ist"><img style="position: absolute; top: 0; right: 0; border: 0;" src="https://s3.amazonaws.com/github/ribbons/forkme_right_darkblue_121621.png" alt="Fork me on GitHub"></a>
 		<header>
 			<h1>ist.js</h1>
 			<h2>DOM templating made natural</title>

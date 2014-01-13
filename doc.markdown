@@ -9,8 +9,6 @@ id: doc
 Documentation
 =============
 
-## Table of contents
-
 <section class="doc-toc">
 
 * <a href="#Getting started">Getting started</a>
@@ -46,7 +44,7 @@ Documentation
 <section class="doc">
 
 
-## <a class="nohover" name="Getting started">Getting started</a>
+## <a class="nohover" name="Getting started">Getting started</a><a class="toplink" href="#top">top</a>
 
 <section class="doc-item">
 <section class="doc-desc">
@@ -249,9 +247,9 @@ var myLink = ist.create("a.link[href=#]");
 </section>
 </section>
 
-## <a class="nohover" name="Usage">Usage</a>
+## <a class="nohover" name="Usage">Usage</a><a class="toplink" href="#top">top</a>
 
-### <a class="nohover" name="Standalone usage">Standalone usage</a>
+### <a class="nohover" name="Standalone usage">Standalone usage</a><a class="toplink" href="#top">top</a>
 
 <section class="doc-item">
 <section class="doc-desc">
@@ -281,7 +279,7 @@ var istjs = ist.noConflict();
 </section>
 </section>
 
-### <a class="nohover" name="AMD usage">AMD usage</a>
+### <a class="nohover" name="AMD usage">AMD usage</a><a class="toplink" href="#top">top</a>
 
 <section class="doc-item">
 <section class="doc-desc">
@@ -322,7 +320,7 @@ require(['ist!path/to/template'], function(template) {
 </section>
 </section>
 
-### <a class="nohover" name="Compiling">Compiling</a>
+### <a class="nohover" name="Compiling">Compiling</a><a class="toplink" href="#top">top</a>
 
 <section class="doc-item">
 <section class="doc-desc">
@@ -373,7 +371,7 @@ define(['ist!path/to/template'], function(compiledTemplate) {
 </section>
 </section>
 
-### <a class="nohover" name="Rendering">Rendering</a>
+### <a class="nohover" name="Rendering">Rendering</a><a class="toplink" href="#top">top</a>
 
 <section class="doc-item">
 <section class="doc-desc">
@@ -450,7 +448,7 @@ container.appendChild(rendered);
 </section>
 </section>
 
-### <a class="nohover" name="Updating">Updating</a>
+### <a class="nohover" name="Updating">Updating</a><a class="toplink" href="#top">top</a>
 
 <section class="doc-item">
 <section class="doc-desc">
@@ -498,9 +496,9 @@ rendered.update();
 </section>
 </section>
 
-## <a class="nohover" name="Template Syntax">Template Syntax</a>
+## <a class="nohover" name="Template Syntax">Template Syntax</a><a class="toplink" href="#top">top</a>
 
-### <a class="nohover" name="Node tree">Node tree</a>
+### <a class="nohover" name="Node tree">Node tree</a><a class="toplink" href="#top">top</a>
 
 <section class="doc-item">
 <section class="doc-desc">
@@ -556,7 +554,7 @@ div.parent
 </section>
 </section>
 
-### <a class="nohover" name="Comments">Comments</a>
+### <a class="nohover" name="Comments">Comments</a><a class="toplink" href="#top">top</a>
 
 <section class="doc-item">
 <section class="doc-desc">
@@ -584,7 +582,7 @@ div.parent
 </section>
 </section>
 
-### <a class="nohover" name="Element selectors">Element selectors</a>
+### <a class="nohover" name="Element selectors">Element selectors</a><a class="toplink" href="#top">top</a>
 
 <section class="doc-item">
 <section class="doc-desc">
@@ -675,7 +673,7 @@ selectors.  Of course you will need at least one qualifier.
 </section>
 </section>
 
-### <a class="nohover" name="Text nodes">Text nodes</a>
+### <a class="nohover" name="Text nodes">Text nodes</a><a class="toplink" href="#top">top</a>
 
 <section class="doc-item">
 <section class="doc-desc">
@@ -741,7 +739,7 @@ h2
 </section>
 </section>
 
-### <a class="nohover" name="Expressions">Expressions</a>
+### <a class="nohover" name="Expressions">Expressions</a><a class="toplink" href="#top">top</a>
 
 <section class="doc-item">
 <section class="doc-desc">
@@ -823,7 +821,7 @@ div[id={{ opencurly }} id {{ closecurly }}]
 </section>
 </section>
 
-### <a class="nohover" name="Event handlers">Event handlers</a>
+### <a class="nohover" name="Event handlers">Event handlers</a><a class="toplink" href="#top">top</a>
 
 <section class="doc-item">
 <section class="doc-desc">
@@ -869,7 +867,7 @@ myTemplate.render({
 </section>
 </section>
 
-### <a class="nohover" name="Directives">Directives</a>
+### <a class="nohover" name="Directives">Directives</a><a class="toplink" href="#top">top</a>
 
 <section class="doc-item">
 <section class="doc-desc">
@@ -890,7 +888,7 @@ div.parent
 </section>
 </section>
 
-#### <a class="nohover" name="Conditionals">Conditionals</a>
+#### <a class="nohover" name="Conditionals">Conditionals</a><a class="toplink" href="#top">top</a>
 
 <section class="doc-item">
 <section class="doc-desc">
@@ -935,7 +933,7 @@ match the opposite condition.
 </section>
 </section>
 
-#### <a class="nohover" name="Context switching">Context switching</a>
+#### <a class="nohover" name="Context switching">Context switching</a><a class="toplink" href="#top">top</a>
 
 <section class="doc-item">
 <section class="doc-desc">
@@ -971,7 +969,7 @@ The `@with` directive can also be used to hard-code some parts of the template.
 </section>
 </section>
 
-#### <a class="nohover" name="Array iteration">Array iteration</a>
+#### <a class="nohover" name="Array iteration">Array iteration</a><a class="toplink" href="#top">top</a>
 
 <section class="doc-item">
 <section class="doc-desc">
@@ -1050,7 +1048,7 @@ can still access it using `this`.
 </section>
 </section>
 
-#### <a class="nohover" name="Object property iteration">Object property iteration</a>
+#### <a class="nohover" name="Object property iteration">Object property iteration</a><a class="toplink" href="#top">top</a>
 
 <section class="doc-item">
 <section class="doc-desc">
@@ -1081,7 +1079,7 @@ about the iteration.
 
 </section>
 </section>
-#### <a class="nohover" name="Components">Components</a>
+#### <a class="nohover" name="Components">Components</a><a class="toplink" href="#top">top</a>
 
 <section class="doc-item">
 <section class="doc-desc">
@@ -1131,7 +1129,7 @@ There is no direct way to pass a specific context to a component when
 </section>
 </section>
 
-#### <a class="nohover" name="External template inclusion">External template inclusion</a>
+#### <a class="nohover" name="External template inclusion">External template inclusion</a><a class="toplink" href="#top">top</a>
 
 <section class="doc-item">
 <section class="doc-desc">
@@ -1269,7 +1267,7 @@ require(["ist", "included-template"], function(ist) {
 </section>
 </section>
 
-### <a class="nohover" name="Partials">Partials</a>
+### <a class="nohover" name="Partials">Partials</a><a class="toplink" href="#top">top</a>
 
 <section class="doc-item">
 <section class="doc-desc">
@@ -1327,7 +1325,7 @@ function addNewTweet(author, text) {
 </section>
 </section>
 
-## <a class="nohover" name="Single node creation">Single node creation</a>
+## <a class="nohover" name="Single node creation">Single node creation</a><a class="toplink" href="#top">top</a>
 
 <section class="doc-item">
 <section class="doc-desc">
@@ -1344,9 +1342,9 @@ var myDiv = ist.create(
 {% endhighlight %}
 </section>
 </section>
-    
 <section class="doc-item">
 <section class="doc-desc">
+    
 It also supports rendering with context.
 
 </section>
@@ -1359,9 +1357,9 @@ var myDiv = ist.create(
 {% endhighlight %}
 </section>
 </section>
-    
 <section class="doc-item">
 <section class="doc-desc">
+    
 `ist.create()` is also able to create several nodes at once using a CSS-like
 angle-bracket syntax.
 
@@ -1417,9 +1415,9 @@ var popupDiv = ist.create(
 </section>
 </section>
 
-## <a class="nohover" name="Custom directives">Custom directives</a>
+## <a class="nohover" name="Custom directives">Custom directives</a><a class="toplink" href="#top">top</a>
 
-### <a class="nohover" name="Definition and syntax">Definition and syntax</a>
+### <a class="nohover" name="Definition and syntax">Definition and syntax</a><a class="toplink" href="#top">top</a>
 
 <section class="doc-item">
 <section class="doc-desc">
@@ -1461,7 +1459,7 @@ Here are some example calls to `@foo` with the parameters the helper receives:
 <section class="doc-code">
 {% highlight css %}
 @with { hello: "world" }
-    /* Call with a parameter, the handler receives:
+    /* @foo called with a parameter, the handler receives:
         - context: a Context object for { hello: "world" }
         - value: "world"
         - template: a compiled ist template for
@@ -1472,7 +1470,7 @@ Here are some example calls to `@foo` with the parameters the helper receives:
         div.childA
         div.childB
 
-    /* Call with a parameter, the handler receives:
+    /* @foo called without a parameter, the handler receives:
         - context: a Context object for { hello: "world" }
         - value: undefined
         - template: a compiled ist template for
@@ -1512,7 +1510,7 @@ ist.helper(
 </section>
 </section>
 
-### <a class="nohover" name="Handling updates">Handling updates</a>
+### <a class="nohover" name="Handling updates">Handling updates</a><a class="toplink" href="#top">top</a>
 
 <section class="doc-item">
 <section class="doc-desc">
@@ -1692,7 +1690,7 @@ ist.helper(
 </section>
 </section>
 
-### <a class="nohover" name="Context objects">Context objects</a>
+### <a class="nohover" name="Context objects">Context objects</a><a class="toplink" href="#top">top</a>
 
 <section class="doc-item">
 <section class="doc-desc">
@@ -1801,7 +1799,7 @@ ist.helper(
 </section>
 </section>
 
-## <a class="nohover" name="Version">Version</a>
+## <a class="nohover" name="Version">Version</a><a class="toplink" href="#top">top</a>
 
 <section class="doc-item">
 <section class="doc-desc">

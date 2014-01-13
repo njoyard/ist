@@ -11,7 +11,7 @@ src/doc-parsed.markdown: src/doc.markdown
 			-e 's:}_}:{{ closecurly }}:g' \
 			-e 's:^```(.+):{% highlight \1 %}:' \
 			-e 's:^```:{% endhighlight %}:' \
-			-e 's:^(#+) (.*):\1 <a class="nohover" name="\2">\2</a>:' \
+			-e 's:^(#+) (.*):\1 <a class="nohover" name="\2">\2</a><a class="toplink" href="#top">top</a>:' \
 		>> src/doc-parsed.markdown
 	echo "" >> src/doc-parsed.markdown
 	echo "</section>" >> src/doc-parsed.markdown
@@ -28,6 +28,7 @@ src/doc-toc.markdown: src/doc-parsed.markdown
 			-e 's:^##### (.*)$$:            * \1:' \
 			-e 's:^###### (.*)$$:                * \1:' \
 			-e 's:<a class="nohover" name=":<a href="#:' \
+			-e 's:<a class="toplink" href="#top">top</a>::' \
 		>> src/doc-toc.markdown
 	echo "" >> src/doc-toc.markdown
 	echo "</section>" >> src/doc-toc.markdown
