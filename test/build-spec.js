@@ -44,7 +44,7 @@ define([], function() {
 
 					var requireScript = iframeDoc.createElement('script');
 					requireScript.src = '/base/node_modules/requirejs/require.js';
-					requireScript.dataset.main = file;
+					requireScript.setAttribute('data-main', file);
 
 					runs(function() {
 						iframeDoc.body.appendChild(requireScript);
