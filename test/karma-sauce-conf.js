@@ -35,13 +35,14 @@ module.exports = function(config) {
     singleRun: true,
 
     sauceLabs: {
-      build: ['travis', process.env.TRAVIS_BUILD_NUMBER, process.env.TRAVIS_BUILD_ID, process.env.IST_BUILD_ID].join('-'),
+      username: 'istjs',
+      accessKey: '51465978-455e-45f1-b5fa-4acdfc2b49e3',
       startConnect: false,
-      testName: 'ist.js',
-      tunnelIdentifier: process.env.TRAVIS_JOB_NUMBER
+      testName: 'ist.js'
     },
 
     customLaunchers: {
+      sl_safari_osx:      { base: 'SauceLabs', browserName: 'safari',  platform: 'OS X 10.8' },
       sl_ie10:            { base: 'SauceLabs', browserName: 'internet explorer',  platform: 'Windows 2012', version: '10' },
       sl_ie11:            { base: 'SauceLabs', browserName: 'internet explorer',  platform: 'Windows 8.1', version: '11' },
       sl_chrome_linux:    { base: 'SauceLabs', browserName: 'chrome',  platform: 'linux' },
@@ -57,6 +58,7 @@ module.exports = function(config) {
     browsers: [
       'sl_ie10',
       'sl_ie11',
+      'sl_safari_osx',
       'sl_chrome_linux',
       'sl_chrome_windows',
       'sl_chrome_osx',
@@ -69,4 +71,18 @@ module.exports = function(config) {
 
     transports: ['xhr-polling']
   });
+
+  if (process.env.TRAVIS) {
+    config.sauceLabs.build = [
+      'travis',
+      process.env.TRAVIS_BUILD_NUMBER,
+      process.env.TRAVIS_BUILD_ID,
+      process.env.IST_BUILD_ID
+    ].join('-');
+
+    config.sauceLabs.tunnelIdentifier = process.env.TRAVIS_JOB_NUMBER;
+  } else {
+    config.sauceLabs.build = 'custom-' + (process.env.TEST_ID || Date.now());
+    config.sauceLabs.tunnelIdentifier = process.env.TUNNEL_ID;
+  }
 };

@@ -12,11 +12,12 @@
 #
 # Script adapted to log to a file
 
+TUNNEL_IDENTIFIER=$1
 CONNECT_URL="http://saucelabs.com/downloads/Sauce-Connect-latest.zip"
-CONNECT_DIR="/tmp/sauce-connect-$RANDOM"
-CONNECT_LOG="/tmp/sauce-log-$RANDOM"
+CONNECT_DIR="/tmp/sauce-connect-$TUNNEL_IDENTIFIER"
+CONNECT_LOG="/tmp/sauce-log-$TUNNEL_IDENTIFIER"
 CONNECT_DOWNLOAD="Sauce_Connect.zip"
-READY_FILE="connect-ready-$RANDOM"
+READY_FILE="connect-ready-$TUNNEL_IDENTIFIER"
 READY_COUNTDOWN=120
 
 # Get Connect and start it
@@ -26,10 +27,11 @@ curl $CONNECT_URL > $CONNECT_DOWNLOAD
 unzip $CONNECT_DOWNLOAD
 rm $CONNECT_DOWNLOAD
 java -jar Sauce-Connect.jar --readyfile $READY_FILE \
-    --tunnel-identifier $TRAVIS_JOB_NUMBER \
+    --tunnel-identifier $TUNNEL_IDENTIFIER \
     $SAUCE_USERNAME $SAUCE_ACCESS_KEY >$CONNECT_LOG &
 
 # Wait for Connect to be ready before exiting
+echo "Waiting for sauce-connect to be ready..."
 while [ ! -f $READY_FILE ]; do
   READY_COUNTDOWN=$(($READY_COUNTDOWN-1))
   if [ $READY_COUNTDOWN -lt 0 ]; then
