@@ -1,0 +1,6 @@
+---
+layout: post
+title: ist.js v0.6.4 - IE11- and Safari-compatible
+---
+
+As of version 0.6.4, ist.js is now compatible with IE11 and Safari 6 (actually it worked with version 0.6.3, but the test suite had bugs that prevented it to succeed with those browsers).

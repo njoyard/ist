@@ -34,7 +34,7 @@ Run `make` from the repository root to build both ist.js and the minified versio
 
 ist.js includes a thorough test suite which uses [Karma][karma] and [Jasmine][jasmine].  There are two ways to run the test suite from a local repository clone:
 
-* `make test` runs the test suite with Chrome, Firefox and Opera, and then exits.  You must have both those browsers installed for this to succeed.
+* `make test` runs the test suite with PhantomJS, Chrome, Firefox and Opera, and then exits.  You must have both those browsers installed for this to succeed (except for PhantomJS, which is built-in with Karma).
 * `make test-dev` launches Karma but does not launch any browsers.  You can then point any browser to http://localhost:9876/ to run the test suite with this browser.
 
 Compatibility
