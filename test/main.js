@@ -35,6 +35,11 @@
 	script.innerHTML = ["\tdiv.insideScriptTag", "\t\tdiv.child", "\t\t\t@if variable === \"value\"", "\t\t\t\tdiv.conditional"].join("\n");
 	document.body.appendChild(script);
 
+	/* Add render and get nth node helper */
+	window.renderAndGetNode = function(template, context, index) {
+		return template.render(context).childNodes[index];
+	};
+
 	require(['ist'].concat(tests), function(ist) {
 		/* Setup custom jasmine matchers */
 		beforeEach(function() {
@@ -58,7 +63,8 @@
 					'Parse error in \'' + template + '\' on line ' + line,
 					'missing ) in parenthetical in \'' + template + '\' on line ' + line,
 					'Function constructor: failed to compile function in \'' + template + '\' on line ' + line,
-					'Expected \')\' in \'' + template + '\' on line ' + line
+					'Expected \')\' in \'' + template + '\' on line ' + line,
+					'Expected token \')\' in \'' + template + '\' on line ' + line
 				]);
 			};
 

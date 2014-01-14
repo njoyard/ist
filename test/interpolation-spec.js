@@ -1,5 +1,5 @@
 /*jshint browser:true*/
-/*global define, describe, it, expect*/
+/*global define, describe, it, expect, renderAndGetNode */
 
 define([
 	'ist',
@@ -16,39 +16,48 @@ define([
 			propObj = {
 				sub: { property: 'value' },
 				access: { to: { deeply: { nested: { property: 'value' } } } }
-			},
-			baseNodes = tBase.render({ variable: 'value', object: obj }).childNodes,
-			propNodes = tProperties.render(propObj).childNodes,
-			thisNodes = tThis.render('value').childNodes;
+			};
+
+		function getBaseNode(index) {
+			return tBase.render({ variable: 'value', object: obj }).childNodes[index];
+		}
+
+		function getPropNode(index) {
+			return tProperties.render(propObj).childNodes[index];
+		}
+
+		function getThisNode(index) {
+			return tThis.render('value').childNodes[index];
+		}
 		
 		it('should interpolate variables in text nodes', function() {
-			expect( baseNodes[0].textContent ).toBe( 'before value after' );
+			expect( renderAndGetNode(tBase, { variable: 'value', object: obj }, 0).textContent ).toBe( 'before value after' );
 		});
 		
 		it('should interpolate variables in attribute values', function() {
-			expect( baseNodes[1].getAttribute('attribute') ).toBe( 'before value after' );
+			expect( renderAndGetNode(tBase, { variable: 'value', object: obj }, 1).getAttribute('attribute') ).toBe( 'before value after' );
 		});
 		
 		it('should interpolate variables in property values', function() {
-			expect( baseNodes[2].property ).toBe( 'before value after' );
+			expect( renderAndGetNode(tBase, { variable: 'value', object: obj }, 2).property ).toBe( 'before value after' );
 		});
 		
 		it('should ignore space inside interpolation braces', function() {
-			expect( baseNodes[3].textContent ).toBe( 'value' );
-			expect( baseNodes[4].textContent ).toBe( 'value' );
+			expect( renderAndGetNode(tBase, { variable: 'value', object: obj }, 3).textContent ).toBe( 'value' );
+			expect( renderAndGetNode(tBase, { variable: 'value', object: obj }, 4).textContent ).toBe( 'value' );
 		});
 		
 		it('should convert non-string variables to string', function() {
-			expect( baseNodes[5].getAttribute('attribute') ).toBe( obj.toString() );
+			expect( renderAndGetNode(tBase, { variable: 'value', object: obj }, 5).getAttribute('attribute') ).toBe( obj.toString() );
 		});
 		
 		it('should interpolate context properties', function() {
-			expect( propNodes[0].textContent ).toBe( 'value' );
-			expect( propNodes[1].textContent ).toBe( 'value' );
+			expect( renderAndGetNode(tProperties, propObj, 0).textContent ).toBe( 'value' );
+			expect( renderAndGetNode(tProperties, propObj, 1).textContent ).toBe( 'value' );
 		});
 		
 		it('should interpolate \'this\' as the rendering context itself', function() {
-			expect( thisNodes[0].textContent ).toBe( 'value' );
+			expect( renderAndGetNode(tThis, 'value', 0).textContent ).toBe( 'value' );
 		});
 		
 		it('should interpolate undefined subproperties as \'undefined\'', function() {
@@ -63,19 +72,18 @@ define([
 		});
 		
 		document.myClassValue = 'document property value';
-		var exprNodes = tExpressions.render(obj).childNodes;
 		
 		it('should evaluate expressions', function() {
-			expect( exprNodes[0].textContent ).toBe( '' + (1 + 17 - 3 / 2) );
-			expect( exprNodes[1].textContent ).toBe( '' + (obj.aNumber + 3) );
+			expect( renderAndGetNode(tExpressions, obj, 0).textContent ).toBe( '' + (1 + 17 - 3 / 2) );
+			expect( renderAndGetNode(tExpressions, obj, 1).textContent ).toBe( '' + (obj.aNumber + 3) );
 		});
 		
 		it('should allow accessing the rendering document inside expressions using \'document\'', function() {
-			expect( exprNodes[2].className ).toBe( document.myClassValue + 'suffix' );
+			expect( renderAndGetNode(tExpressions, obj, 2).className ).toBe( document.myClassValue + 'suffix' );
 		});
 		
 		it('should execute arbitrary JS code inside expressions', function() {
-			expect( exprNodes[3].textContent ).toBe( '' + (Math.PI + (function(arg) { return Array.isArray(arg); })([1, 2])) );
+			expect( renderAndGetNode(tExpressions, obj, 3).textContent ).toBe( '' + (Math.PI + (function(arg) { return Array.isArray(arg); })([1, 2])) );
 		});
 
 		it('should report syntax error in expressions when compiling', function() {
