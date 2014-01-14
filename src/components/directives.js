@@ -137,7 +137,7 @@ define(function() {
 
 		'dom': function domHelper(ctx, value, tmpl, fragment) {
 			if (value.ownerDocument !== ctx.doc) {
-				value = ctx.doc.importNode(value);
+				value = ctx.doc.importNode(value, true);
 			}
 
 			while(fragment.hasChildNodes()) {
