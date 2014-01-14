@@ -1,3 +1,8 @@
+v0.6.4 - 2014-01-14
+- Fixed @dom directive not inserting child nodes
+- Fixed tests for Safari, PhantomJS and IE11
+- Added Safari, PhantomJS and IE11 to tested browsers
+
 v0.6.3 - 2014-01-11
 - Automated tests are now run with Firefox and Opera in addition to Chrome
 - Fixed text node contents being set to non-string

@@ -1,6 +1,6 @@
 /**
  * IST: Indented Selector Templating
- * version 0.6.3
+ * version 0.6.4
  *
  * Copyright (c) 2012-2013 Nicolas Joyard
  * Released under the MIT license.
@@ -450,7 +450,7 @@
 	
 			'dom': function domHelper(ctx, value, tmpl, fragment) {
 				if (value.ownerDocument !== ctx.doc) {
-					value = ctx.doc.importNode(value);
+					value = ctx.doc.importNode(value, true);
 				}
 	
 				while(fragment.hasChildNodes()) {
