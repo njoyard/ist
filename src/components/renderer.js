@@ -95,7 +95,9 @@ function(Context, directives, RenderedTree, RenderedDirective) {
 		}
 	
 		try {
-			helper.call(null, ctx, ctx.scopedCall(pr.evaluator), pr.template, fragment);
+			ctx.scopedCall(pr.evaluator, function(v) {
+				helper.call(null, ctx, v, pr.template, fragment);
+			});
 		} catch (err) {
 			throw this._completeError(err, node);
 		}

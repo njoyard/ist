@@ -3,7 +3,7 @@
 	var depths = [0];
 }
 
-/* PEGjs rules */
+/* Template rules */
 
 templateLines
 = newline* first:line? tail:(newline+ line)* newline*
@@ -117,4 +117,3 @@ simpleDirective
 exprDirective
 = "@" name:identifier __+ expr:character+
 { return helpers.createDirective(name, expr.join(''), line()); }
-

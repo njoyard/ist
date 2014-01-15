@@ -68,7 +68,7 @@
 		return template.render(context).childNodes[index];
 	};
 
-
+	
 	/* Run tests */
 
 	var ready = (function() {

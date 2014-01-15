@@ -94,7 +94,7 @@ define([], function() {
 		},
 
 		scopedCall: function(fn, target) {
-			return fn.call(this.value, this.doc, this.scope, target);
+			return fn.call(this.value, this.scope, target);
 		}
 	};
 	
