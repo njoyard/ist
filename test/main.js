@@ -121,7 +121,8 @@
 								'Expected an identifier but found \'' + token + '\' instead in \'' + template + '\' on line ' + line,
 								'Parse error in \'' + template + '\' on line ' + line,
 								'Function constructor: failed to compile function in \'' + template + '\' on line ' + line,
-								'Expected \';\' in \'' + template + '\' on line ' + line
+								'Expected \')\' in \'' + template + '\' on line ' + line,
+								'Expected token \')\' in \'' + template + '\' on line ' + line
 							]);
 						};
 

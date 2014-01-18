@@ -74,7 +74,7 @@ functests-dev: ist ist-min
 
 # Test browsers separately (Sauce Labs limits concurrent tests, plus Karma
 # sometimes timeouts waiting for browsers when several of them are running)
-SAUCEBROWSERS=ie11 safari_osx chrome_linux chrome_windows chrome_osx firefox_linux firefox_windows firefox_osx opera_linux opera_windows
+SAUCEBROWSERS=ie10 ie11 safari_osx chrome_linux chrome_windows chrome_osx firefox_linux firefox_windows firefox_osx opera_linux opera_windows
 
 @PHONY: $(SAUCEBROWSERS)
 $(SAUCEBROWSERS):
