@@ -1,0 +1,9 @@
+{
+	"name": "%NAME%.main",
+	"out": "%NAME%-min.out.js",
+	"optimize": "none",
+
+	"paths": {
+		"ist": "../../ist-min"
+	}
+}

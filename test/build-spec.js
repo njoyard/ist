@@ -14,49 +14,51 @@ define([], function() {
 		}
 	}
 
-	describe('build', function() {
-		built.forEach(function(file) {
-			it('should run ' + file, function() {
-				var complete = false;
+	return function() {
+		describe('[r.js built scripts]', function() {
+			built.forEach(function(file) {
+				it('should run ' + file, function() {
+					var complete = false;
 
-				var iframe = document.createElement('iframe');
-				iframe.name = file;
-				iframe.src = 'about:blank';
-				document.body.appendChild(iframe);
+					var iframe = document.createElement('iframe');
+					iframe.name = file;
 
-				iframe.addEventListener('load', function() {
-					var iframeWindow = window.frames[file];
-					var iframeDoc = iframeWindow.document;
+					iframe.addEventListener('load', function() {
+						var iframeWindow = window.frames[file];
+						var iframeDoc = iframeWindow.document;
 
-					iframeWindow.__run__ = function(testRunner) {
-						testRunner(expect, function() {
-							document.body.removeChild(iframe);
-							complete = true;
-						});
-					};
+						iframeWindow.__run__ = function(testRunner) {
+							testRunner(expect, function() {
+								document.body.removeChild(iframe);
+								complete = true;
+							});
+						};
 
-					var istScript = iframeDoc.createElement('script');
-					istScript.type = 'text/x-ist';
-					istScript.id = 'scriptTag';
-					istScript.innerHTML = 'div\n "{{ foo }}"';
+						var istScript = iframeDoc.createElement('script');
+						istScript.type = 'text/x-ist';
+						istScript.id = 'scriptTag';
+						istScript.innerHTML = 'div\n "{{ foo }}"';
 
-					iframeDoc.body.appendChild(istScript);
+						iframeDoc.body.appendChild(istScript);
 
-					var requireScript = iframeDoc.createElement('script');
-					requireScript.src = '/base/node_modules/requirejs/require.js';
-					requireScript.setAttribute('data-main', file);
-
-					runs(function() {
+						var requireScript = iframeDoc.createElement('script');
+						requireScript.src = '/base/node_modules/requirejs/require.js';
+						requireScript.setAttribute('data-main', file);
 						iframeDoc.body.appendChild(requireScript);
+					});
+					
+					runs(function() {
+						iframe.src = 'about:blank';
+						document.body.appendChild(iframe);
 					});
 
 					waitsFor(
 						function() { return complete; },
-						1000,
-						'built script ' + file
+						'built script ' + file,
+						1000
 					);
 				});
 			});
 		});
-	});
+	};
 });

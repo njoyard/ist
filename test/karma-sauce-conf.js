@@ -10,9 +10,10 @@ module.exports = function(config) {
     files: [
       'test/main.js',
       {pattern: 'ist.js', included: false},
+      {pattern: 'ist-min.js', included: false},
       {pattern: 'test/lib/*.js', included: false},
       {pattern: 'test/**/*.ist', included: false},
-      {pattern: 'test/usage/standalone.html', included: false},
+      {pattern: 'test/usage/*', included: false},
       {pattern: 'test/**/included_*.js', included: false},
       {pattern: 'test/**/*-spec.js', included: false},
       {pattern: 'test/build/*.out.js', included: false}

@@ -1,49 +1,71 @@
 /*jshint browser:true*/
 /*global define, describe, it, expect, runs, waitsFor*/
 
-define([], function() {
+define(['text!test/usage/standalone-template.ist'], function(templateText) {
 	'use strict';
 
-	describe('usage', function() {
-		it('should work when loaded as a standalone script', function() {
-			var completed = false;
-			
-			runs(function() {
-				var iframe = document.createElement('iframe');
+	return function(configName) {
+		describe('[Standalone usage]', function() {
+			it('should work when ' + configName + '.js is loaded as a standalone script', function() {
+				var complete = false;
 				
+				var iframe = document.createElement('iframe');
+				iframe.name = 'standalone';
+
 				iframe.addEventListener('load', function() {
 					var ifw = window.frames.standalone;
 				
 					if (!ifw) {
 						throw new Error('Cannot find standalone iframe');
 					}
-				
-					var ist = ifw.testIstPresent();
-					expect( typeof ist ).toBe( 'function' );
-					expect( typeof ist.create ).toBe( 'function' );
-					expect( typeof ist.helper ).toBe( 'function' );
+
+					var doc = ifw.document;
+
+					/* Add script to set a value to window.ist */
+					var setWindowIst = doc.createElement('script');
+					setWindowIst.innerHTML = 'window.ist = "previous ist value";';
+					doc.body.appendChild(setWindowIst);
+
+					/* Load ist.js */
+					var istjs = doc.createElement('script');
+
+					istjs.addEventListener('load', function() {
+						/* Add template script tag */
+						var template = doc.createElement('script');
+						template.type = 'text/x-ist';
+						template.id = 'template1';
+						template.innerHTML = templateText;
+						doc.body.appendChild(template);
+
+						/* Add script to define test functions */
+						var testScript = doc.createElement('script');
 					
-					var template = ifw.testTemplate();
-					expect( typeof template.render ).toBe( 'function' );
-					
-					template = ifw.testFromScript();
-					expect( typeof template.render ).toBe( 'function' );
-					
-					var noconflict = ifw.testNoConflict();
-					expect( noconflict.before ).toBe( ist );
-					expect( noconflict.result ).toBe( ist );
-					expect( noconflict.after ).toBe( 'previous ist value' );
-				
-					document.body.removeChild(iframe);
-					completed = true;
+						testScript.addEventListener('load', function() {
+							ifw.__run__(expect, function() {
+								document.body.removeChild(iframe);
+								complete = true;
+							});
+						});
+						
+						testScript.src = '/base/test/usage/standalone-script.js';
+						doc.body.appendChild(testScript);
+					});
+
+					istjs.src = '/base/' + configName + '.js';
+					doc.body.appendChild(istjs);
 				});
-			
-				iframe.name = 'standalone';
-				iframe.src = 'base/test/usage/standalone.html';
-				document.body.appendChild(iframe);
+
+				runs(function() {
+					iframe.src = 'about:blank';
+					document.body.appendChild(iframe);
+				});
+					
+				waitsFor(
+					function() { return complete; },
+					1000,
+					'standalone iframe load timeout'
+				);
 			});
-			
-			waitsFor(function() { return completed; }, 10000, 'Standalone iframe load timeout');
 		});
-	});
+	};
 });

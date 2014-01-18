@@ -4,5 +4,6 @@ node_modules
 src/parser/parser.compiled.js
 src/parser/parser.js
 
-# Do not track compiled r.js tests
+# Do not track compiled r.js tests and config files
+test/build/*.build.js
 test/build/*.out.js

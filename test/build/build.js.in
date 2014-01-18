@@ -1,6 +1,6 @@
 {
-	"name": "base.main",
-	"out": "base.out.js",
+	"name": "%NAME%.main",
+	"out": "%NAME%.out.js",
 	"optimize": "none",
 
 	"paths": {
