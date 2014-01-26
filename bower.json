@@ -18,7 +18,9 @@
   "ignore": [
     "**/.*",
     "src",
-    "tests",
+    "test",
+    "package.json",
+    "bower.json",
     "Makefile"
   ]
 }
