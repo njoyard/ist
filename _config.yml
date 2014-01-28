@@ -1,5 +1,5 @@
 pygments: true
 markdown: rdiscount
 exlude: [src/, Makefile]
-url: http://njoyard.github.io/ist
+url: http://istjs.njoyard.fr
 #url: http://localhost:4000

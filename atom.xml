@@ -5,10 +5,10 @@ layout: nil
 <feed xmlns="http://www.w3.org/2005/Atom">
  
   <title>ist.js</title>
-  <link href="http://njoyard.github.io/ist"/>
-  <link type="application/atom+xml" rel="self" href="http://njoyard.github.io/ist/atom.xml"/>
+  <link href="http://istjs.njoyard.fr"/>
+  <link type="application/atom+xml" rel="self" href="http://istjs.njoyard.fr/atom.xml"/>
   <updated>{{ site.time | date_to_xmlschema }}</updated>
-  <id>http://njoyard.github.io/ist</id>
+  <id>http://istjs.njoyard.fr/</id>
   <author>
     <name>Nicolas Joyard</name>
     <email>joyard.nicolas@gmail.com</email>
@@ -17,13 +17,13 @@ layout: nil
   {% for post in site.posts %}
   <entry>
     <id>http://njoyard.github.io/ist{{ post.id }}</id>
-    <link type="text/html" rel="alternate" href="http://njoyard.github.io/ist{{ post.url }}"/>
+    <link type="text/html" rel="alternate" href="http://istjs.njoyard.fr{{ post.url }}"/>
     <title>{{ post.title }}</title>
     <published>{{ post.date | date_to_xmlschema }}</published>
     <updated>{{ post.date | date_to_xmlschema }}</updated>
     <author>
       <name>Nicolas Joyard</name>
-      <uri>http://njoyard.github.io/ist</uri>
+      <uri>http://istjs.njoyard.fr</uri>
     </author>
     <content type="html">{{ post.content | xml_escape }}</content>
   </entry>
