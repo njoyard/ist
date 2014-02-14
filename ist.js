@@ -1,6 +1,6 @@
 /**
  * IST: Indented Selector Templating
- * version 0.6.4
+ * version 0.6.5
  *
  * Copyright (c) 2012-2013 Nicolas Joyard
  * Released under the MIT license.
@@ -223,8 +223,11 @@
 			this.values = [object];
 	
 			this.doc = doc || document;
-			this.rootScope = this.scope = {};
+			this.rootScope = this.scope = Context.globalScope;
 		}
+	
+	
+		Context.globalScope = {};
 	
 	
 		Context.prototype = {
@@ -3014,7 +3017,7 @@
 	}(istComponents.misc));
 	
 	/*global define, requirejs, isAMD, isNode, isBrowser */
-	istComponents.ist = ( function(Template, directives, pegjsParser, preprocess, pluginify, misc) {
+	istComponents.ist = ( function(Template, directives, Context, pegjsParser, preprocess, pluginify, misc) {
 		
 	
 		/**
@@ -3144,7 +3147,13 @@
 				throw new Error('Invalid included template \'' + name + '\'');
 			}
 		});
-		
+	
+	
+		/* Global scope registration */
+		ist.global = function(key, value) {
+			Context.globalScope[key] = value;
+		};
+	
 	
 		if (isNode || (isBrowser && isAMD)) {
 			pluginify(ist);
@@ -3154,6 +3163,7 @@
 	}(
 		istComponents.template,
 		istComponents.directives,
+		istComponents.context,
 		istComponents.parser,
 		istComponents.preprocessor,
 		istComponents.amdplugin,

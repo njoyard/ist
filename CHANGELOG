@@ -1,3 +1,6 @@
+v0.6.5 - 2014-02-14
+- Added ist.global(key, value)
+
 v0.6.4 - 2014-01-14
 - Fixed @dom directive not inserting child nodes
 - Fixed tests for Safari, PhantomJS and IE11
@@ -44,7 +47,7 @@ v0.5.6 - 2013-03-09
 v0.5.5 - 2012-12-06
 - Fixed a bug where pushEvalVar would not hide a previously pushed variable
 - Added new tests for push/popEvalVar behaviour
-- Fixed a bug where rendering wnth context properties names that are not valid
+- Fixed a bug where rendering with context properties names that are not valid
   identifiers would cause an error
 - Optimized rendering by reading context properties when the Context object is
   created, instead of doing it once for each "{{  }}" evaluation
