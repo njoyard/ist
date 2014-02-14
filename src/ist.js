@@ -2,11 +2,12 @@
 define([
 	'components/template',
 	'components/directives',
+	'components/context',
 	'parser/parser',
 	'parser/preprocessor',
 	'util/amdplugin',
 	'util/misc'
-], function(Template, directives, pegjsParser, preprocess, pluginify, misc) {
+], function(Template, directives, Context, pegjsParser, preprocess, pluginify, misc) {
 	'use strict';
 
 	/**
@@ -136,7 +137,13 @@ define([
 			throw new Error('Invalid included template \'' + name + '\'');
 		}
 	});
-	
+
+
+	/* Global scope registration */
+	ist.global = function(key, value) {
+		Context.globalScope[key] = value;
+	};
+
 
 	if (isNode || (isBrowser && isAMD)) {
 		pluginify(ist);

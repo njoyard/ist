@@ -13,8 +13,11 @@ define([], function() {
 		this.values = [object];
 
 		this.doc = doc || document;
-		this.rootScope = this.scope = {};
+		this.rootScope = this.scope = Context.globalScope;
 	}
+
+
+	Context.globalScope = {};
 
 
 	Context.prototype = {
