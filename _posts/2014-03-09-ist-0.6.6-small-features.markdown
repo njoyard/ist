@@ -21,10 +21,10 @@ ist.global("myValue", 42);
 {% highlight css %}
 div
     /* Renders to "helped value: hi!" */
-    "{{ myHelper('hi!') }}"
+    "{{ opencurly }} myHelper('hi!') {{ closecurly }}"
 
     /* Renders to "helped value: hi!" */
-    "{{ myValue }}"
+    "{{ opencurly }} myValue {{ closecurly }}"
 {% endhighlight %}
 
 Note that context variables with the same name as global variables will take precedence, as you're used to in Javascript.
