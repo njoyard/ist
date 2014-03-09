@@ -673,6 +673,20 @@ selectors.  Of course you will need at least one qualifier.
 </section>
 </section>
 
+<section class="doc-item">
+<section class="doc-desc">
+If you have many qualifiers, you may want to have them on separate lines to improve readability.  You can escape newlines with a backslash to make ist.js ignore them.  All spaces before the backslash and on the beginning of the following line will be ignored, but take care not to leave spaces _after_ the escaping backslash.
+
+</section>
+<section class="doc-code">
+{% highlight css %}
+.div-with-very-long-selector-qualifier-list#and-long-id \
+    [and-long-attribute-list=value1][and-long-attribute-list-2=value2] \
+    [and-long-attribute-list-3=value3][and-long-attribute-list-4=value4]
+{% endhighlight %}
+</section>
+</section>
+
 ### <a class="nohover" name="Text nodes">Text nodes</a><a class="toplink" href="#top">top</a>
 
 <section class="doc-item">
@@ -808,19 +822,43 @@ identifiers, using the square bracket notation.
 
 <section class="doc-item">
 <section class="doc-desc">
-Expressions cannot be used inside id or class qualifiers, but you can use
-attribute qualifiers instead.
+You can define global variables that will be usable in any expression using `ist.global("name", "value")`.  Context variables with the same name will overwrite those.
 
 </section>
 <section class="doc-code">
-{% highlight css %}
-div[class={{ opencurly }} cssClass {{ closecurly }}]
-div[.className={{ opencurly }} cssClass {{ closecurly }}]
-div[id={{ opencurly }} id {{ closecurly }}]
+{% highlight js %}
+ist.global("upper", function(text) {
+    return text.toUpperCase();
+});
 {% endhighlight %}
 </section>
 </section>
 
+{% highlight css %}
+<section class="doc-item">
+<section class="doc-desc">
+"{{ opencurly }} upper('will be uppercased') {{ closecurly }}"
+</section>
+<section class="doc-code">
+{% endhighlight %}
+
+Expressions cannot be used inside id or class qualifiers, but you can use
+attribute qualifiers instead.
+
+{% highlight css %}
+</section>
+</section>
+<section class="doc-item">
+<section class="doc-desc">
+div[class={{ opencurly }} cssClass {{ closecurly }}]
+div[.className={{ opencurly }} cssClass {{ closecurly }}]
+div[id={{ opencurly }} id {{ closecurly }}]
+</section>
+<section class="doc-code">
+{% endhighlight %}
+
+</section>
+</section>
 ### <a class="nohover" name="Event handlers">Event handlers</a><a class="toplink" href="#top">top</a>
 
 <section class="doc-item">
@@ -1342,9 +1380,9 @@ var myDiv = ist.create(
 {% endhighlight %}
 </section>
 </section>
+    
 <section class="doc-item">
 <section class="doc-desc">
-    
 It also supports rendering with context.
 
 </section>
@@ -1357,9 +1395,9 @@ var myDiv = ist.create(
 {% endhighlight %}
 </section>
 </section>
+    
 <section class="doc-item">
 <section class="doc-desc">
-    
 `ist.create()` is also able to create several nodes at once using a CSS-like
 angle-bracket syntax.
 
@@ -1803,7 +1841,7 @@ ist.helper(
 
 <section class="doc-item">
 <section class="doc-desc">
-This documentation was last updated for ist.js version 0.6.1.
+This documentation was last updated for ist.js version 0.6.6.
 
 [1]: http://handlebarsjs.com/block_helpers.html
 </section>

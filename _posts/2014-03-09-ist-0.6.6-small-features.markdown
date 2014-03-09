@@ -1,0 +1,39 @@
+---
+layout: post
+title: ist.js v0.6.6 - Small new features
+---
+
+{% assign opencurly = '{{' %}
+{% assign closecurly = '}}' %}
+
+I just released ist.js version 0.6.6, which adds two new features (one of which was actually added in 0.6.5 but I didn't write a post about it).
+
+The first one enables defining global variables or helpers that will be available anywhere in templates:
+
+{% highlight javascript %}
+ist.global("myHelper", function(value) {
+    return "helped value: " + value;
+});
+
+ist.global("myValue", 42);
+{% endhighlight %}
+
+{% highlight css %}
+div
+    /* Renders to "helped value: hi!" */
+    "{{ myHelper('hi!') }}"
+
+    /* Renders to "helped value: hi!" */
+    "{{ myValue }}"
+{% endhighlight %}
+
+Note that context variables with the same name as global variables will take precedence, as you're used to in Javascript.
+
+The second features enable escaping newlines with a backslash to make long selectors more readable.  All spaces/tabs before the backslash and on the beginning of the following line will be ignored.  Take care not to leave spaces _after_ the escaping backslash.
+
+{% highlight css %}
+div.class#id[data-one={{ opencurly }} one {{ closecurly }}][data-two={{ opencurly }} two {{ closecurly }}] \
+    [data-three={{ opencurly }} three {{ closecurly }}][data-four={{ opencurly }}four {{ closecurly }}] \
+            [data-five={{ opencurly }} five {{ closecurly }}][data-six={{ opencurly }} six {{ closecurly }}]
+{% endhighlight %}
+

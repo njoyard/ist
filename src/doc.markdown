@@ -424,6 +424,14 @@ selectors.  Of course you will need at least one qualifier.
 	[implicit=yes]
 ```
 
+If you have many qualifiers, you may want to have them on separate lines to improve readability.  You can escape newlines with a backslash to make ist.js ignore them.  All spaces before the backslash and on the beginning of the following line will be ignored, but take care not to leave spaces _after_ the escaping backslash.
+
+```css
+.div-with-very-long-selector-qualifier-list#and-long-id \
+    [and-long-attribute-list=value1][and-long-attribute-list-2=value2] \
+    [and-long-attribute-list-3=value3][and-long-attribute-list-4=value4]
+```
+
 ### Text nodes
 
 You can add text nodes in a template by enclosing text with single or double
@@ -507,6 +515,18 @@ identifiers, using the square bracket notation.
 "{{ this[12] }}"
 "{{ this['weird property name'] }}"
 "{{ this[\"typeof\"] }}"
+```
+
+You can define global variables that will be usable in any expression using `ist.global("name", "value")`.  Context variables with the same name will overwrite those.
+
+```js
+ist.global("upper", function(text) {
+    return text.toUpperCase();
+});
+```
+
+```css
+"{{ upper('will be uppercased') }}"
 ```
 
 Expressions cannot be used inside id or class qualifiers, but you can use
@@ -1254,6 +1274,6 @@ ist.helper(
 
 ## Version
 
-This documentation was last updated for ist.js version 0.6.1.
+This documentation was last updated for ist.js version 0.6.6.
 
 [1]: http://handlebarsjs.com/block_helpers.html
