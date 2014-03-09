@@ -58,7 +58,7 @@ License
 ist.js is distributed under the MIT license. See the file [`LICENSE`][3] for
 more information.
 
-Copyright (c) 2012-2013 Nicolas Joyard
+Copyright (c) 2012-2014 Nicolas Joyard
 
 
 [1]: http://njoyard.github.io/ist

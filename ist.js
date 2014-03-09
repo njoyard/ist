@@ -1,8 +1,8 @@
 /**
  * IST: Indented Selector Templating
- * version 0.6.5
+ * version 0.6.6
  *
- * Copyright (c) 2012-2013 Nicolas Joyard
+ * Copyright (c) 2012-2014 Nicolas Joyard
  * Released under the MIT license.
  *
  * Author: Nicolas Joyard <joyard.nicolas@gmail.com>
@@ -2877,7 +2877,7 @@
 			removeComment, removeWhitespace;
 	
 		removeComment = function(m, p1) {
-			return p1.split(newlines).map(function(l) { return ''; }).join('\n');
+			return p1.split(newlines).map(function() { return ""; }).join("\n");
 		};
 	
 		removeWhitespace = function(l) {
@@ -2888,17 +2888,35 @@
 		 * Template preprocessor; handle what the parser cannot handle
 		 * - Make whitespace-only lines empty
 		 * - Remove block-comments (keeping line count)
-		 */	
+		 * - Remove escaped line breaks
+		 */
 		return function(text) {
-			var lines;
+			return text
+				// Remove block comments
+				.replace(comment, removeComment)
 	
-			// Remove block comments
-			text = text.replace(comment, removeComment); 
+				.split(newlines)
 	
-			// Remove everthing from whitespace-only lines
-			text = text.split(newlines).map(removeWhitespace).join('\n');
+				// Remove everthing from whitespace-only lines
+				.map(removeWhitespace)
 	
-			return text;
+				// Remove escaped line breaks
+				.reduce(function(lines, line) {
+					if (lines.length) {
+						var prevline = lines[lines.length - 1];
+						if (prevline[prevline.length - 1] === "\\") {
+							lines[lines.length - 1] = prevline.replace(/\s*\\$/, "") + line.replace(/^\s*/, "");
+						} else {
+							lines.push(line);
+						}
+					} else {
+						lines.push(line);
+					}
+	
+					return lines;
+				}, [])
+	
+				.join("\n");
 		};
 	}());
 	

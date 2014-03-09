@@ -9,19 +9,21 @@ define([
 	'text!test/syntax/notextchildren.ist',
 	'text!test/syntax/nomatchingindent.ist',
 	'ist!test/syntax/indentedroot',
-	'ist!test/syntax/comments'
+	'ist!test/syntax/comments',
+	'ist!test/syntax/escapednl'
 ], function(
 	ist,
 	tEmptyLines, tChildren, tSiblings,
 	textNoTextChildren, textNoMatchingIndent,
-	tIndentedRoot, tComments) {
+	tIndentedRoot, tComments, tEscapedNl) {
 	'use strict';
 	
 	var elNodes = tEmptyLines.render().childNodes,
 		childrenNodes = tChildren.render().childNodes,
 		siblingsNodes = tSiblings.render().childNodes,
 		irootNodes = tIndentedRoot.render().childNodes,
-		cmtNodes = tComments.render().childNodes;
+		cmtNodes = tComments.render().childNodes,
+		enlNodes = tEscapedNl.render().childNodes;
 	
 	describe('syntax', function() {
 		it('should ignore empty and whitespace-only lines', function() {
@@ -96,6 +98,13 @@ define([
 			expect( cmtNodes[1].childNodes[0].childNodes[0].className ).toBe( 'class4' );
 			expect( cmtNodes[2].className ).toBe( 'class5' );
 			expect( cmtNodes[2].childNodes[0].className ).toBe( 'class6' );
+		});
+
+		it('should ignore escaped new lines', function() {
+			expect( enlNodes[0].className ).toBe( 'class' );
+			expect( enlNodes[1].className ).toBe( 'class' );
+			expect( enlNodes[2].className ).toBe( 'class' );
+			expect( enlNodes[2].id ).toBe( 'id' );
 		});
 	});
 });

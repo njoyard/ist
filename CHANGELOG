@@ -1,3 +1,6 @@
+v0.6.6 - 2014-03-09
+- Added support for escaped newlines in templates
+
 v0.6.5 - 2014-02-14
 - Added ist.global(key, value)
 
