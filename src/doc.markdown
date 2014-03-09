@@ -523,9 +523,8 @@ You can define global variables that will be usable in any expression using `ist
 ist.global("upper", function(text) {
     return text.toUpperCase();
 });
-```
 
-```css
+// Template
 "{{ upper('will be uppercased') }}"
 ```
 

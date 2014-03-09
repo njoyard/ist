@@ -830,35 +830,28 @@ You can define global variables that will be usable in any expression using `ist
 ist.global("upper", function(text) {
     return text.toUpperCase();
 });
+
+// Template
+"{{ opencurly }} upper('will be uppercased') {{ closecurly }}"
 {% endhighlight %}
 </section>
 </section>
 
-{% highlight css %}
 <section class="doc-item">
 <section class="doc-desc">
-"{{ opencurly }} upper('will be uppercased') {{ closecurly }}"
-</section>
-<section class="doc-code">
-{% endhighlight %}
-
 Expressions cannot be used inside id or class qualifiers, but you can use
 attribute qualifiers instead.
 
+</section>
+<section class="doc-code">
 {% highlight css %}
-</section>
-</section>
-<section class="doc-item">
-<section class="doc-desc">
 div[class={{ opencurly }} cssClass {{ closecurly }}]
 div[.className={{ opencurly }} cssClass {{ closecurly }}]
 div[id={{ opencurly }} id {{ closecurly }}]
-</section>
-<section class="doc-code">
 {% endhighlight %}
+</section>
+</section>
 
-</section>
-</section>
 ### <a class="nohover" name="Event handlers">Event handlers</a><a class="toplink" href="#top">top</a>
 
 <section class="doc-item">
