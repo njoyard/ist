@@ -517,14 +517,17 @@ identifiers, using the square bracket notation.
 "{{ this[\"typeof\"] }}"
 ```
 
-You can define global variables that will be usable in any expression using `ist.global("name", "value")`.  Context variables with the same name will overwrite those.
+You can define global variables that will be usable in any expression using `ist.global("name", "value")`.
 
 ```js
 ist.global("upper", function(text) {
     return text.toUpperCase();
 });
+```
 
-// Template
+Context variables with the same name will overwrite global variable, as you're used to in Javascript.
+
+```css
 "{{ upper('will be uppercased') }}"
 ```
 

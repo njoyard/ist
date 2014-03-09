@@ -822,7 +822,7 @@ identifiers, using the square bracket notation.
 
 <section class="doc-item">
 <section class="doc-desc">
-You can define global variables that will be usable in any expression using `ist.global("name", "value")`.  Context variables with the same name will overwrite those.
+You can define global variables that will be usable in any expression using `ist.global("name", "value")`.
 
 </section>
 <section class="doc-code">
@@ -830,8 +830,17 @@ You can define global variables that will be usable in any expression using `ist
 ist.global("upper", function(text) {
     return text.toUpperCase();
 });
+{% endhighlight %}
+</section>
+</section>
 
-// Template
+<section class="doc-item">
+<section class="doc-desc">
+Context variables with the same name will overwrite global variable, as you're used to in Javascript.
+
+</section>
+<section class="doc-code">
+{% highlight css %}
 "{{ opencurly }} upper('will be uppercased') {{ closecurly }}"
 {% endhighlight %}
 </section>
