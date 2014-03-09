@@ -23,7 +23,7 @@ div
     /* Renders to "helped value: hi!" */
     "{{ opencurly }} myHelper('hi!') {{ closecurly }}"
 
-    /* Renders to "helped value: hi!" */
+    /* Renders to "42" */
     "{{ opencurly }} myValue {{ closecurly }}"
 {% endhighlight %}
 
