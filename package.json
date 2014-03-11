@@ -3,7 +3,7 @@
 		"karma": "*",
 		"karma-opera-launcher": "*",
 		"karma-sauce-launcher": "*",
-		"pegjs": "*",
+		"pegjs": "~0.8.0",
 		"requirejs": "*"
 	}
 }

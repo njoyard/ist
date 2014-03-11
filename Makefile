@@ -40,7 +40,7 @@ $(RJSOUTS): %.out.js:%.build.js ist.js
 
 # Functional tests
 
-KARMA=node_modules/.bin/karma
+KARMA=node_modules/karma/bin/karma
 KARMACONF=test/karma-conf.js
 KARMASAUCECONF=test/karma-sauce-conf.js
 
