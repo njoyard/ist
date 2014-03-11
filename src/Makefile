@@ -10,7 +10,7 @@ PARSER=parser/parsehelpers.js parser/parser.js parser/preprocessor.js
 UTIL=$(wildcard util/*.js)
 PARTS=$(wildcard parts/build.*.part)
 
-SOURCE=ist.js $(COMPONENTS) $(PARSER) $(UTIL)
+SOURCE=main.js $(COMPONENTS) $(PARSER) $(UTIL)
 
 all: ist ist-min
 

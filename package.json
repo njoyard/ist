@@ -1,5 +1,6 @@
 {
 	"devDependencies": {
+		"amdclean": "~1.3.0",
 		"karma": "*",
 		"karma-chrome-launcher": "*",
 		"karma-firefox-launcher": "*",

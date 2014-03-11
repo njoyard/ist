@@ -1,36 +1,24 @@
 {
-	name: 'ist',
+	name: 'main',
 	
 	optimize: 'uglify2',
 	
 	onBuildWrite: function (moduleName, path, contents) {
-		var mangleModuleName,
-			replaceModuleCalls,
-			replaceDefineCalls;
-			
-		mangleModuleName = function(name) {
-			return name.split('/').pop();
-		};
-			
-		replaceModuleCalls = function(match, p1) {
-			return "istComponents." + mangleModuleName(p1);
-		};
-		
-		replaceDefineCalls = function(match, p1, p2, p3) {
-			var deps = p2.replace(
-					/["']([^"']+)["']/g, 
-					replaceModuleCalls
-				);
-			return "istComponents." + mangleModuleName(p1) + " = (" + p3 + "(" + deps + "))";
-		};
-	
-		// Replace define calls
-		return contents.replace(
-			/define\s*\(["']([^"']+)["']\s*,\s*\[((?:\n|[^\]])*)\]\s*,((?:\n|.)*)\)/g,
-			replaceDefineCalls
-		).replace(/^/mg, '\t');
-    },
-    
+		// Remove jshint comments
+		return contents.replace(/\/\*(jshint|global) [^*\/]*\*\//g, '');
+	},
+
+	onModuleBundleComplete: function (data) {
+		var fs = module.require('fs'),
+			amdclean = module.require('amdclean'),
+			outputFile = data.path;
+
+		fs.writeFileSync(outputFile, amdclean.clean({
+			'filePath': outputFile,
+			'ignoreModules': ['ist']
+		}));
+	},
+
 	wrap: {
 		startFile: 'parts/build.header.part',
 		endFile: 'parts/build.footer.part'

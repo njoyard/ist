@@ -25,7 +25,7 @@ define([
 				(typeof e.column !== 'undefined' ?  ', character ' + e.column : '');
 			throw e;
 		}
-	
+		
 		return new Template(name, parsed);
 	}
 	

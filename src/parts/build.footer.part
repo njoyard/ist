@@ -1,15 +1,14 @@
 	
 	if (isAMD || isNode) {
-		define("ist", [], function() { return istComponents.ist; });
+		define("ist", [], function() { return main; });
 	} else {
-		previous = global.ist;
+		var previous = global.ist;
 		
-		global.ist = istComponents.ist;
+		global.ist = main;
 		global.ist.noConflict = function() {
 			var ist = global.ist;
 			global.ist = previous;
 			return ist;
 		};
-		
 	}
 }(this)); 

@@ -13,7 +13,3 @@
 		isNode = typeof process !== "undefined" && process.versions && !!process.versions.node,
 		isBrowser = typeof window !== "undefined" && window.navigator && window.document;
 
-	var previous, istComponents;
-
-	istComponents = { require: global.require };
-
