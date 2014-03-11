@@ -52,7 +52,7 @@ define([], function() {
 
 					waitsFor(
 						function() { return complete; },
-						1000,
+						10000,
 						'built script ' + file
 					);
 				});

@@ -28,7 +28,7 @@ module.exports = function(config) {
     colors: true,
     logLevel: config.LOG_INFO,
     autoWatch: false,
-    captureTimeout: 10000,
+    captureTimeout: 60000,
     browserDisconnectTimeout: 10000,
     browserDisconnectTolerance: 2,
     browserNoActivityTimeout: 20000,
