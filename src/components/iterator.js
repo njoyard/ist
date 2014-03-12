@@ -18,6 +18,11 @@ define(['util/misc'], function(misc) {
 		var keyIndex = markerComment.keys;
 		var fragIndex = markerComment.fragments;
 
+		if (typeof keys === 'function') {
+			callback = keys;
+			keys = ["nokey"];
+		}
+
 		// Handle removed keys
 		for (var i = 0; i < keyIndex.length; i++) {
 			if (keys.indexOf(keyIndex[i]) === -1) {

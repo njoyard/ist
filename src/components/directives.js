@@ -14,7 +14,7 @@ define(function() {
 	 * @param {Function} iterate directive iterator
 	 */
 	function conditionalHelper(ctx, render, tmpl, iterate) {
-		iterate(['conditional'], function(key, rendered) {
+		iterate(function(key, rendered) {
 			if (render) {
 				if (rendered) {
 					rendered.update(ctx);
@@ -90,7 +90,7 @@ define(function() {
 		},
 
 		'with': function withHelper(ctx, value, tmpl, iterate) {
-			iterate(['with'], function(key, rendered) {
+			iterate(function(key, rendered) {
 				ctx.pushValue(value);
 
 				if (rendered) {
@@ -123,7 +123,7 @@ define(function() {
 		},
 
 		'dom': function domHelper(ctx, value, tmpl, iterate) {
-			iterate(['dom'], function() {
+			iterate(function() {
 				if (value.ownerDocument !== ctx.doc) {
 					value = ctx.doc.importNode(value, true);
 				}
@@ -141,7 +141,7 @@ define(function() {
 				throw new Error('Template \'' + value + '\' has not been @defined');
 			}
 
-			iterate(['use'], function(key, rendered) {
+			iterate(function(key, rendered) {
 				if (rendered) {
 					rendered.update(ctx);
 				} else {

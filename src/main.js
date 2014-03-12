@@ -96,7 +96,7 @@ define([
 	
 	/* Built-in @include helper */
 	ist.helper('include', function(ctx, value, tmpl, iterate) {
-		iterate(['include'], function(key, rendered) {
+		iterate(function(key, rendered) {
 			if (rendered) {
 				rendered.update(ctx);
 			} else {
