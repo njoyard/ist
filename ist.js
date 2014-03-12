@@ -1,6 +1,6 @@
 /**
  * IST: Indented Selector Templating
- * version 0.6.6
+ * version NEXT
  *
  * Copyright (c) 2012-2014 Nicolas Joyard
  * Released under the MIT license.
@@ -31,47 +31,64 @@
                 }
                 return found;
             },
-            appendNodeSegment: function (firstChild, lastChild, target) {
+            iterateNodelist: function (firstChild, lastChild, callback) {
                 var node = firstChild, end = lastChild ? lastChild.nextSibling : null, next;
-                while (node && node != end) {
+                while (node && node !== end) {
                     next = node.nextSibling;
-                    target.appendChild(node);
+                    callback(node);
                     node = next;
                 }
             },
-            insertNodeSegmentBefore: function (firstChild, lastChild, target, ref) {
-                var node = firstChild, end = lastChild ? lastChild.nextSibling : null, next;
-                while (node && node != end) {
-                    next = node.nextSibling;
-                    target.insertBefore(node, ref);
-                    node = next;
-                }
+            buildNodelist: function (firstChild, lastChild) {
+                var list = [];
+                this.iterateNodelist(firstChild, lastChild, function (node) {
+                    list.push(node);
+                });
+                return list;
+            },
+            removeNodelist: function (firstChild, lastChild) {
+                this.iterateNodelist(firstChild, lastChild, function (node) {
+                    node.parentNode.removeChild(node);
+                });
             }
         };
     var components_codegen = function (misc) {
             
             var expressionRE = /{{\s*((?:}(?!})|[^}])*?)\s*}}/;
             var NL = '\n';
+            var TAB = '\t';
+            var indent;
             var interpolateCache = {};
             var propertyCache = {};
+            if (TAB.length && NL.length) {
+                indent = function (code) {
+                    if (Array.isArray(code)) {
+                        return code.map(indent);
+                    } else {
+                        return TAB + code.split(NL).join(NL + TAB);
+                    }
+                };
+            } else {
+                indent = function (c) {
+                    return c;
+                };
+            }
             var codegen = {
-                    directiveEvaluator: function (node) {
-                        if ('expr' in node) {
-                            return new Function('__doc,__scope', 'return (' + this.evaluate(node.expr) + ').call(this,__doc,_scope);');
-                        } else {
-                            return undef;
-                        }
-                    },
                     evaluate: function (expr) {
                         var cacheKey = '{{ ' + expr + ' }}';
                         if (!(cacheKey in interpolateCache)) {
+                            var code = [
+                                    TAB + 'if(this!==null&&this!==undefined){',
+                                    TAB + TAB + 'with(this){with(__scope){return ' + expr + ';}}',
+                                    TAB + '}else{',
+                                    TAB + TAB + 'with(__scope){return ' + expr + ';}',
+                                    TAB + '}'
+                                ].join(NL);
+                            var args = 'document,__scope';
+                            new Function(args, code);
                             interpolateCache[cacheKey] = [
-                                'function(document,__scope){',
-                                'if(this!==null&&this!==undefined){',
-                                'with(this){ with(__scope){ return ' + expr + '; }}',
-                                '}else{',
-                                'with(__scope){return ' + expr + ';}',
-                                '}',
+                                'function(' + args + '){',
+                                code,
                                 '}'
                             ].join(NL);
                         }
@@ -96,50 +113,188 @@
                         if (!(cacheKey in propertyCache)) {
                             propertyCache[cacheKey] = [
                                 'function(__target,__value) {',
-                                'var __current = __target'
-                            ].concat(path.map(function (part, index) {
+                                TAB + 'var __current = __target;'
+                            ].concat(indent(path.map(function (part, index) {
                                 if (index === path.length - 1) {
                                     return '__current["' + part + '"] = __value;';
                                 } else {
-                                    return '__current = __current["' + part + '"] || {};';
+                                    return '__current = __current["' + part + '"] = __current["' + part + '"] || {};';
                                 }
-                            })).concat(['}']).join(NL);
+                            }))).concat(['}']).join(NL);
                         }
                         return propertyCache[cacheKey];
+                    },
+                    line: function (node) {
+                        return '__line = ' + node.line + ';';
                     },
                     element: function (node) {
                         var attributes = node.attributes;
                         var properties = node.properties;
-                        return [].concat(Object.keys(attributes).map(function (attr) {
+                        var events = node.events;
+                        return [codegen.line(node)].concat(Object.keys(attributes).map(function (attr) {
                             return [
                                 '__node.setAttribute(',
-                                '"' + attr + '",',
-                                '(' + codegen.interpolate(attributes[attr]) + ').call(__ctx,__doc,__scope)',
+                                TAB + '"' + attr + '",',
+                                TAB + '__ctx.call(' + codegen.interpolate(attributes[attr]) + ')',
                                 ');'
                             ].join(NL);
                         })).concat(properties.map(function (prop) {
-                            return '(' + codegen.property(prop.path) + ')(__node, (' + codegen.interpolate(prop.value) + ').call(__ctx,__doc,__scope));';
-                        })).concat(['/* TODO event update */']).join(NL);
+                            return '(' + codegen.property(prop.path) + ')(__node, __ctx.call(' + codegen.interpolate(prop.value) + '));';
+                        })).concat(Object.keys(events).map(function (evt) {
+                            return [
+                                '__node.addEventListener(',
+                                TAB + '"' + evt + '",',
+                                TAB + '__ctx.call(' + codegen.evaluate(events[evt]) + '),',
+                                TAB + 'false',
+                                ');'
+                            ].join(NL);
+                        })).join(NL);
                     },
-                    text: function (text) {
-                        return '__node.textContent = (' + codegen.interpolate(text) + ').call(__ctx,__doc,__scope);';
+                    text: function (node) {
+                        return [
+                            codegen.line(node),
+                            '__node.textContent = __ctx.call(' + codegen.interpolate(node.text) + ');'
+                        ].join(NL);
                     },
                     directive: function (node) {
-                        return '/* TODO directive update YAY */';
+                        var evalExpr = node.expr ? '__ctx.call(' + codegen.evaluate(node.expr) + ')' : 'undefined';
+                        return [
+                            codegen.line(node),
+                            'if (!("keys" in __node)) {',
+                            TAB + '__node.keys = [];',
+                            TAB + '__node.fragments = [];',
+                            '}',
+                            'if (!__directives.has("' + node.directive + '")) {',
+                            TAB + 'throw new Error("No directive helper for @' + node.directive + ' has been registered");',
+                            '}',
+                            '__directives.get("' + node.directive + '")(__ctx, ' + evalExpr + ', __node.template, __node.iterator);',
+                            '__node = __node.iterator.last() || __node;'
+                        ].join(NL);
                     },
                     children: function (code) {
-                        return ['(function(__nodelist) {'].concat(code).concat(['})(__node.childNodes);']).join(NL);
+                        return ['(function(__nodelist) {'].concat(indent(code)).concat(['})([].slice.call(__node.childNodes));']).join(NL);
                     },
                     next: function () {
-                        return '__node = __nodelist.shift();';
+                        return ['__node = __nodelist.shift();'].join(NL);
                     },
                     wrap: function (code) {
-                        return ['var __node;'].concat(code).join(NL);
+                        return [
+                            'var __node;',
+                            'var __line;',
+                            'try {'
+                        ].concat(indent(code)).concat([
+                            TAB + 'return __node;',
+                            '} catch(e) {',
+                            TAB + 'throw __error(e, __line);',
+                            '}'
+                        ]).join(NL);
                     }
                 };
             return codegen;
         }(util_misc);
-    var components_context = function () {
+    var components_iterator = function (misc) {
+            
+            function iterator(markerComment, keys, callback) {
+                var keyIndex = markerComment.keys;
+                var fragIndex = markerComment.fragments;
+                if (typeof keys === 'function') {
+                    callback = keys;
+                    keys = ['nokey'];
+                }
+                for (var i = 0; i < keyIndex.length; i++) {
+                    if (keys.indexOf(keyIndex[i]) === -1) {
+                        var frag = fragIndex[i];
+                        misc.removeNodelist(frag.firstChild, frag.lastChild);
+                        keyIndex.splice(i, 1);
+                        fragIndex.splice(i, 1);
+                        i--;
+                    }
+                }
+                var prev = markerComment;
+                keys.forEach(function (key, i) {
+                    var idx = keyIndex.indexOf(key);
+                    var ret;
+                    var frag;
+                    var next;
+                    var rendered;
+                    var isNew = false;
+                    if (idx !== -1) {
+                        frag = fragIndex[idx];
+                        var node = frag.firstChild;
+                        if (node && node.previousSibling !== prev) {
+                            next = prev.nextSibling;
+                            misc.iterateNodelist(node, frag.lastChild, function (node) {
+                                prev.parentNode.insertBefore(node, next);
+                            });
+                        }
+                        rendered = frag.rendered;
+                        if (rendered) {
+                            rendered.clear = function () {
+                                misc.removeNodelist(frag.firstChild, frag.lastChild);
+                            };
+                            rendered.reclaim = function (parent) {
+                                misc.iterateNodelist(frag.firstChild, frag.lastChild, function (node) {
+                                    parent.appendChild(node);
+                                });
+                            };
+                        }
+                    } else {
+                        frag = {};
+                    }
+                    ret = callback(key, rendered);
+                    if (idx !== i) {
+                        if (idx !== -1) {
+                            keyIndex.splice(idx, 1);
+                            fragIndex.splice(idx, 1);
+                        }
+                        keyIndex.splice(i, 0, key);
+                        fragIndex.splice(i, 0, frag);
+                    }
+                    if (ret) {
+                        if ('nodeType' in ret) {
+                            if (rendered && ret !== rendered) {
+                                rendered.clear();
+                            }
+                            isNew = true;
+                            rendered = ret;
+                        } else {
+                            throw new Error('Helper iterator callback returned unknown result');
+                        }
+                    }
+                    if (rendered) {
+                        if (rendered.nodeType === rendered.DOCUMENT_FRAGMENT_NODE) {
+                            frag.firstChild = typeof rendered._first === 'function' ? rendered._first() : rendered.firstChild;
+                            frag.lastChild = typeof rendered._last === 'function' ? rendered._last() : rendered.lastChild;
+                        } else {
+                            frag.firstChild = frag.lastChild = rendered;
+                        }
+                        frag.rendered = rendered;
+                        if (isNew) {
+                            next = prev.nextSibling;
+                            misc.iterateNodelist(frag.firstChild, frag.lastChild, function (node) {
+                                prev.parentNode.insertBefore(node, next);
+                            });
+                        }
+                    } else {
+                        delete frag.rendered;
+                        frag.firstChild = frag.lastChild = null;
+                    }
+                    prev = frag.firstChild || prev;
+                });
+            }
+            iterator.last = function (markerComment) {
+                var fragIndex = markerComment.fragments;
+                if (fragIndex && fragIndex.length) {
+                    for (var i = fragIndex.length - 1; i >= 0; i--) {
+                        if (fragIndex[i].lastChild) {
+                            return fragIndex[i].lastChild;
+                        }
+                    }
+                }
+            };
+            return iterator;
+        }(util_misc);
+    var components_context = function (iterator) {
             
             function Context(object, doc) {
                 this.value = object;
@@ -149,6 +304,25 @@
             }
             Context.globalScope = {};
             Context.prototype = {
+                clonePrerendered: function (node) {
+                    var clone = this.importNode(node, false);
+                    if (node.nodeType === node.COMMENT_NODE) {
+                        clone.iterator = function (keys, callback) {
+                            return iterator(clone, keys, callback);
+                        };
+                        clone.iterator.last = function () {
+                            return iterator.last(clone);
+                        };
+                        clone.template = node.template;
+                    }
+                    var self = this;
+                    if (node.childNodes) {
+                        [].slice.call(node.childNodes).forEach(function (child) {
+                            clone.appendChild(self.clonePrerendered(child));
+                        });
+                    }
+                    return clone;
+                },
                 importNode: function (node, deep) {
                     if (node.ownerDocument === this.doc) {
                         return node.cloneNode(deep);
@@ -203,30 +377,35 @@
                 createContext: function (newValue) {
                     return new Context(newValue, this.doc);
                 },
-                scopedCall: function (fn, target) {
-                    return fn.call(this.value, this.doc, this.scope, target);
+                call: function (fn) {
+                    return fn.call(this.value, this.doc, this.scope);
                 }
             };
             return Context;
-        }();
+        }(components_iterator);
     var components_directives = function () {
             
             var directives, registered, defined = {};
-            function conditionalHelper(ctx, render, tmpl, fragment) {
-                var rendered = fragment.extractRenderedFragment();
-                if (render) {
-                    if (rendered) {
-                        rendered.update(ctx);
+            function conditionalHelper(ctx, render, tmpl, iterate) {
+                iterate(function (key, rendered) {
+                    if (render) {
+                        if (rendered) {
+                            rendered.update(ctx);
+                        } else {
+                            return tmpl.render(ctx);
+                        }
                     } else {
-                        rendered = tmpl.render(ctx);
+                        if (rendered) {
+                            rendered.clear();
+                        }
                     }
-                    fragment.appendRenderedFragment(rendered);
-                }
+                });
             }
-            function iterationHelper(ctx, items, keys, loopAdd, tmpl, fragment) {
+            function iterationHelper(ctx, items, keys, loopAdd, tmpl, iterate) {
                 var outerValue = ctx.value;
-                var extracted = fragment.extractRenderedFragments(), fragKeys = extracted.keys, fragments = extracted.fragments;
-                items.forEach(function itemIterator(item, index) {
+                iterate(keys, function (key, rendered) {
+                    var index = keys.indexOf(key);
+                    var item = items[keys.indexOf(key)];
                     ctx.pushValue(item);
                     var loop = {
                             first: index === 0,
@@ -241,84 +420,81 @@
                         });
                     }
                     ctx.pushScope({ loop: loop });
-                    var keyIndex = fragKeys.indexOf(keys[index]), rendered;
-                    if (keyIndex === -1) {
-                        rendered = tmpl.render(ctx);
-                    } else {
-                        rendered = fragments[keyIndex];
+                    if (rendered) {
                         rendered.update(ctx);
+                    } else {
+                        rendered = tmpl.render(ctx);
                     }
                     ctx.popScope();
                     ctx.popValue();
-                    fragment.appendRenderedFragment(rendered, keys[index]);
+                    return rendered;
                 });
             }
             registered = {
-                'if': function ifHelper(ctx, value, tmpl, fragment) {
-                    conditionalHelper.call(null, ctx, value, tmpl, fragment);
+                'if': function ifHelper(ctx, value, tmpl, iterate) {
+                    conditionalHelper.call(null, ctx, value, tmpl, iterate);
                 },
-                'unless': function unlessHelper(ctx, value, tmpl, fragment) {
-                    conditionalHelper.call(null, ctx, !value, tmpl, fragment);
+                'unless': function unlessHelper(ctx, value, tmpl, iterate) {
+                    conditionalHelper.call(null, ctx, !value, tmpl, iterate);
                 },
-                'with': function withHelper(ctx, value, tmpl, fragment) {
-                    var rendered = fragment.extractRenderedFragment();
-                    ctx.pushValue(value);
-                    if (rendered) {
-                        rendered.update(ctx);
-                    } else {
-                        rendered = tmpl.render(ctx);
-                    }
-                    ctx.popValue();
-                    fragment.appendChild(tmpl.render(value));
+                'with': function withHelper(ctx, value, tmpl, iterate) {
+                    iterate(function (key, rendered) {
+                        ctx.pushValue(value);
+                        if (rendered) {
+                            rendered.update(ctx);
+                        } else {
+                            rendered = tmpl.render(ctx);
+                        }
+                        ctx.popValue();
+                        return rendered;
+                    });
                 },
-                'each': function eachHelper(ctx, value, tmpl, fragment) {
+                'each': function eachHelper(ctx, value, tmpl, iterate) {
                     if (!Array.isArray(value)) {
                         throw new Error(value + ' is not an array');
                     }
-                    iterationHelper(ctx, value, value, null, tmpl, fragment);
+                    iterationHelper(ctx, value, value, null, tmpl, iterate);
                 },
-                'eachkey': function () {
-                    function extractItem(k) {
-                        return {
-                            key: k,
-                            value: this[k]
-                        };
-                    }
-                    return function eachkeyHelper(ctx, value, tmpl, fragment) {
-                        var keys = Object.keys(value), array;
-                        array = keys.map(extractItem, value);
-                        iterationHelper(ctx, array, keys, { object: value }, tmpl, fragment);
-                    };
-                }(),
-                'dom': function domHelper(ctx, value, tmpl, fragment) {
-                    if (value.ownerDocument !== ctx.doc) {
-                        value = ctx.doc.importNode(value, true);
-                    }
-                    while (fragment.hasChildNodes()) {
-                        fragment.removeChild(fragment.firstChild);
-                    }
-                    fragment.appendChild(value);
+                'eachkey': function eachkeyHelper(ctx, value, tmpl, iterate) {
+                    var keys = Object.keys(value);
+                    var array = keys.map(function (key) {
+                            return {
+                                key: key,
+                                value: value[key]
+                            };
+                        });
+                    iterationHelper(ctx, array, keys, { object: value }, tmpl, iterate);
                 },
-                'define': function defineHelper(ctx, value, tmpl, fragment) {
+                'dom': function domHelper(ctx, value, tmpl, iterate) {
+                    iterate(function () {
+                        if (value.ownerDocument !== ctx.doc) {
+                            value = ctx.doc.importNode(value, true);
+                        }
+                        return value;
+                    });
+                },
+                'define': function defineHelper(ctx, value, tmpl) {
                     defined[value] = tmpl;
                 },
-                'use': function useHelper(ctx, value, tmpl, fragment) {
-                    var template = defined[value];
-                    if (!template) {
+                'use': function useHelper(ctx, value, tmpl, iterate) {
+                    if (!(value in defined)) {
                         throw new Error('Template \'' + value + '\' has not been @defined');
                     }
-                    var rendered = fragment.extractRenderedFragment();
-                    if (rendered) {
-                        rendered.update(ctx);
-                    } else {
-                        rendered = template.render(ctx);
-                    }
-                    fragment.appendRenderedFragment(rendered);
+                    iterate(function (key, rendered) {
+                        if (rendered) {
+                            rendered.update(ctx);
+                        } else {
+                            return defined[value].render(ctx);
+                        }
+                    });
                 }
             };
             directives = {
                 register: function registerDirective(name, helper) {
                     registered[name] = helper;
+                },
+                has: function hasDirective(name) {
+                    return name in registered && typeof registered[name] === 'function';
                 },
                 get: function getDirective(name) {
                     return registered[name];
@@ -326,232 +502,7 @@
             };
             return directives;
         }();
-    var components_rendereddirective = function (misc) {
-            
-            function appendRenderedFragment(fragment, key) {
-                this._istKeyIndex.push(key);
-                this._istFragIndex.push({
-                    firstChild: fragment.firstChild,
-                    lastChild: fragment.lastChild,
-                    update: fragment.update
-                });
-                this.appendChild(fragment);
-            }
-            function extractRenderedFragments() {
-                var ctx = this._istContext, keyIndex = this._istKeyIndex, fragIndex = this._istFragIndex, extracted = {
-                        keys: keyIndex.slice(),
-                        fragments: fragIndex.map(function (item) {
-                            var frag = ctx.createDocumentFragment();
-                            misc.appendNodeSegment(item.firstChild, item.lastChild, frag);
-                            frag.update = item.update;
-                            return frag;
-                        })
-                    };
-                keyIndex.splice(0, keyIndex.length);
-                fragIndex.splice(0, fragIndex.length);
-                return extracted;
-            }
-            function extractRenderedFragment(key) {
-                var ctx = this._istContext, keyIndex = this._istKeyIndex, fragIndex = this._istFragIndex, position = keyIndex.indexOf(key), item, fragment;
-                if (position !== -1) {
-                    item = fragIndex[position];
-                    fragment = ctx.createDocumentFragment();
-                    misc.appendNodeSegment(item.firstChild, item.lastChild, fragment);
-                    fragment.update = item.update;
-                    keyIndex.splice(position, 1);
-                    fragIndex.splice(position, 1);
-                    return fragment;
-                }
-            }
-            function RenderedDirective() {
-                this.firstChild = null;
-                this.lastChild = null;
-                this.keyIndex = [];
-                this.fragIndex = [];
-            }
-            RenderedDirective.prototype.createFragment = function (ctx) {
-                var fragment = ctx.createDocumentFragment();
-                fragment._istContext = ctx;
-                fragment._istKeyIndex = this.keyIndex;
-                fragment._istFragIndex = this.fragIndex;
-                fragment.appendRenderedFragment = appendRenderedFragment;
-                fragment.extractRenderedFragment = extractRenderedFragment;
-                fragment.extractRenderedFragments = extractRenderedFragments;
-                misc.appendNodeSegment(this.firstChild, this.lastChild, fragment);
-                return fragment;
-            };
-            RenderedDirective.prototype.updateFromFragment = function (fragment) {
-                this.firstChild = fragment.firstChild;
-                this.lastChild = fragment.lastChild;
-            };
-            return RenderedDirective;
-        }(util_misc);
-    var components_renderedtree = function (RenderedDirective, misc) {
-            
-            function RenderedTree(element, childrenIndex) {
-                this.element = element;
-                this.childrenIndex = childrenIndex || [];
-                this.appendDone = false;
-            }
-            RenderedTree.prototype.forEach = function (templateNodes, fn, that) {
-                var index = this.childrenIndex;
-                templateNodes.forEach(function (node, i) {
-                    index[i] = fn.call(this, node, index[i]);
-                }, that);
-            };
-            RenderedTree.prototype.updateParent = function () {
-                var item = this.childrenIndex[0];
-                if (item) {
-                    this.element = null;
-                    if (item instanceof RenderedTree) {
-                        this.element = item.element.parentNode;
-                    } else if (item instanceof RenderedDirective) {
-                        this.element = item.firstChild.parentNode;
-                    } else {
-                        this.element = item.parentNode;
-                    }
-                }
-            };
-            RenderedTree.prototype.appendChildren = function () {
-                var parent = this.element, index = this.childrenIndex;
-                if (parent) {
-                    if (!this.appendDone) {
-                        index.forEach(function (indexItem) {
-                            if (indexItem instanceof RenderedTree) {
-                                parent.appendChild(indexItem.element);
-                            } else if (indexItem instanceof RenderedDirective) {
-                                misc.appendNodeSegment(indexItem.firstChild, indexItem.lastChild, parent);
-                            } else {
-                                parent.appendChild(indexItem);
-                            }
-                        });
-                        this.appendDone = true;
-                    } else {
-                        var nextSibling = null;
-                        for (var i = index.length - 1; i >= 0; i--) {
-                            var indexItem = index[i];
-                            if (indexItem instanceof RenderedTree) {
-                                nextSibling = indexItem.element;
-                            } else if (indexItem instanceof RenderedDirective) {
-                                misc.insertNodeSegmentBefore(indexItem.firstChild, indexItem.lastChild, parent, nextSibling);
-                                nextSibling = indexItem.firstChild || nextSibling;
-                            } else {
-                                nextSibling = indexItem;
-                            }
-                        }
-                    }
-                }
-            };
-            return RenderedTree;
-        }(components_rendereddirective, util_misc);
-    var components_renderer = function (Context, directives, RenderedTree, RenderedDirective) {
-            
-            function Renderer(template) {
-                this.template = template;
-                this.context = undefined;
-            }
-            Renderer.prototype.setContext = function (context, doc) {
-                doc = doc || (this.context ? this.context.doc : document);
-                if (context instanceof Context) {
-                    this.context = context;
-                } else {
-                    this.context = new Context(context, doc);
-                }
-            };
-            Renderer.prototype._completeError = function (err, node) {
-                return this.template._completeError(err, node);
-            };
-            Renderer.prototype._renderTextNode = function (node, textNode) {
-                var ctx = this.context;
-                if (!textNode) {
-                    if ('pr' in node) {
-                        textNode = ctx.importNode(node.pr, false);
-                    } else {
-                        textNode = ctx.createTextNode('');
-                    }
-                }
-                if (!('pr' in node)) {
-                    try {
-                        ctx.scopedCall(node.updater, textNode);
-                    } catch (err) {
-                        throw this._completeError(err, node);
-                    }
-                }
-                return textNode;
-            };
-            Renderer.prototype._renderElement = function (node, elementNode) {
-                var ctx = this.context;
-                if (!elementNode) {
-                    elementNode = ctx.importNode(node.pr, false);
-                }
-                try {
-                    ctx.scopedCall(node.updater, elementNode);
-                } catch (err) {
-                    throw this._completeError(err, node);
-                }
-                return elementNode;
-            };
-            Renderer.prototype._renderDirective = function (node, renderedDirective) {
-                var ctx = this.context, pr = node.pr, helper = directives.get(node.directive);
-                if (typeof helper !== 'function') {
-                    throw new Error('No directive helper for @' + node.directive + ' has been registered');
-                }
-                if (!renderedDirective) {
-                    renderedDirective = new RenderedDirective();
-                }
-                var fragment = renderedDirective.createFragment(ctx);
-                if (fragment.firstChild && fragment.firstChild._isISTPlaceHolder) {
-                    fragment.removeChild(fragment.firstChild);
-                }
-                try {
-                    helper.call(null, ctx, ctx.scopedCall(pr.evaluator), pr.template, fragment);
-                } catch (err) {
-                    throw this._completeError(err, node);
-                }
-                if (fragment.childNodes.length === 0) {
-                    var placeholder = ctx.createComment('');
-                    placeholder._isISTPlaceHolder = true;
-                    fragment.appendChild(placeholder);
-                }
-                renderedDirective.updateFromFragment(fragment);
-                return renderedDirective;
-            };
-            Renderer.prototype._renderRec = function (node, indexEntry) {
-                if ('text' in node) {
-                    indexEntry = this._renderTextNode(node, indexEntry);
-                }
-                if ('tagName' in node) {
-                    if (indexEntry) {
-                        indexEntry.element = this._renderElement(node, indexEntry.element);
-                    } else {
-                        indexEntry = new RenderedTree(this._renderElement(node));
-                    }
-                    this._renderNodes(node.children, indexEntry);
-                }
-                if ('directive' in node) {
-                    indexEntry = this._renderDirective(node, indexEntry);
-                }
-                return indexEntry;
-            };
-            Renderer.prototype._renderNodes = function (nodes, tree) {
-                tree.forEach(nodes, this._renderRec, this);
-                tree.appendChildren();
-            };
-            Renderer.prototype.render = function () {
-                var renderer = this, fragment = this.context.createDocumentFragment(), nodes = this.template.nodes, tree = new RenderedTree(fragment);
-                this._renderNodes(nodes, tree);
-                fragment.update = function (ctx) {
-                    if (ctx) {
-                        renderer.setContext(ctx);
-                    }
-                    tree.updateParent();
-                    renderer._renderNodes(nodes, tree);
-                };
-                return fragment;
-            };
-            return Renderer;
-        }(components_context, components_directives, components_renderedtree, components_rendereddirective);
-    var components_template = function (codegen, Context, Renderer) {
+    var components_template = function (codegen, Context, directives, misc) {
             
             var expressionRE = /{{((?:}(?!})|[^}])*)}}/;
             function findPartialRec(name, nodes) {
@@ -575,7 +526,9 @@
                 this.nodes = nodes;
                 if (typeof document !== 'undefined') {
                     this.pre = document.createDocumentFragment();
-                    this.update = this._preRenderTree(nodes, this.pre);
+                    var updateCode = this._preRenderTree(nodes, this.pre);
+                    this.update = new Function('__error,__directives,__ctx,__nodelist', updateCode);
+                    this.update.code = updateCode;
                 }
             }
             Template.prototype._preRenderTree = function (templateNodes, parent) {
@@ -583,43 +536,38 @@
                 var self = this;
                 templateNodes.forEach(function (templateNode) {
                     var node;
-                    if ('tagName' in templateNode) {
-                        node = document.createElement(templateNode.tagName);
-                        templateNode.classes.forEach(function (cls) {
-                            node.classList.add(cls);
-                        });
-                        if (typeof templateNode.id !== 'undefined') {
-                            node.id = templateNode.id;
-                        }
-                        code.push(codegen.element(templateNode));
-                        if (templateNode.children && templateNode.children.length) {
-                            code = code.concat(codegen.children(self._preRenderTree(templateNode.children, node)));
-                        }
-                    } else if ('text' in templateNode) {
-                        node = document.createTextNode(templateNode.text);
-                        if (expressionRE.test(templateNode.text)) {
-                            code.push(codegen.text(templateNode.text));
-                        }
-                    } else if ('directive' in templateNode) {
-                        node = document.createComment('ist.js directive placeholder');
-                        if (templateNode.children && templateNode.children.length) {
-                            node._template = new Template(self.name, templateNode.children);
-                        }
-                        code.push(codegen.directive(templateNode));
-                    }
-                    parent.appendChild(node);
                     code.push(codegen.next());
+                    try {
+                        if ('tagName' in templateNode) {
+                            node = document.createElement(templateNode.tagName);
+                            templateNode.classes.forEach(function (cls) {
+                                node.classList.add(cls);
+                            });
+                            if (typeof templateNode.id !== 'undefined') {
+                                node.id = templateNode.id;
+                            }
+                            code.push(codegen.element(templateNode));
+                            if (templateNode.children && templateNode.children.length) {
+                                code = code.concat(codegen.children(self._preRenderTree(templateNode.children, node)));
+                            }
+                        } else if ('text' in templateNode) {
+                            node = document.createTextNode(templateNode.text);
+                            if (expressionRE.test(templateNode.text)) {
+                                code.push(codegen.text(templateNode));
+                            }
+                        } else if ('directive' in templateNode) {
+                            node = document.createComment('ist.js directive');
+                            if (templateNode.children && templateNode.children.length) {
+                                node.template = new Template(self.name, templateNode.children);
+                            }
+                            code.push(codegen.directive(templateNode));
+                        }
+                        parent.appendChild(node);
+                    } catch (e) {
+                        throw self._completeError(e, templateNode.line);
+                    }
                 });
                 return codegen.wrap(code);
-            };
-            Template.prototype._completeError = function (err, node) {
-                var current = 'in \'' + this.name + '\' on line ' + (node.line || '<unknown>');
-                if (typeof err.istStack === 'undefined') {
-                    err.message += ' ' + current;
-                    err.istStack = [];
-                }
-                err.istStack.push(current);
-                return err;
             };
             Template.prototype.findPartial = function (name) {
                 if (console)
@@ -632,20 +580,49 @@
                     return;
                 }
                 result = findPartialRec(name, this.nodes);
-                if (typeof result !== 'undefined') {
+                if (result) {
                     return new Template(this.name, [result]);
                 }
             };
-            Template.prototype.render = function (context, doc) {
-                var template = this, renderer = new Renderer(template);
-                renderer.setContext(context, doc);
-                return renderer.render();
+            Template.prototype._completeError = function (err, line) {
+                var current = 'in \'' + this.name + '\' on line ' + (line || '<unknown>');
+                if (typeof err.istStack === 'undefined') {
+                    err.message += ' ' + current;
+                    err.istStack = [];
+                }
+                err.istStack.push(current);
+                return err;
             };
-            Template.prototype.getCode = function (pretty) {
-                return 'new ist.Template(' + JSON.stringify(this.name) + ', ' + JSON.stringify(this.nodes, null, pretty ? 1 : 0) + ')';
+            Template.prototype.render = function (context, doc) {
+                var self = this;
+                function getContext(ctx, doc) {
+                    if (ctx instanceof Context) {
+                        return ctx;
+                    } else {
+                        return new Context(ctx, doc || document);
+                    }
+                }
+                context = getContext(context, doc);
+                var fragment = context.clonePrerendered(this.pre);
+                var firstNode = fragment.firstChild;
+                var lastNode = fragment.lastChild;
+                fragment.update = function (ctx) {
+                    ctx = getContext(ctx || context);
+                    lastNode = self.update(function (err, line) {
+                        return self._completeError(err, line);
+                    }, directives, ctx, misc.buildNodelist(firstNode, lastNode));
+                };
+                fragment._first = function () {
+                    return firstNode;
+                };
+                fragment._last = function () {
+                    return lastNode;
+                };
+                fragment.update(context);
+                return fragment;
             };
             return Template;
-        }(components_codegen, components_context, components_renderer);
+        }(components_codegen, components_context, components_directives, util_misc);
     var parser_parsehelpers = function () {
             
             var UNCHANGED = 'U', INDENT = 'I', DEDENT = 'D', textToJSON, elemToJSON, directiveToJSON, helpers = {};
@@ -2534,6 +2511,9 @@
         }();
     var util_amdplugin = function (misc) {
             
+            function getTemplateCode(template) {
+                return 'new ist.Template(' + JSON.stringify(template.name) + ', ' + JSON.stringify(template.nodes) + ')';
+            }
             function pluginify(ist) {
                 var fetchText, buildMap = {};
                 if (isBrowser) {
@@ -2583,7 +2563,7 @@
                             }
                             return p1 + '@include "' + dpath + '"';
                         });
-                        code = ist(text, name).getCode(true);
+                        code = getTemplateCode(ist(text, name));
                         text = 'define(\'ist!' + name + '\',' + JSON.stringify(deps) + ', function(ist) {\n' + '  return ' + code + ';\n' + '});\n';
                         if (config.isBuild) {
                             buildMap['ist!' + name] = text;
@@ -2649,34 +2629,40 @@
             ist.helper = function (name, helper) {
                 directives.register(name, helper);
             };
-            ist.helper('include', function (ctx, value, tmpl, fragment) {
-                var name = value, what = name.replace(/\.ist$/, ''), found, tryReq;
-                found = misc.findScript(name);
-                if (isAMD) {
-                    tryReq = [
-                        what,
-                        what + '.ist',
-                        'ist!' + what,
-                        'text!' + what + '.ist'
-                    ];
-                    while (!found && tryReq.length) {
-                        try {
-                            found = requirejs(tryReq.shift());
-                        } catch (e) {
+            ist.helper('include', function (ctx, value, tmpl, iterate) {
+                iterate(function (key, rendered) {
+                    if (rendered) {
+                        rendered.update(ctx);
+                    } else {
+                        var name = value, what = name.replace(/\.ist$/, ''), found, tryReq;
+                        found = misc.findScript(name);
+                        if (isAMD) {
+                            tryReq = [
+                                what,
+                                what + '.ist',
+                                'ist!' + what,
+                                'text!' + what + '.ist'
+                            ];
+                            while (!found && tryReq.length) {
+                                try {
+                                    found = requirejs(tryReq.shift());
+                                } catch (e) {
+                                }
+                            }
+                        }
+                        if (!found) {
+                            throw new Error('Cannot find included template \'' + name + '\'');
+                        }
+                        if (typeof found === 'string') {
+                            found = ist(found, what);
+                        }
+                        if (typeof found.render === 'function') {
+                            return found.render(ctx);
+                        } else {
+                            throw new Error('Invalid included template \'' + name + '\'');
                         }
                     }
-                }
-                if (!found) {
-                    throw new Error('Cannot find included template \'' + name + '\'');
-                }
-                if (typeof found === 'string') {
-                    found = ist(found, what);
-                }
-                if (typeof found.render === 'function') {
-                    fragment.appendChild(found.render(ctx));
-                } else {
-                    throw new Error('Invalid included template \'' + name + '\'');
-                }
+                });
             });
             ist.global = function (key, value) {
                 Context.globalScope[key] = value;

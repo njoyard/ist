@@ -1,5 +1,5 @@
 /*jshint browser:true */
-/*global define, describe, it, expect, nthNonCommentChild */
+/*global define, describe, it, expect, nthNonCommentChild, nonCommentChildren */
 
 define([
 	'ist',
@@ -283,93 +283,226 @@ define([
 				.toThrow('Helper error in \'test/directivehelper/errors\' on line 10');
 		});
 
-		it('should allow helpers to save and retrieve rendered templates with arbitrary keys across updates', function() {
-			var frag;
-			ist.helper('test', function(ctx, value, template, fragment) {
-				frag = fragment;
+		it('should pass previously rendered result to iterator callback when updating', function() {
+			var phase;
+			var initial;
+			var secondArg;
+
+			ist.helper('renderedHelper', function(context, value, tmpl, iterate) {
+				iterate(function(key, rendered) {
+					if (phase === 'update') {
+						secondArg = rendered;
+					} else {
+						initial = context.createTextNode('test');
+						return initial;
+					}
+				});
 			});
 
-			ist('@test').render();
-			expect( typeof frag.extractRenderedFragment ).toBe( 'function' );
-			expect( typeof frag.appendRenderedFragment ).toBe( 'function' );
+			phase = 'render';
 
-			var key = { a: 1, b: '2' },
-				test, retrieved;
+			var container = document.createElement('div');
+			var rendered = ist('@renderedHelper').render();
+			container.appendChild(rendered);
 
-			ist.helper('test', function(ctx, value, template, fragment) {
-				switch (test) {
-					case 'save':
-						fragment.appendRenderedFragment(template.render(ctx), key);
-						break;
+			phase = 'update';
+			rendered.update();
 
-					case 'retrieve':
-						retrieved = fragment.extractRenderedFragment(key);
-						break;
+			expect( secondArg ).toBe( initial );
+		});
 
-					case 'update':
-						retrieved = fragment.extractRenderedFragment(key);
+		it('should pass key only to iterator callback when key is new', function() {
+			var phase;
+			var secondArg = 'callback not called with "added" key';
 
-						if (retrieved)
-							retrieved.update(ctx);
-						else
-							retrieved = template.render(ctx);
+			ist.helper('renderedHelper', function(context, value, tmpl, iterate) {
+				var keys = phase === 'update' ? ['original', 'added'] : ['original'];
 
-						fragment.appendRenderedFragment(template.render(ctx), key);
-						break;
-
-					case 'retrieveall':
-						retrieved = fragment.extractRenderedFragments();
-						break;
-				}
+				iterate(keys, function(key, rendered) {
+					if (phase === 'update' && key === 'added') {
+						secondArg = rendered;
+					} else {
+						return context.createTextNode('test');
+					}
+				});
 			});
 
-			test = 'save';
-			var rendered = tUpdate.render({ foo: 1, bar: 2 });
+			phase = 'render';
 
-			expect( rendered.firstChild.textContent ).toBe( '1' );
-			expect( rendered.firstChild.nextSibling.textContent ).toBe( '2' );
+			var container = document.createElement('div');
+			var rendered = ist('@renderedHelper').render();
+			container.appendChild(rendered);
 
-			test = 'retrieve';
-			rendered.update({ foo: 3, bar: 4 });
+			phase = 'update';
+			rendered.update();
 
-			expect( retrieved.firstChild.textContent ).toBe( '1' );
-			expect( retrieved.firstChild.nextSibling.textContent ).toBe( '2' );
+			expect( typeof secondArg ).toBe( 'undefined' );
+		});
 
-			// rendered should be empty except for placeholder comment nodes
-			expect( [].slice.call(rendered.childNodes).some(function(child) { return child.nodeType !== document.COMMENT_NODE; }) ).toBe( false );
+		it('should replace nodes returned from iterator callback when updating', function() {
+			ist.helper('replaceHelper', function(context, value, tmpl, iterate) {
+				iterate(function() {
+					return context.createTextNode('replace');
+				});
+			});
 
-			test = 'update';
-			rendered = tUpdate.render({ foo: 1, bar: 2 });
+			var container = document.createElement('div');
+			var rendered = ist('@replaceHelper').render();
+			container.appendChild(rendered);
 
-			expect( rendered.firstChild.textContent ).toBe( '1' );
-			expect( rendered.firstChild.nextSibling.textContent ).toBe( '2' );
+			var original =  nthNonCommentChild(container, 0);
 
-			rendered.update({ foo: 3, bar: 4 });
+			expect( nonCommentChildren(container).length ).toBe(1);
+			expect( original.textContent ).toBe( 'replace' );
 
-			expect( rendered.firstChild.textContent ).toBe( '3' );
-			expect( rendered.firstChild.nextSibling.textContent ).toBe( '4' );
+			rendered.update();
+			var replaced =  nthNonCommentChild(container, 0);
 
-			test = 'save';
-			rendered = tUpdate.render({ foo: 1, bar: 2 });
+			expect( nonCommentChildren(container).length ).toBe(1);
+			expect( replaced.textContent ).toBe( 'replace' );
+			expect( replaced ).toNotBe( original );
+		});
 
-			test = 'retrieveall';
-			rendered.update({ foo: 3, bar: 4 });
+		it('should add new nodes returned from iterator callback when updating', function() {
+			var phase;
 
-			expect( 'keys' in retrieved ).toBe( true );
-			expect( 'fragments' in retrieved ).toBe( true );
+			ist.helper('addHelper', function(context, value, tmpl, iterate) {
+				var keys = phase === 'update' ? ['original', 'added'] : ['original'];
 
-			expect( Array.isArray(retrieved.keys) ).toBe( true );
-			expect( Array.isArray(retrieved.fragments) ).toBe( true );
+				iterate(keys, function(key) {
+					return context.createTextNode(key);
+				});
+			});
 
-			expect( retrieved.keys.length ).toBe( 1 );
-			expect( retrieved.fragments.length ).toBe( 1 );
+			phase = 'render';
+			var container = document.createElement('div');
+			var rendered = ist('@addHelper\n  "{{ this }}"').render();
+			container.appendChild(rendered);
 
-			expect( retrieved.keys[0] ).toBe( key );
-			expect( retrieved.fragments[0].firstChild.textContent ).toBe( '1' );
-			expect( retrieved.fragments[0].firstChild.nextSibling.textContent ).toBe( '2' );
+			expect( nonCommentChildren(container).length ).toBe(1);
+			expect( nthNonCommentChild(container, 0).textContent ).toBe( 'original' );
 
-			// rendered should be empty except for placeholder comment nodes
-			expect( [].slice.call(rendered.childNodes).some(function(child) { return child.nodeType !== document.COMMENT_NODE; }) ).toBe( false );
+			phase = 'update';
+			rendered.update();
+
+			expect( nonCommentChildren(container).length ).toBe(2);
+			expect( nthNonCommentChild(container, 0).textContent ).toBe( 'original' );
+			expect( nthNonCommentChild(container, 1).textContent ).toBe( 'added' );
+		});
+
+		it('should remove nodes corresponding to removed keys when updating', function() {
+			var phase;
+
+			ist.helper('addHelper', function(context, value, tmpl, iterate) {
+				var keys = phase === 'update' ? ['original'] : ['original', 'toberemoved'];
+
+				iterate(keys, function(key) {
+					return context.createTextNode(key);
+				});
+			});
+
+			phase = 'render';
+			var container = document.createElement('div');
+			var rendered = ist('@addHelper\n  "{{ this }}"').render();
+			container.appendChild(rendered);
+
+			expect( nonCommentChildren(container).length ).toBe(2);
+			expect( nthNonCommentChild(container, 0).textContent ).toBe( 'original' );
+			expect( nthNonCommentChild(container, 1).textContent ).toBe( 'toberemoved' );
+
+			phase = 'update';
+			rendered.update();
+
+			expect( nonCommentChildren(container).length ).toBe(1);
+			expect( nthNonCommentChild(container, 0).textContent ).toBe( 'original' );
+		});
+
+		it('should move nodes corresponding to moved keys when updating', function() {
+			var phase;
+
+			ist.helper('moveHelper', function(context, value, tmpl, iterate) {
+				var keys = phase === 'update' ? ['second', 'first'] : ['first', 'second'];
+
+				iterate(keys, function(key) {
+					return context.createTextNode(key);
+				});
+			});
+
+			phase = 'render';
+			var container = document.createElement('div');
+			var rendered = ist('@moveHelper\n  "{{ this }}"').render();
+			container.appendChild(rendered);
+
+			expect( nonCommentChildren(container).length ).toBe(2);
+			expect( nthNonCommentChild(container, 0).textContent ).toBe( 'first' );
+			expect( nthNonCommentChild(container, 1).textContent ).toBe( 'second' );
+
+			phase = 'update';
+			rendered.update();
+
+			expect( nonCommentChildren(container).length ).toBe(2);
+			expect( nthNonCommentChild(container, 0).textContent ).toBe( 'second' );
+			expect( nthNonCommentChild(container, 1).textContent ).toBe( 'first' );
+		});
+
+		it('should enable removing previously rendered nodes when updating', function() {
+			var phase;
+
+			ist.helper('clearHelper', function(context, value, tmpl, iterate) {
+				iterate(function(key, rendered) {
+					if (rendered) {
+						rendered.clear();
+					} else {
+						return context.createTextNode('test');
+					}
+				});
+			});
+
+			phase = 'render';
+			var container = document.createElement('div');
+			var rendered = ist('@clearHelper\n  "{{ this }}"').render();
+			container.appendChild(rendered);
+
+			expect( nonCommentChildren(container).length ).toBe(1);
+			expect( nthNonCommentChild(container, 0).textContent ).toBe( 'test' );
+
+			phase = 'update';
+			rendered.update();
+
+			expect( nonCommentChildren(container).length ).toBe(0);
+		});
+
+		it('should enable reclaiming previously rendered nodes when updating', function() {
+			var phase;
+			var reclaimContainer = document.createElement('div');
+
+			ist.helper('reclaimHelper', function(context, value, tmpl, iterate) {
+				iterate(function(key, rendered) {
+					if (rendered) {
+						rendered.reclaim(reclaimContainer);
+					} else {
+						return context.createTextNode('test');
+					}
+				});
+			});
+
+			phase = 'render';
+			var container = document.createElement('div');
+			var rendered = ist('@reclaimHelper\n  "{{ this }}"').render();
+			container.appendChild(rendered);
+
+			expect( nonCommentChildren(container).length ).toBe(1);
+			var original = nthNonCommentChild(container, 0);
+			expect( original.textContent ).toBe( 'test' );
+
+			phase = 'update';
+			rendered.update();
+
+			expect( nonCommentChildren(container).length ).toBe(0);
+			expect( nonCommentChildren(reclaimContainer).length ).toBe(1);
+			var reclaimed = nthNonCommentChild(reclaimContainer, 0);
+			expect( reclaimed.textContent ).toBe( 'test' );
+			expect( reclaimed ).toBe( original );
 		});
 	});
 });

@@ -1,3 +1,6 @@
+NEXT
+- Rewrote rendering to group nodes together and simplify directive handling
+
 v0.6.6 - 2014-03-09
 - Added support for escaped newlines in templates
 

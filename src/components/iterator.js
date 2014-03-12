@@ -55,43 +55,45 @@ define(['util/misc'], function(misc) {
 				frag = fragIndex[idx];
 				var node = frag.firstChild;
 
-				if (node.previousSibling !== prev) {
-					// Nodes are not in the expected position, move them
+				if (node && node.previousSibling !== prev) {
+					// Nodes are not at the expected position, move them
 					next = prev.nextSibling;
 					misc.iterateNodelist(node, frag.lastChild, function(node) {
 						prev.parentNode.insertBefore(node, next);
 					});
 				}
-			}
 
-			if (frag) {
 				rendered = frag.rendered;
 
-				rendered.clear = function() {
-					misc.removeNodelist(frag.firstChild, frag.lastChild);
-				};
+				// Add clear and reclaim helpers to previously returned node
+				if (rendered) {
+					rendered.clear = function() {
+						misc.removeNodelist(frag.firstChild, frag.lastChild);
+					};
 
-				rendered.reclaim = function(parent) {
-					misc.iterateNodelist(frag.firstChild, frag.lastChild, function(node) {
-						parent.appendChild(node);
-					});
-				};
+					rendered.reclaim = function(parent) {
+						misc.iterateNodelist(frag.firstChild, frag.lastChild, function(node) {
+							parent.appendChild(node);
+						});
+					};
+				}
+			} else {
+				// Initialize empty fragIndex element
+				frag = {};
 			}
 
+			// Call back helper to render or update
 			ret = callback(key, rendered);
 
 			if (idx !== i) {
-				// Update index
+				// Update index to new key position
 				if (idx !== -1) {
 					keyIndex.splice(idx, 1);
 					fragIndex.splice(idx, 1);
 				}
 				
 				keyIndex.splice(i, 0, key);
-				fragIndex.splice(i, 0, frag = {});
-			} else {
-				// Just reinitialize fragment index item
-				fragIndex[i] = frag = {};
+				fragIndex.splice(i, 0, frag);
 			}
 
 			if (ret) {
@@ -125,6 +127,7 @@ define(['util/misc'], function(misc) {
 					});
 				}
 			} else {
+				delete frag.rendered;
 				frag.firstChild = frag.lastChild = null;
 			}
 

@@ -1,5 +1,5 @@
 /*jshint browser:true*/
-/*global define, describe, it, expect, renderAndGetNode */
+/*global define, describe, it, expect, waitsFor, renderAndGetNode */
 
 define([
 	'ist!test/qualifiers/id',
@@ -75,9 +75,21 @@ define([
 		
 		it('should be able to set event handlers on elements', function() {
 			var called = false;
-			
-			tEventHandlers.render({ handler: function() { called = true; } });
-			expect( called ).toBe( true );
+			var done = false;
+			var container = document.createElement('div');
+
+			container.appendChild(tEventHandlers.render({ handler: function() { called = true; } }));
+			document.body.appendChild(container);
+
+			waitsFor(
+				function() { return called; },
+				10000,
+				'image error event'
+			);
+
+			setTimeout(function() {
+				document.body.removeChild(container);
+			}, 9000);
 		});
 		
 		it('should handle qualifiers in any order', function() {
