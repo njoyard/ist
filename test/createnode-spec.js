@@ -1,5 +1,5 @@
 /*jshint browser:true*/
-/*global define, describe, it, expect*/
+/*global define, describe, it, expect, nthNonCommentChild, nonCommentChildren */
 
 define(['ist'], function(ist) {
 	'use strict';
@@ -30,15 +30,15 @@ define(['ist'], function(ist) {
 			);
 			
 			expect( node.getAttribute('prop') ).toBe( 'val' );
-			expect( node.firstChild.textContent ).toBe( 'text content' );
+			expect( nthNonCommentChild(node, 0).textContent ).toBe( 'text content' );
 		});
 		
 		it('should support directives', function() {
 			var ctx = { people: [ { name: 'alice' }, { name: 'bob' }, { name: 'carl' } ] },
 				node = ist.create('div.parent > @each people > "{{ name }}"', ctx);
 				
-			expect( node.childNodes.length ).toBe( ctx.people.length );
-			Array.prototype.slice.call(node.childNodes).forEach(function(node, i) {
+			expect( nonCommentChildren(node).length ).toBe( ctx.people.length );
+			nonCommentChildren(node).forEach(function(node, i) {
 				expect( node.textContent ).toBe( ctx.people[i].name );
 			});
 		});

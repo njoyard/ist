@@ -1,6 +1,6 @@
 /*jshint evil:true */
 /*global define */
-define([], function() {
+define(['components/iterator'], function(iterator) {
 	'use strict';
 
 
@@ -21,6 +21,25 @@ define([], function() {
 
 
 	Context.prototype = {
+		/* Clone prerendered template node tree */
+		clonePrerendered: function(node) {
+			var clone = this.importNode(node, false);
+			if (node.nodeType === node.COMMENT_NODE) {
+				clone.iterator = function(keys, callback) { return iterator(clone, keys, callback); };
+				clone.iterator.last =  function() { return iterator.last(clone); };
+				clone.template = node.template;
+			}
+
+			var self = this;
+			if (node.childNodes) {
+				[].slice.call(node.childNodes).forEach(function(child) {
+					clone.appendChild(self.clonePrerendered(child));
+				});
+			}
+
+			return clone;
+		},
+
 		/* Node creation aliases */
 		importNode: function(node, deep) {
 			if (node.ownerDocument === this.doc) {
@@ -96,8 +115,8 @@ define([], function() {
 			return new Context(newValue, this.doc);
 		},
 
-		scopedCall: function(fn, target) {
-			return fn.call(this.value, this.doc, this.scope, target);
+		call: function(fn) {
+			return fn.call(this.value, this.doc, this.scope);
 		}
 	};
 	

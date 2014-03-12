@@ -33,29 +33,31 @@ define(function() {
 			
 			return found;
 		},
-
-		appendNodeSegment: function(firstChild, lastChild, target) {
+		
+		iterateNodelist: function(firstChild, lastChild, callback) {
 			var node = firstChild,
 				end = lastChild ? lastChild.nextSibling : null,
 				next;
 
-			while (node && node != end) {
+			while (node && node !== end) {
 				next = node.nextSibling;
-				target.appendChild(node);
+				callback(node);
 				node = next;
 			}
 		},
 
-		insertNodeSegmentBefore: function(firstChild, lastChild, target, ref) {
-			var node = firstChild,
-				end = lastChild ? lastChild.nextSibling : null,
-				next;
+		buildNodelist: function(firstChild, lastChild) {
+			var list = [];
+			this.iterateNodelist(firstChild, lastChild, function(node) {
+				list.push(node);
+			});
+			return list;
+		},
 
-			while (node && node != end) {
-				next = node.nextSibling;
-				target.insertBefore(node, ref);
-				node = next;
-			}
+		removeNodelist: function(firstChild, lastChild) {
+			this.iterateNodelist(firstChild, lastChild, function(node) {
+				node.parentNode.removeChild(node);
+			});
 		}
 	};
 });

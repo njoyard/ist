@@ -37,7 +37,17 @@
 
 	/* Add render and get nth node helper */
 	window.renderAndGetNode = function(template, context, index) {
-		return template.render(context).childNodes[index];
+		return window.nthNonCommentChild(template.render(context), index);
+	};
+
+	window.nthNonCommentChild = function(parent, index) {
+		return window.nonCommentChildren(parent)[index];
+	};
+
+	window.nonCommentChildren = function(parent) {
+		return [].slice.call(parent.childNodes).filter(function(node) {
+			return node.nodeType !== node.COMMENT_NODE;
+		});
 	};
 
 	require(['ist'].concat(tests), function(ist) {

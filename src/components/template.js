@@ -2,9 +2,10 @@
 define([
 	'components/codegen',
 	'components/context',
-	'components/renderer'
+	'components/directives',
+	'util/misc'
 ],
-function(codegen, Context, Renderer) {
+function(codegen, Context, directives, misc) {
 	'use strict';
 
 	var expressionRE = /{{((?:}(?!})|[^}])*)}}/;
@@ -39,84 +40,68 @@ function(codegen, Context, Renderer) {
 		this.name = name || '<unknown>';
 		this.nodes = nodes;
 
-		if (typeof document !== 'undefined')
-			this.nodes.forEach(this._preRenderRec, this);
+		if (typeof document !== 'undefined') {
+			this.pre = document.createDocumentFragment();
+
+			var updateCode = this._preRenderTree(nodes, this.pre);
+
+			/*jshint evil:true*/
+			this.update = new Function('__error,__directives,__ctx,__nodelist', updateCode);
+
+			this.update.code = updateCode;
+		}
 	}
-	
-	
-	/* Prerender recursion helper */
-	Template.prototype._preRenderRec = function(node) {
-		var pr;
 
-		if ('pr' in node || 'updater' in node) {
-			return;
-		}
 	
-		/* Prerender children */
-		if ('children' in node) {
-			node.children.forEach(this._preRenderRec, this);
-		}
+	Template.prototype._preRenderTree = function(templateNodes, parent) {
+		var code = [];
+		var self = this;
 
-		/* Text node */
-		if ('text' in node) {
-			if (!expressionRE.test(node.text)) {
-				/* Node content is constant */
-				node.pr = document.createTextNode(node.text);
-			} else {
-				try {
-					node.updater = codegen.textUpdater(node);
-				} catch(err) {
-					throw this._completeError(err, node);
+		templateNodes.forEach(function(templateNode) {
+			var node;
+
+			code.push(codegen.next());
+
+			try {
+				if ('tagName' in templateNode) {
+					node = document.createElement(templateNode.tagName);
+
+					templateNode.classes.forEach(function(cls) {
+						node.classList.add(cls);
+					});
+
+					if (typeof templateNode.id !== 'undefined') {
+						node.id = templateNode.id;
+					}
+
+					code.push(codegen.element(templateNode));
+
+					if (templateNode.children && templateNode.children.length) {
+						code = code.concat(codegen.children(self._preRenderTree(templateNode.children, node)));
+					}
+				} else if ('text' in templateNode) {
+					node = document.createTextNode(templateNode.text);
+
+					if (expressionRE.test(templateNode.text)) {
+						code.push(codegen.text(templateNode));
+					}
+				} else if ('directive' in templateNode) {
+					node = document.createComment('ist.js directive');
+
+					if (templateNode.children && templateNode.children.length) {
+						node.template = new Template(self.name, templateNode.children);
+					}
+
+					code.push(codegen.directive(templateNode));
 				}
-			}
-		}
-		
-		/* Element node */
-		if ('tagName' in node) {
-			node.pr = pr = document.createElement(node.tagName);
-			
-			node.classes.forEach(function(cls) {
-				pr.classList.add(cls);
-			});
 
-			if (typeof node.id !== 'undefined') {
-				pr.id = node.id;
+				parent.appendChild(node);
+			} catch(e) {
+				throw self._completeError(e, templateNode.line);
 			}
+		});
 
-			try {
-				node.updater = codegen.elementUpdater(node);
-			} catch(err) {
-				throw this._completeError(err, node);
-			}
-		}
-
-		/* Directive node */
-		if ('directive' in node) {
-			try {
-				node.pr = {
-					template: new Template(this.name, node.children),
-					evaluator: codegen.directiveEvaluator(node)
-				};
-			} catch(err) {
-				throw this._completeError(err, node);
-			}
-		}
-	}
-	
-	
-	/* Complete an Error object with information about the current node and
-		template */
-	Template.prototype._completeError = function(err, node) {
-		var current = 'in \'' + this.name + '\' on line ' +
-					  (node.line || '<unknown>');
-		
-		if (typeof err.istStack === 'undefined') {
-			err.message += ' ' + current;
-			err.istStack = [];
-		}
-		
-		err.istStack.push(current);
-		return err;
+		return codegen.wrap(code);
 	};
 	
 	
@@ -125,9 +110,9 @@ function(codegen, Context, Renderer) {
 	/* Look for a node with the given partial name and return a new
 	   Template object if found */
 	Template.prototype.findPartial = function(name) {
-		if (console) (console.warn || console.log)("Warning: Template#findPartial is deprecated, use Template#partial instead");
+		if (console) (console.warn || console.log)('Warning: Template#findPartial is deprecated, use Template#partial instead');
 		return this.partial(name);
-	}
+	};
 	Template.prototype.partial = function(name) {
 		var result;
 		
@@ -137,31 +122,62 @@ function(codegen, Context, Renderer) {
 			
 		result = findPartialRec(name, this.nodes);
 		
-		if (typeof result !== 'undefined') {
+		if (result) {
 			return new Template(this.name, [result]);
 		}
 	};
 	
+	Template.prototype._completeError = function(err, line) {
+		var current = 'in \'' + this.name + '\' on line ' + (line || '<unknown>');
 
+		if (typeof err.istStack === 'undefined') {
+			err.message += ' ' + current;
+			err.istStack = [];
+		}
+		
+		err.istStack.push(current);
+		return err;
+	};
 	
 	/* Render template using 'context' in 'doc' */
 	Template.prototype.render = function(context, doc) {
-		var template = this,
-			renderer = new Renderer(template);
+		var self = this;
 
-		renderer.setContext(context, doc);
-		return renderer.render();
+		function getContext(ctx, doc) {
+			if (ctx instanceof Context) {
+				return ctx;
+			} else {
+				return new Context(ctx, doc || document);
+			}
+		}
+
+		context = getContext(context, doc);
+
+		var fragment = context.clonePrerendered(this.pre);
+		var firstNode = fragment.firstChild;
+		var lastNode = fragment.lastChild;
+
+		fragment.update = function(ctx) {
+			ctx = getContext(ctx || context);
+			lastNode = self.update(function(err, line) {
+				return self._completeError(err, line);
+			}, directives, ctx, misc.buildNodelist(firstNode, lastNode));
+		};
+
+		fragment._first = function() {
+			return firstNode;
+		};
+
+		fragment._last = function() {
+			return lastNode;
+		};
+
+		fragment.update(context);
+
+		return fragment;
 	};
 
-
-	/* Return code to regenerate this template */
-	Template.prototype.getCode = function(pretty) {
-		return 'new ist.Template(' +
-			JSON.stringify(this.name) + ', ' +
-			JSON.stringify(this.nodes, null, pretty ? 1 : 0) +
-		')';
-	};
 	
 	
 	return Template;
-});
+}); 

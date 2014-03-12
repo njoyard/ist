@@ -68,10 +68,10 @@ define([
 			expect( renderAndGetNode(tProperties, undefined, 3).aProperty ).toBe( '\\"aéé\n]' );
 		});
 
-        it('should be able to set property paths on elements', function() {
-                expect( typeof renderAndGetNode(tProperties, undefined, 4).property ).toBe( 'object' );
-                expect( renderAndGetNode(tProperties, undefined, 4).property.path ).toBe( 'a value' );
-        });
+		it('should be able to set property paths on elements', function() {
+			expect( typeof renderAndGetNode(tProperties, undefined, 4).property ).toBe( 'object' );
+			expect( renderAndGetNode(tProperties, undefined, 4).property.path ).toBe( 'a value' );
+		});
 		
 		it('should be able to set event handlers on elements', function() {
 			var called = false;

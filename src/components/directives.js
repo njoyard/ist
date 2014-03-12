@@ -11,20 +11,22 @@ define(function() {
 	 * @param {Context} ctx rendering context
 	 * @param render render template if truthy
 	 * @param {Template} tmpl template to render
-	 * @param {DocumentFragment} fragment target fragment
+	 * @param {Function} iterate directive iterator
 	 */
-	function conditionalHelper(ctx, render, tmpl, fragment) {
-		var rendered = fragment.extractRenderedFragment();
-
-		if (render) {
-			if (rendered) {
-				rendered.update(ctx);
+	function conditionalHelper(ctx, render, tmpl, iterate) {
+		iterate(['conditional'], function(key, rendered) {
+			if (render) {
+				if (rendered) {
+					rendered.update(ctx);
+				} else {
+					return tmpl.render(ctx);
+				}
 			} else {
-				rendered = tmpl.render(ctx);
+				if (rendered) {
+					rendered.clear();
+				}
 			}
-
-			fragment.appendRenderedFragment(rendered);
-		}
+		});
 	}
 
 	
@@ -36,21 +38,17 @@ define(function() {
 	 * @param {Array} keys item identifiers
 	 * @param [loopAdd] additional loop properties
 	 * @param {Template} tmpl template to render for each item
-	 * @param {DocumentFragment} fragment target fragment
+	 * @param {Function} iterate directive iterator
 	 */
-	function iterationHelper(ctx, items, keys, loopAdd, tmpl, fragment) {
+	function iterationHelper(ctx, items, keys, loopAdd, tmpl, iterate) {
 		var outerValue = ctx.value;
 
-		/* Extract previously rendered fragments */
-		var extracted = fragment.extractRenderedFragments(),
-			fragKeys = extracted.keys,
-			fragments = extracted.fragments;
-		
-		/* Loop over array and append rendered fragments */
-		items.forEach(function itemIterator(item, index) {
+		iterate(keys, function(key, rendered) {
+			var index = keys.indexOf(key);
+			var item = items[keys.indexOf(key)];
+
 			ctx.pushValue(item);
 
-			/* Create subcontext */
 			var loop = {
 				first: index === 0,
 				index: index,
@@ -67,105 +65,89 @@ define(function() {
 
 			ctx.pushScope({ loop: loop });
 
-			/* Render or update fragments */
-			var keyIndex = fragKeys.indexOf(keys[index]),
-				rendered;
-
-			if (keyIndex === -1) {
-				/* Item was not rendered yet */
-				rendered = tmpl.render(ctx);
-			} else {
-				rendered = fragments[keyIndex];
+			if (rendered) {
 				rendered.update(ctx);
+			} else {
+				rendered = tmpl.render(ctx);
 			}
 
 			ctx.popScope();
 			ctx.popValue();
 
-			fragment.appendRenderedFragment(rendered, keys[index]);
+			return rendered;
 		});
 	}
 	
 	
-	/* Built-in directive helpers (except @include) */
+	/* Built-in directive helpers (except @include and @else) */
 	registered = {
-		'if': function ifHelper(ctx, value, tmpl, fragment) {
-			conditionalHelper.call(null, ctx, value, tmpl, fragment);
+		'if': function ifHelper(ctx, value, tmpl, iterate) {
+			conditionalHelper.call(null, ctx, value, tmpl, iterate);
 		},
 
-		'unless': function unlessHelper(ctx, value, tmpl, fragment) {
-			conditionalHelper.call(null, ctx, !value, tmpl, fragment);
+		'unless': function unlessHelper(ctx, value, tmpl, iterate) {
+			conditionalHelper.call(null, ctx, !value, tmpl, iterate);
 		},
 
-		'with': function withHelper(ctx, value, tmpl, fragment) {
-			var rendered = fragment.extractRenderedFragment();
+		'with': function withHelper(ctx, value, tmpl, iterate) {
+			iterate(['with'], function(key, rendered) {
+				ctx.pushValue(value);
 
-			ctx.pushValue(value);
+				if (rendered) {
+					rendered.update(ctx);
+				} else {
+					rendered = tmpl.render(ctx);
+				}
 
-			if (rendered) {
-				rendered.update(ctx);
-			} else {
-				rendered = tmpl.render(ctx);
-			}
+				ctx.popValue();
 
-			ctx.popValue();
-
-			fragment.appendChild(tmpl.render(value));
+				return rendered;
+			});
 		},
 
-		'each': function eachHelper(ctx, value, tmpl, fragment) {
+		'each': function eachHelper(ctx, value, tmpl, iterate) {
 			if (!Array.isArray(value)) {
 				throw new Error(value + ' is not an array');
 			}
 			
-			iterationHelper(ctx, value, value, null, tmpl, fragment);
+			iterationHelper(ctx, value, value, null, tmpl, iterate);
 		},
 
-		'eachkey': (function() {
-			function extractItem(k) {
-				return { key: k, value: this[k] };
-			}
+		'eachkey': function eachkeyHelper(ctx, value, tmpl, iterate) {
+			var keys = Object.keys(value);
+			var array = keys.map(function(key) {
+					return { key: key, value: value[key] };
+				});
 
-			return function eachkeyHelper(ctx, value, tmpl, fragment) {
-				var keys = Object.keys(value),
-					array;
-					
-				array = keys.map(extractItem, value);
-				iterationHelper(ctx, array, keys, { object: value }, tmpl, fragment);
-			};
-		}()),
-
-		'dom': function domHelper(ctx, value, tmpl, fragment) {
-			if (value.ownerDocument !== ctx.doc) {
-				value = ctx.doc.importNode(value, true);
-			}
-
-			while(fragment.hasChildNodes()) {
-				fragment.removeChild(fragment.firstChild);
-			}
-			fragment.appendChild(value);
+			iterationHelper(ctx, array, keys, { object: value }, tmpl, iterate);
 		},
 
-		'define': function defineHelper(ctx, value, tmpl, fragment) {
+		'dom': function domHelper(ctx, value, tmpl, iterate) {
+			iterate(['dom'], function() {
+				if (value.ownerDocument !== ctx.doc) {
+					value = ctx.doc.importNode(value, true);
+				}
+
+				return value;
+			});
+		},
+
+		'define': function defineHelper(ctx, value, tmpl) {
 			defined[value] = tmpl;
 		},
 
-		'use': function useHelper(ctx, value, tmpl, fragment) {
-			var template = defined[value];
-
-			if (!template) {
+		'use': function useHelper(ctx, value, tmpl, iterate) {
+			if (!(value in defined)) {
 				throw new Error('Template \'' + value + '\' has not been @defined');
 			}
 
-			var rendered = fragment.extractRenderedFragment();
-
-			if (rendered) {
-				rendered.update(ctx);
-			} else {
-				rendered = template.render(ctx);
-			}
-
-			fragment.appendRenderedFragment(rendered);
+			iterate(['use'], function(key, rendered) {
+				if (rendered) {
+					rendered.update(ctx);
+				} else {
+					return defined[value].render(ctx);
+				}
+			});
 		}
 	};
 	
@@ -173,6 +155,10 @@ define(function() {
 	directives = {
 		register: function registerDirective(name, helper) {
 			registered[name] = helper;
+		},
+
+		has: function hasDirective(name) {
+			return name in registered && typeof registered[name] === 'function';
 		},
 
 		get: function getDirective(name) {

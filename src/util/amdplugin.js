@@ -2,6 +2,13 @@
 define(['util/misc'], function(misc) {
 	'use strict';
 
+	function getTemplateCode(template) {
+		return 'new ist.Template(' +
+			JSON.stringify(template.name) + ', ' +
+			JSON.stringify(template.nodes) +
+		')';
+	}
+
 	function pluginify(ist) {
 		var fetchText, buildMap = {};
 
@@ -81,7 +88,7 @@ define(['util/misc'], function(misc) {
 				);
 				
 				/* Get parsed code */
-				code = ist(text, name).getCode(true);
+				code = getTemplateCode(ist(text, name));
 				text = 'define(\'ist!' + name + '\',' + JSON.stringify(deps) + ', function(ist) {\n' +
 					   '  return ' + code + ';\n' +
 					   '});\n';

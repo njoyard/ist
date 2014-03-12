@@ -1,5 +1,5 @@
 /*jshint browser:true */
-/*global define, describe, it, expect */
+/*global define, describe, it, expect, nthNonCommentChild */
 
 define([
 	'ist',
@@ -31,7 +31,7 @@ define([
 			
 			ist.helper('testDirective', undefined);
 			
-			expect( function() { ist(textDirectivehelper).render(context); } ).toThrow('No directive helper for @testDirective has been registered');
+			expect( function() { ist(textDirectivehelper).render(context); } ).toThrow('No directive helper for @testDirective has been registered in \'<unknown>\' on line 2');
 		});
 	
 		it('should call helpers when the corresponding @directive is rendered', function() {
@@ -125,32 +125,6 @@ define([
 			expect( result.querySelector('.child').firstChild.textContent ).toBe( 'interpolated my value' );
 		});
 		
-		it('should pass an empty DocumentFragment to helpers as 4th argument', function() {
-			var frag,
-				context = { context: { value: 'context' } };
-			
-			ist.helper('testDirective', function(ctx, value, tmpl, fragment) {
-				frag = fragment;
-			});
-			ist(textDirectivehelper).render(context);
-			
-			expect( frag.nodeType ).toBe( document.DOCUMENT_FRAGMENT_NODE );
-		});
-		
-		it('should insert what helpers insert in their LiveFragment into the parent template node', function() {
-			var node, frag;
-				
-			ist.helper('testDirective', function(ctx, value, subtemplate, fragment) {
-				node = ctx.createElement('div');
-				node.className = 'generated';
-				fragment.appendChild(node);
-			});
-			frag = ist(textDirectivehelper).render({ context: undefined });
-			
-			expect( frag.querySelector('div.parent div.generated') ).toNotBe( null );
-			expect( frag.querySelector('div.parent div.generated') ).toBe( node );
-		});
-		
 		it('should allow passing a quoted string instead of a context path', function() {
 			var val;
 			
@@ -174,57 +148,121 @@ define([
 			expect( typeof arg ).toBe( 'undefined' );
 		});
 		
-		it('should allow pushing variables to a rendering context', function() {
-			ist.helper('pushDirective', function(ctx, value, subtemplate, fragment) {
-				ctx.pushScope({ variable: 'value' });
-				fragment.appendChild(subtemplate.render(ctx));
-				ctx.popScope();
+		it('should pass a directive iterator to helpers as 4th argument', function() {
+			var iter,
+				context = { context: { value: 'context' } };
+			
+			ist.helper('testDirective', function(ctx, value, tmpl, iterate) {
+				iter = iterate;
 			});
+			ist(textDirectivehelper).render(context);
+			
+			expect( typeof iter ).toBe( 'function' );
+		});
+
+		it('should call iterator callback once for each passed key', function() {
+			var keys = [],
+				context = { context: { value: 'context' } };
+
+			ist.helper('testDirective', function(ctx, value, tmpl, iterate) {
+				iterate(['foo', 'bar', 'baz'], function(key) {
+					keys.push(key);
+				});
+			});
+			ist(textDirectivehelper).render(context);
+			
+			expect( keys.join(',') ).toBe( 'foo,bar,baz' );
+		});
+
+		it('should insert what iterator callback returns into the parent template node', function() {
+			var node, frag;
+
+			ist.helper('testDirective', function(ctx, value, subtemplate, iterate) {
+				iterate(['test'], function() {
+					node = ctx.createElement('div');
+					node.className = 'generated';
+					return node;
+				});
+			});
+			frag = ist(textDirectivehelper).render({ context: undefined });
+			
+			expect( frag.querySelector('div.parent div.generated') ).toNotBe( null );
+			expect( frag.querySelector('div.parent div.generated') ).toBe( node );
+		});
+
+		it('should allow pushing variables to a rendering context', function() {
+			ist.helper('pushDirective', function(ctx, value, subtemplate, iterate) {
+				iterate(['test'], function() {
+					ctx.pushScope({ variable: 'value' });
+					var rendered = subtemplate.render(ctx);
+					ctx.popScope();
+
+					return rendered;
+				});
+			});
+
 			expect(
-				ist('@pushDirective\n \'{{ variable }}\'').render({}).childNodes[0]
+				nthNonCommentChild(ist('@pushDirective\n \'{{ variable }}\'').render({}), 0)
 			).toHaveTextContent( 'value' );
 		});
 		
 		it('should allow overwriting existing rendering context properties when pushing variables', function() {
-			ist.helper('pushDirective', function(ctx, value, subtemplate, fragment) {
-				ctx.pushScope({ variable: 'new value' });
-				fragment.appendChild(subtemplate.render(ctx));
-				ctx.popScope();
+			ist.helper('pushDirective', function(ctx, value, subtemplate, iterate) {
+				iterate(['test'], function() {
+					ctx.pushScope({ variable: 'new value' });
+					var rendered = subtemplate.render(ctx);
+					ctx.popScope();
+
+					return rendered;
+				});
 			});
+
 			expect(
-				ist('@pushDirective\n \'{{ variable }}\'').render({ variable: 'value' }).childNodes[0]
+				nthNonCommentChild(ist('@pushDirective\n \'{{ variable }}\'').render({ variable: 'value' }), 0)
 			).toHaveTextContent( 'new value' );
 		});
 		
 		it('should allow stacking pushed variables in rendering contexts', function() {
 			var frag;
-			
-			ist.helper('pushDirective1', function(ctx, value, subtemplate, fragment) {
-				ctx.pushScope({ variable: 'value 1' });
-				fragment.appendChild(subtemplate.render(ctx));
-				ctx.popScope();
+
+			ist.helper('pushDirective1', function(ctx, value, subtemplate, iterate) {
+				iterate(['test'], function() {
+					ctx.pushScope({ variable: 'value 1' });
+					var rendered = subtemplate.render(ctx);
+					ctx.popScope();
+
+					return rendered;
+				});
 			});
-			ist.helper('pushDirective2', function(ctx, value, subtemplate, fragment) {
-				ctx.pushScope({ variable: 'value 2' });
-				fragment.appendChild(subtemplate.render(ctx));
-				ctx.popScope();
+
+			ist.helper('pushDirective2', function(ctx, value, subtemplate, iterate) {
+				iterate(['test'], function() {
+					ctx.pushScope({ variable: 'value 2' });
+					var rendered = subtemplate.render(ctx);
+					ctx.popScope();
+
+					return rendered;
+				});
 			});
 			
 			frag = ist('@pushDirective1\n \'0 {{ variable }}\'\n @pushDirective2\n  \'1 {{ variable }}\'\n \'2 {{ variable }}\'').render({});
 			
-			expect( frag.childNodes[0] ).toHaveTextContent( '0 value 1' );
-			expect( frag.childNodes[1] ).toHaveTextContent( '1 value 2' );
-			expect( frag.childNodes[2] ).toHaveTextContent( '2 value 1' );
+			expect( nthNonCommentChild(frag, 0) ).toHaveTextContent( '0 value 1' );
+			expect( nthNonCommentChild(frag, 1) ).toHaveTextContent( '1 value 2' );
+			expect( nthNonCommentChild(frag, 2) ).toHaveTextContent( '2 value 1' );
 		});
 		
 		it('should allow popping pushed variables from rendering contexts', function() {
-			ist.helper('pushDirective', function(ctx, value, subtemplate, fragment) {
-				ctx.pushScope({ variable: 'new value' });
-				ctx.popScope();
-				fragment.appendChild(subtemplate.render(ctx));
+			ist.helper('pushDirective', function(ctx, value, subtemplate, iterate) {
+				iterate(['test'], function() {
+					ctx.pushScope({ variable: 'new value' });
+					ctx.popScope();
+					return subtemplate.render(ctx);
+				});
 			});
+
 			expect(
-				ist('@pushDirective\n \'{{ variable }}\'').render({ variable: 'value' }).childNodes[0]
+				nthNonCommentChild(ist('@pushDirective\n \'{{ variable }}\'').render({ variable: 'value' }), 0)
 			).toHaveTextContent( 'value' );
 		});
 		
