@@ -1,6 +1,6 @@
 /**
  * IST: Indented Selector Templating
- * version NEXT
+ * version 0.6.6
  *
  * Copyright (c) 2012-2014 Nicolas Joyard
  * Released under the MIT license.
@@ -55,8 +55,8 @@
     var components_codegen = function (misc) {
             
             var expressionRE = /{{\s*((?:}(?!})|[^}])*?)\s*}}/;
-            var NL = '\n';
-            var TAB = '\t';
+            var NL = '';
+            var TAB = '';
             var indent;
             var interpolateCache = {};
             var propertyCache = {};
@@ -79,12 +79,12 @@
                         if (!(cacheKey in interpolateCache)) {
                             var code = [
                                     TAB + 'if(this!==null&&this!==undefined){',
-                                    TAB + TAB + 'with(this){with(__scope){return ' + expr + ';}}',
+                                    TAB + TAB + 'with(this){with(__s){return ' + expr + ';}}',
                                     TAB + '}else{',
-                                    TAB + TAB + 'with(__scope){return ' + expr + ';}',
+                                    TAB + TAB + 'with(__s){return ' + expr + ';}',
                                     TAB + '}'
                                 ].join(NL);
-                            var args = 'document,__scope';
+                            var args = 'document,__s';
                             new Function(args, code);
                             interpolateCache[cacheKey] = [
                                 'function(' + args + '){',
@@ -112,20 +112,20 @@
                         var cacheKey = path.join('.');
                         if (!(cacheKey in propertyCache)) {
                             propertyCache[cacheKey] = [
-                                'function(__target,__value) {',
-                                TAB + 'var __current = __target;'
+                                'function(__t,__v) {',
+                                TAB + 'var __c = __t;'
                             ].concat(indent(path.map(function (part, index) {
                                 if (index === path.length - 1) {
-                                    return '__current["' + part + '"] = __value;';
+                                    return '__c["' + part + '"] = __v;';
                                 } else {
-                                    return '__current = __current["' + part + '"] = __current["' + part + '"] || {};';
+                                    return '__c = __c["' + part + '"] = __c["' + part + '"] || {};';
                                 }
                             }))).concat(['}']).join(NL);
                         }
                         return propertyCache[cacheKey];
                     },
                     line: function (node) {
-                        return '__line = ' + node.line + ';';
+                        return '__i = ' + node.line + ';';
                     },
                     element: function (node) {
                         var attributes = node.attributes;
@@ -133,18 +133,18 @@
                         var events = node.events;
                         return [codegen.line(node)].concat(Object.keys(attributes).map(function (attr) {
                             return [
-                                '__node.setAttribute(',
+                                '__n.setAttribute(',
                                 TAB + '"' + attr + '",',
-                                TAB + '__ctx.call(' + codegen.interpolate(attributes[attr]) + ')',
+                                TAB + '__x.call(' + codegen.interpolate(attributes[attr]) + ')',
                                 ');'
                             ].join(NL);
                         })).concat(properties.map(function (prop) {
-                            return '(' + codegen.property(prop.path) + ')(__node, __ctx.call(' + codegen.interpolate(prop.value) + '));';
+                            return '(' + codegen.property(prop.path) + ')(__n, __x.call(' + codegen.interpolate(prop.value) + '));';
                         })).concat(Object.keys(events).map(function (evt) {
                             return [
-                                '__node.addEventListener(',
+                                '__n.addEventListener(',
                                 TAB + '"' + evt + '",',
-                                TAB + '__ctx.call(' + codegen.evaluate(events[evt]) + '),',
+                                TAB + '__x.call(' + codegen.evaluate(events[evt]) + '),',
                                 TAB + 'false',
                                 ');'
                             ].join(NL);
@@ -153,39 +153,39 @@
                     text: function (node) {
                         return [
                             codegen.line(node),
-                            '__node.textContent = __ctx.call(' + codegen.interpolate(node.text) + ');'
+                            '__n.textContent = __x.call(' + codegen.interpolate(node.text) + ');'
                         ].join(NL);
                     },
                     directive: function (node) {
-                        var evalExpr = node.expr ? '__ctx.call(' + codegen.evaluate(node.expr) + ')' : 'undefined';
+                        var evalExpr = node.expr ? '__x.call(' + codegen.evaluate(node.expr) + ')' : 'undefined';
                         return [
                             codegen.line(node),
-                            'if (!("keys" in __node)) {',
-                            TAB + '__node.keys = [];',
-                            TAB + '__node.fragments = [];',
+                            'if (!("keys" in __n)) {',
+                            TAB + '__n.keys = [];',
+                            TAB + '__n.fragments = [];',
                             '}',
-                            'if (!__directives.has("' + node.directive + '")) {',
+                            'if (!__d.has("' + node.directive + '")) {',
                             TAB + 'throw new Error("No directive helper for @' + node.directive + ' has been registered");',
                             '}',
-                            '__directives.get("' + node.directive + '")(__ctx, ' + evalExpr + ', __node.template, __node.iterator);',
-                            '__node = __node.iterator.last() || __node;'
+                            '__d.get("' + node.directive + '")(__x, ' + evalExpr + ', __n.template, __n.iterator);',
+                            '__n = __n.iterator.last() || __n;'
                         ].join(NL);
                     },
                     children: function (code) {
-                        return ['(function(__nodelist) {'].concat(indent(code)).concat(['})([].slice.call(__node.childNodes));']).join(NL);
+                        return ['(function(__l) {'].concat(indent(code)).concat(['})([].slice.call(__n.childNodes));']).join(NL);
                     },
                     next: function () {
-                        return ['__node = __nodelist.shift();'].join(NL);
+                        return ['__n = __l.shift();'].join(NL);
                     },
                     wrap: function (code) {
                         return [
-                            'var __node;',
-                            'var __line;',
+                            'var __n;',
+                            'var __i;',
                             'try {'
                         ].concat(indent(code)).concat([
-                            TAB + 'return __node;',
+                            TAB + 'return __n;',
                             '} catch(e) {',
-                            TAB + 'throw __error(e, __line);',
+                            TAB + 'throw __e(e, __i);',
                             '}'
                         ]).join(NL);
                     }
@@ -527,7 +527,7 @@
                 if (typeof document !== 'undefined') {
                     this.pre = document.createDocumentFragment();
                     var updateCode = this._preRenderTree(nodes, this.pre);
-                    this.update = new Function('__error,__directives,__ctx,__nodelist', updateCode);
+                    this.update = new Function('__e,__d,__x,__l', updateCode);
                     this.update.code = updateCode;
                 }
             }

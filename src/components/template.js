@@ -46,7 +46,7 @@ function(codegen, Context, directives, misc) {
 			var updateCode = this._preRenderTree(nodes, this.pre);
 
 			/*jshint evil:true*/
-			this.update = new Function('__error,__directives,__ctx,__nodelist', updateCode);
+			this.update = new Function('__e,__d,__x,__l', updateCode);
 
 			this.update.code = updateCode;
 		}
