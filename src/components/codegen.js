@@ -60,9 +60,9 @@ define(['util/misc'], function(misc) {
 				new Function(args, code);
 
 				interpolateCache[cacheKey] = [
-					'function(' + args + '){',
+					'__x.call(function(' + args + '){',
 					code,
-					'}'
+					'})'
 				].join(NL);
 			}
 
@@ -73,22 +73,26 @@ define(['util/misc'], function(misc) {
 		// Returns code to interpolate expressions in text
 		interpolate: function(text) {
 			if (!(text in interpolateCache)) {
-				interpolateCache[text] = codegen.evaluate(
-					text.split(expressionRE)
-					.map(function(part, index) {
-						if (index % 2) {
-							// expression
-							return '(' + part + ')';
-						} else {
-							// text literal
-							return '\'' + misc.jsEscape(part) + '\'';
-						}
-					})
-					.filter(function(part) {
-						return part !== '\'\'';
-					})
-					.join('+')
-				);
+				if (expressionRE.test(text)) {
+					interpolateCache[text] = codegen.evaluate(
+						text.split(expressionRE)
+						.map(function(part, index) {
+							if (index % 2) {
+								// expression
+								return '(' + part + ')';
+							} else {
+								// text literal
+								return '\'' + misc.jsEscape(part) + '\'';
+							}
+						})
+						.filter(function(part) {
+							return part !== '\'\'';
+						})
+						.join('+')
+					);
+				} else {
+					interpolateCache[text] = '\'' + misc.jsEscape(text) +'\'';
+				}
 			}
 
 			return interpolateCache[text];
@@ -133,18 +137,18 @@ define(['util/misc'], function(misc) {
 					return [
 						'__n.setAttribute(',
 						TAB + '"' + attr + '",',
-						TAB + '__x.call(' + codegen.interpolate(attributes[attr]) + ')',
+						TAB + codegen.interpolate(attributes[attr]),
 						');'
 					].join(NL);
 				}))
 				.concat(properties.map(function(prop) {
-					return '(' + codegen.property(prop.path) + ')(__n, __x.call(' + codegen.interpolate(prop.value) + '));';
+					return '(' + codegen.property(prop.path) + ')(__n, ' + codegen.interpolate(prop.value) + ');';
 				}))
 				.concat(Object.keys(events).map(function(evt) {
 					return [
 						'__n.addEventListener(',
 						TAB + '"' + evt + '",',
-						TAB + '__x.call(' + codegen.evaluate(events[evt]) + '),',
+						TAB + codegen.evaluate(events[evt]) + ',',
 						TAB + 'false',
 						');'
 					].join(NL);
@@ -156,13 +160,13 @@ define(['util/misc'], function(misc) {
 		text: function(node) {
 			return [
 				codegen.line(node),
-				'__n.textContent = __x.call(' + codegen.interpolate(node.text) + ');'
+				'__n.textContent = ' + codegen.interpolate(node.text) + ';'
 			].join(NL);
 		},
 
 		// Returns code to update directive nodes
 		directive: function(node) {
-			var evalExpr = node.expr ? '__x.call(' + codegen.evaluate(node.expr) + ')' : 'undefined';
+			var evalExpr = node.expr ? codegen.evaluate(node.expr) : 'undefined';
 
 			return [
 				codegen.line(node),
