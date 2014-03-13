@@ -1,13 +1,8 @@
 {
 	"devDependencies": {
-		"karma": "*",
-		"karma-chrome-launcher": "*",
-		"karma-firefox-launcher": "*",
-		"karma-jasmine": "*",
+		"karma": "~0.10.9",
 		"karma-opera-launcher": "*",
-		"karma-phantomjs-launcher": "*",
-		"karma-requirejs": "*",
-		"karma-sauce-launcher": "*",
+		"karma-sauce-launcher": "~0.1.5",
 		"pegjs": "~0.8.0",
 		"requirejs": "*"
 	}
