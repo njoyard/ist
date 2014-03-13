@@ -139,7 +139,7 @@
                             return [
                                 '__n.setAttribute(',
                                 TAB + '"' + attr + '",',
-                                TAB + codegen.interpolate(attributes[attr]),
+                                TAB + '"" + ' + codegen.interpolate(attributes[attr]),
                                 ');'
                             ].join(NL);
                         })).concat(properties.map(function (prop) {
@@ -157,7 +157,7 @@
                     text: function (node) {
                         return [
                             codegen.line(node),
-                            '__n.textContent = ' + codegen.interpolate(node.text) + ';'
+                            '__n.textContent = "" + ' + codegen.interpolate(node.text) + ';'
                         ].join(NL);
                     },
                     directive: function (node) {

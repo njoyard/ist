@@ -137,7 +137,7 @@ define(['util/misc'], function(misc) {
 					return [
 						'__n.setAttribute(',
 						TAB + '"' + attr + '",',
-						TAB + codegen.interpolate(attributes[attr]),
+						TAB + '"" + ' + codegen.interpolate(attributes[attr]),
 						');'
 					].join(NL);
 				}))
@@ -160,7 +160,7 @@ define(['util/misc'], function(misc) {
 		text: function(node) {
 			return [
 				codegen.line(node),
-				'__n.textContent = ' + codegen.interpolate(node.text) + ';'
+				'__n.textContent = "" + ' + codegen.interpolate(node.text) + ';'
 			].join(NL);
 		},
 
