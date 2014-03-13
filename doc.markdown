@@ -76,7 +76,7 @@ You can deliver templates to the browser using a `<script>` tag.
         header
             h1 "{{ opencurly }} title {{ closecurly }}"
         p.articleParagraph
-            "{{ opencurly }} text {{ closecurly }}"    
+            "{{ opencurly }} text {{ closecurly }}"
 </script>
 {% endhighlight %}
 </section>
@@ -121,7 +121,7 @@ var context = {
         title: "ist.js released",
         text: "ist.js has just been released"
     };
-    
+
 var node = template.render(context);
 
 document.body.appendChild(node);
@@ -181,7 +181,7 @@ var context = {
             { url: "contact.html", label: "Contact" }
         ]
     };
-    
+
 document.body.appendChild(menuTemplate.render(context));
 {% endhighlight %}
 </section>
@@ -195,12 +195,12 @@ Templates can also include [comments](#Comments) and blank lines for clarity.
 <section class="doc-code">
 {% highlight css %}
 ul.menu
-    
+
     /* Only display admin link if user is an administrator */
     @if isAdmin
         li
             a.adminZone "Administration zone"
-            
+
     @each menuItems
         li
             a[href={{ opencurly }} url {{ closecurly }}] "{{ opencurly }} label {{ closecurly }}"
@@ -223,7 +223,7 @@ var context = {
             { url: "contact.html", label: "Contact" }
         ]
     };
-    
+
 var rendered = menuTemplate.render(context);
 document.body.appendChild(rendered);
 
@@ -293,7 +293,7 @@ require(['ist'], function(ist) {
         node = template.render({
             title: "Title"
         });
-        
+
     document.body.appendChild(node);
 });
 {% endhighlight %}
@@ -313,7 +313,7 @@ require(['ist!path/to/template'], function(template) {
     var node = template.render({
             title: "Title"
         });
-        
+
     document.body.appendChild(node);
 });
 {% endhighlight %}
@@ -346,7 +346,7 @@ Templates stored in a `<script>` tag are compiled when you get them using
 <script id="example-template" type="text/x-ist">
     article
         h1 "{{ opencurly }} title {{ closecurly }}"
-        p "{{ opencurly }} text {{ closecurly }}"    
+        p "{{ opencurly }} text {{ closecurly }}"
 </script>
 
 <script>
@@ -365,7 +365,7 @@ compiled templates.
 <section class="doc-code">
 {% highlight js %}
 define(['ist!path/to/template'], function(compiledTemplate) {
-    /* ... */ 
+    /* ... */
 });
 {% endhighlight %}
 </section>
@@ -503,8 +503,9 @@ rendered.update();
 <section class="doc-item">
 <section class="doc-desc">
 ist.js uses indentation to specify node trees, not unlike YAML and Python.  All
-children of a same node must have the same indent.  You can use spaces or tabs,
-but ist.js will not see a tab as the equivalent of any number of spaces.
+children of a same node must have the same indent.  You can use spaces and/or
+tabs, but ist.js considers them different and will always look for strictly
+identical indents.
 
 </section>
 <section class="doc-code">
@@ -539,7 +540,7 @@ child node defines the indent to use for all its siblings.
 <section class="doc-item">
 <section class="doc-desc">
 You can use a different indent for nodes at the same tree level provided they
-are not siblings.
+are not direct siblings.
 
 </section>
 <section class="doc-code">
@@ -568,12 +569,12 @@ it may make the node indent ambiguous.
 /* Comment */
 div.parent
     div.child /* Comment */
-    
+
         div.grandchild
-        
+
     /* Multi-line
         comment */
-    
+
     /* Error-prone
      comment
   */    div.child
@@ -586,9 +587,7 @@ div.parent
 
 <section class="doc-item">
 <section class="doc-desc">
-ist.js uses CSS3 selectors to specify elements.  Of course all selectors are
-not supported, as they would not make sense.  In general, selectors start with
-a tag name.
+ist.js uses a syntax similar to CSS3 selectors to specify elements.  In general, selectors start with a tag name.
 
 </section>
 <section class="doc-code">
@@ -632,12 +631,14 @@ ul
 <section class="doc-item">
 <section class="doc-desc">
 ist.js also allows setting properties on elements, using an attribute qualifier
-with a `.` prefix.
+with a `.` prefix.  You can also specify nested property paths (ist.js will
+create intermediate objects if necessary).
 
 </section>
 <section class="doc-code">
 {% highlight css %}
 div[.className=header]
+div[.path.to.property=value]
 {% endhighlight %}
 </section>
 </section>
@@ -667,8 +668,8 @@ selectors.  Of course you will need at least one qualifier.
 <section class="doc-code">
 {% highlight css %}
 .implicitDiv
-	#implicitDiv
-	[implicit=yes]
+    #implicitDiv
+    [implicit=yes]
 {% endhighlight %}
 </section>
 </section>
@@ -722,15 +723,14 @@ h2      'Subtitle'
 <section class="doc-item">
 <section class="doc-desc">
 This does not prevent adding more children to the parent node.  These examples
-produce the same result, though the first one might not be as clear.  The choice
-is yours.
+produce the same result, though the first one may seem ambiguous.
 
 </section>
 <section class="doc-code">
 {% highlight css %}
 div "Text content"
     div.child
-    
+
 div
     "Text content"
     div.child
@@ -872,9 +872,9 @@ attribute/property qualifiers, but prefixed with an exclamation mark.
 <section class="doc-code">
 {% highlight css %}
 ul#menu
-	@each menu
-		li[!click=action]
-			"{{ opencurly }} label {{ closecurly }}"
+    @each menu
+        li[!click=action]
+            "{{ opencurly }} label {{ closecurly }}"
 {% endhighlight %}
 </section>
 </section>
@@ -888,20 +888,20 @@ braces, and of course it should return a function.
 <section class="doc-code">
 {% highlight js %}
 myTemplate.render({
-	menu: [
-		{
-			label: "about",
-			action: function() {
-				alert("About this application");
-			}
-		},
-		{
-			label: "quit",
-			action: function() {
-				location.href = "/";
-			}
-		}
-	]
+    menu: [
+        {
+            label: "about",
+            action: function() {
+                alert("About this application");
+            }
+        },
+        {
+            label: "quit",
+            action: function() {
+                location.href = "/";
+            }
+        }
+    ]
 });
 {% endhighlight %}
 </section>
@@ -1003,8 +1003,8 @@ The `@with` directive can also be used to hard-code some parts of the template.
 <section class="doc-code">
 {% highlight css %}
 @with { version: '0.5.4', built: '2012-11-20' }
-	footer
-		"ist.js version {{ opencurly }} version {{ closecurly }} built on {{ opencurly }} built {{ closecurly }}"
+    footer
+        "ist.js version {{ opencurly }} version {{ closecurly }} built on {{ opencurly }} built {{ closecurly }}"
 {% endhighlight %}
 </section>
 </section>
@@ -1021,8 +1021,8 @@ a new element in the array.
 <section class="doc-code">
 {% highlight css %}
 ul.menu
-	@each menu
-		a[href={{ opencurly }} url {{ closecurly }}] "{{ opencurly }} label {{ closecurly }}"
+    @each menu
+        a[href={{ opencurly }} url {{ closecurly }}] "{{ opencurly }} label {{ closecurly }}"
 {% endhighlight %}
 </section>
 </section>
@@ -1041,7 +1041,7 @@ var context = {
             { url: "contact.html", label: "Contact" }
         ]
     };
-    
+
 document.body.appendChild(menuTemplate.render(context));
 {% endhighlight %}
 </section>
@@ -1062,14 +1062,14 @@ with details about the iteration.
 <section class="doc-code">
 {% highlight css %}
 @each array
-	@if loop.first
-		"First item"
-		
+    @if loop.first
+        "First item"
+
     "Item {{ opencurly }} loop.index + 1 {{ closecurly }} of {{ opencurly }} loop.length {{ closecurly }}"
     " is {{ opencurly }} this {{ closecurly }}"
-	
-	@if loop.last
-		"Last item"
+
+    @if loop.last
+        "Last item"
 {% endhighlight %}
 </section>
 </section>
@@ -1083,7 +1083,7 @@ can still access it using `this`.
 <section class="doc-code">
 {% highlight css %}
 @each array
-	"Item.loop = {{ opencurly }} this.loop {{ closecurly }}"
+    "Item.loop = {{ opencurly }} this.loop {{ closecurly }}"
 {% endhighlight %}
 </section>
 </section>
@@ -1099,15 +1099,15 @@ over an objects own properties, setting the variables `key` and `value`.
 <section class="doc-code">
 {% highlight css %}
 @eachkey { home: "home.html", news: "news.html" }
-	a[href={{ opencurly }} value {{ closecurly }}]
-		"{{ opencurly }} key {{ closecurly }}"
+    a[href={{ opencurly }} value {{ closecurly }}]
+        "{{ opencurly }} key {{ closecurly }}"
 {% endhighlight %}
 </section>
 </section>
 
 <section class="doc-item">
 <section class="doc-desc">
-When using `@eachkey`, the `loop` variable is set to an object with details 
+When using `@eachkey`, the `loop` variable is set to an object with details
 about the iteration.
 
 * `loop.index` is the 0-based index of the rendered item in the array
@@ -1182,24 +1182,24 @@ definition of `<script>` tags does not matter.
 <section class="doc-code">
 {% highlight html %}
 <script type="text/x-ist" id="menu">
-	ul#menu
-		@each items
-			@include "menu-item"
+    ul#menu
+        @each items
+            @include "menu-item"
 </script>
 
 <script type="text/x-ist" id="menu-item">
-	li
-		a[href={{ opencurly }} url {{ closecurly }}] "{{ opencurly }} label {{ closecurly }}"
+    li
+        a[href={{ opencurly }} url {{ closecurly }}] "{{ opencurly }} label {{ closecurly }}"
 </script>
 
 <script type="text/javascript">
-	function renderMenu() {
-		ist.script("menu").render([
-			{ label: "Home", url: "index.html" },
-			{ label: "News", url: "news.html" },
-			{ label: "Contact", url: "contact.html" }
-		});
-	}
+    function renderMenu() {
+        ist.script("menu").render([
+            { label: "Home", url: "index.html" },
+            { label: "News", url: "news.html" },
+            { label: "Contact", url: "contact.html" }
+        });
+    }
 </script>
 {% endhighlight %}
 </section>
@@ -1218,19 +1218,19 @@ path as a string parameter to `@include`.  You can omit the `.ist` extension.
 @include "common/header"
 
 section#main
-	"Main content, yay!"
-	
+    "Main content, yay!"
+
 @include "common/footer.ist" /* Extension is optional */
 
 
 /* templates/common/header.ist */
 header
-	h1 "My Website"
+    h1 "My Website"
 
 
 /* templates/common/footer.ist */
 footer
-	"Copyright (c) 2012 My Company"
+    "Copyright (c) 2012 My Company"
 {% endhighlight %}
 </section>
 </section>
@@ -1244,11 +1244,11 @@ are automatically loaded as dependencies.
 <section class="doc-code">
 {% highlight js %}
 require(['ist!templates/main'], function(mainTemplate) {
-	/* templates/common/{header,footer} are added as AMD
-	   dependencies to 'ist!templates/main', and thus
-	   are loaded automatically */
-	   
-	mainTemplate.render(/* ... */);
+    /* templates/common/{header,footer} are added as AMD
+       dependencies to 'ist!templates/main', and thus
+       are loaded automatically */
+
+    mainTemplate.render(/* ... */);
 });
 {% endhighlight %}
 </section>
@@ -1256,7 +1256,7 @@ require(['ist!templates/main'], function(mainTemplate) {
 
 <section class="doc-item">
 <section class="doc-desc">
-When a template is loaded from a string or a `<script>` tag however, any 
+When a template is loaded from a string or a `<script>` tag however, any
 `@include`d template must be either an other `<script>` tag ID, or an already
 loaded AMD module name.
 
@@ -1264,7 +1264,7 @@ loaded AMD module name.
 <section class="doc-code">
 {% highlight html %}
 <script type="text/x-ist" id="main">
-	@include "included-template"
+    @include "included-template"
 </script>
 {% endhighlight %}
 </section>
@@ -1279,11 +1279,11 @@ template.
 <section class="doc-code">
 {% highlight js %}
 define("included-template", ["ist!some/template"], function(tmpl) {
-	return tmpl;
+    return tmpl;
 });
 
 require(["ist", "included-template"], function(ist) {
-	ist.script("main").render(/* ... */);
+    ist.script("main").render(/* ... */);
 });
 {% endhighlight %}
 </section>
@@ -1297,11 +1297,11 @@ It may also resolve to a template string.
 <section class="doc-code">
 {% highlight js %}
 define("included-template", [], function() {
-	return "div\n  h1 'included content'";
+    return "div\n  h1 'included content'";
 });
 
 require(["ist", "included-template"], function(ist) {
-	ist.script("main").render(/* ... */);
+    ist.script("main").render(/* ... */);
 });
 {% endhighlight %}
 </section>
@@ -1356,7 +1356,7 @@ function initialRender(tweets) {
 function addNewTweet(author, text) {
     var container = document.querySelector(".liveTweets"),
         partial = myTemplate.partial("tweet");
-        
+
     container.appendChild(
         partial.render({ author: author, text: text })
     );
@@ -1377,12 +1377,12 @@ element selector.
 <section class="doc-code">
 {% highlight js %}
 var myDiv = ist.create(
-		"div.class#id[attribute=Value]"
-	);
+        "div.class#id[attribute=Value]"
+    );
 {% endhighlight %}
 </section>
 </section>
-    
+
 <section class="doc-item">
 <section class="doc-desc">
 It also supports rendering with context.
@@ -1391,13 +1391,13 @@ It also supports rendering with context.
 <section class="doc-code">
 {% highlight js %}
 var myDiv = ist.create(
-		"div[class={{ opencurly }} cls {{ closecurly }}]",
-		{ cls: 'myclass' }
-	);
+        "div[class={{ opencurly }} cls {{ closecurly }}]",
+        { cls: 'myclass' }
+    );
 {% endhighlight %}
 </section>
 </section>
-    
+
 <section class="doc-item">
 <section class="doc-desc">
 `ist.create()` is also able to create several nodes at once using a CSS-like
@@ -1407,9 +1407,9 @@ angle-bracket syntax.
 <section class="doc-code">
 {% highlight js %}
 var myParentDiv = ist.create(
-		'div.parent > div.child > "{{ opencurly }} text {{ closecurly }}"',
-		{ text: "Text node content" }
-	);
+        'div.parent > div.child > "{{ opencurly }} text {{ closecurly }}"',
+        { text: "Text node content" }
+    );
 {% endhighlight %}
 </section>
 </section>
@@ -1426,14 +1426,14 @@ Therefore you should only use it for trivial node tree creation.
 <section class="doc-code">
 {% highlight js %}
 var myParentDiv = ist.create(
-		'div.parent > @each children > "{{ opencurly }} name {{ closecurly }}"',
-		{
-			children: [
-				{ name: 'alice' },
-				{ name: 'bob' }
-			]
-		}
-	);
+        'div.parent > @each children > "{{ opencurly }} name {{ closecurly }}"',
+        {
+            children: [
+                { name: 'alice' },
+                { name: 'bob' }
+            ]
+        }
+    );
 {% endhighlight %}
 </section>
 </section>
@@ -1447,10 +1447,10 @@ argument.
 <section class="doc-code">
 {% highlight js %}
 var popupDiv = ist.create(
-		'div.inPopup', 
-		{},
-		popup.document
-	);
+        'div.inPopup',
+        {},
+        popup.document
+    );
 {% endhighlight %}
 </section>
 </section>
@@ -1473,7 +1473,7 @@ directive name (case-sensitive) and a helper function.
 {% highlight js %}
 /* Helper for '@foo' */
 ist.helper("foo", function(context, value, template, fragment) {
-	/* Do stuff */
+    /* Do stuff */
 });
 {% endhighlight %}
 </section>
@@ -1539,7 +1539,7 @@ argument instead.
 ist.helper(
     "echo",
     function(context, value, template, fragment) {
-    	var node = context.createTextNode(
+        var node = context.createTextNode(
                 value || "no value passed to @echo !"
             );
 
@@ -1748,7 +1748,7 @@ give access to the DOM document where the template is being rendered:
   createElement or createElementNS on the target document.
 * `Context#importNode(node)` is an alias to the same method of the target
   document
-  
+
 </section>
 <section class="doc-code">
 {% highlight js %}
@@ -1761,11 +1761,11 @@ give access to the DOM document where the template is being rendered:
 ist.helper(
     "divtext",
     function(context, value, template, fragment) {
-    	var div = context.createElement("div");
-    	var text = context.createTextNode(value);
-    	
-    	div.appendChild(text);
-    	fragment.appendChild(div);
+        var div = context.createElement("div");
+        var text = context.createTextNode(value);
+
+        div.appendChild(text);
+        fragment.appendChild(div);
     }
 );
 {% endhighlight %}
@@ -1786,10 +1786,10 @@ The following members can be used to create new contexts and access their value:
 ist.helper(
     'test',
     function(context, value, template, fragment) {
-    	var testValue = { foo: "bar" },
-    		ctx = context.createContext(testValue);
-    	
-    	assert(testValue === ctx.value);
+        var testValue = { foo: "bar" },
+            ctx = context.createContext(testValue);
+
+        assert(testValue === ctx.value);
     }
 );
 {% endhighlight %}
@@ -1808,30 +1808,30 @@ evaluated:
 * `Context#popScope()` undoes what pushScope did, popping the last pushed scope
   object.
 * `Context#pushValue(value)` (documentation pending)
-  
+
 </section>
 <section class="doc-code">
 {% highlight js %}
 ist.helper(
     'test',
     function(outer, inner, template, fragment) {
-    	var ctx = outer.createContext({ foo: "bar" });
-    	
+        var ctx = outer.createContext({ foo: "bar" });
+
         assert(ctx.evaluate("foo.toUpperCase()") === "BAR");
-    	
-    	ctx.pushScope({ foo: "baz", hello: "world" });
+
+        ctx.pushScope({ foo: "baz", hello: "world" });
         assert(ctx.evaluate("foo.toUpperCase()") === "BAZ");
         assert(ctx.evaluate("hello") === "world");
 
-    	ctx.pushScope({ foo: "ding" });
+        ctx.pushScope({ foo: "ding" });
         assert(ctx.evaluate("foo.toUpperCase()") === "DING");
         assert(ctx.evaluate("hello") === "world");
 
-    	ctx.popScope();
+        ctx.popScope();
         assert(ctx.evaluate("foo.toUpperCase()") === "BAZ");
         assert(ctx.evaluate("hello") === "world");
-    	
-    	ctx.popScope();
+
+        ctx.popScope();
         assert(ctx.evaluate("foo.toUpperCase()") === "BAR");
     }
 );

@@ -1,5 +1,10 @@
 all: doc.markdown
 
+SECTIONS=$(wildcard src/section-*.markdown)
+
+src/doc.markdown: $(SECTIONS)
+	cat $(SECTIONS) > src/doc.markdown
+
 src/doc-parsed.markdown: src/doc.markdown
 	echo "<section class=\"doc\">" > src/doc-parsed.markdown
 	echo "" >> src/doc-parsed.markdown
