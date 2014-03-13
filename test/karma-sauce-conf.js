@@ -31,7 +31,7 @@ module.exports = function(config) {
     captureTimeout: 60000,
     browserDisconnectTimeout: 10000,
     browserDisconnectTolerance: 2,
-    browserNoActivityTimeout: 20000,
+    browserNoActivityTimeout: 60000,
     singleRun: true,
 
     sauceLabs: {
