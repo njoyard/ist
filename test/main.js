@@ -40,6 +40,10 @@
 		return window.nthNonCommentChild(template.render(context), index);
 	};
 
+	window.renderAndGetNodes = function(template, context) {
+		return window.nonCommentChildren(template.render(context));
+	};
+
 	window.nthNonCommentChild = function(parent, index) {
 		return window.nonCommentChildren(parent)[index];
 	};
@@ -74,6 +78,7 @@
 					'missing ) in parenthetical in \'' + template + '\' on line ' + line,
 					'Function constructor: failed to compile function in \'' + template + '\' on line ' + line,
 					'Expected \')\' in \'' + template + '\' on line ' + line,
+					'Expected \';\' in \'' + template + '\' on line ' + line,
 					'Expected token \')\' in \'' + template + '\' on line ' + line
 				]);
 			};

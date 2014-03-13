@@ -1,4 +1,4 @@
 "{{ 1 + 17 - 3 / 2 }}"
 "{{ this.aNumber + 3 }}"
 div[class={{ document.myClassValue + "suffix" }}]
-"{{ Math.PI + (function(arg) { return Array.isArray(arg); })([1, 2]) }}"
+"{{ (function(arg) { return arg.reduce(function(a,b) { return a+b; }, 0); })([1, 2]) }}"

@@ -8,8 +8,8 @@ require(['ist!include'], function(compiled) {
 		expect(typeof compiled.render).toBe('function');
 
 		var rendered = compiled.render({ foo: 'bar' });
-		expect(rendered.childNodes.length).toBe(1);
-		expect(rendered.childNodes[0].childNodes[0].textContent).toBe('bar');
+		expect(nonCommentChildren(rendered).length).toBe(1);
+		expect(nthNonCommentChild(rendered, 0).childNodes[0].textContent).toBe('bar');
 
 		done();
 	});

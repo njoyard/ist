@@ -1,5 +1,5 @@
 /*jshint browser:true*/
-/*global define, describe, it, expect, runs, waitsFor */
+/*global define, describe, it, expect, runs, waitsFor, renderAndGetNode, nthNonCommentChild, nonCommentChildren */
 
 define([], function() {
 	'use strict';
@@ -27,6 +27,10 @@ define([], function() {
 				iframe.addEventListener('load', function() {
 					var iframeWindow = window.frames[file];
 					var iframeDoc = iframeWindow.document;
+
+					iframeWindow.renderAndGetNode = window.renderAndGetNode;
+					iframeWindow.nthNonCommentChild = window.nthNonCommentChild;
+					iframeWindow.nonCommentChildren = window.nonCommentChildren;
 
 					iframeWindow.__run__ = function(testRunner) {
 						testRunner(expect, function() {

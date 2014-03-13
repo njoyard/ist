@@ -1,5 +1,5 @@
 /*jshint browser:true*/
-/*global define, describe, it, expect*/
+/*global define, describe, it, expect, renderAndGetNodes*/
 
 define([
 	'ist',
@@ -18,12 +18,12 @@ define([
 	tIndentedRoot, tComments, tEscapedNl) {
 	'use strict';
 	
-	var elNodes = tEmptyLines.render().childNodes,
-		childrenNodes = tChildren.render().childNodes,
-		siblingsNodes = tSiblings.render().childNodes,
-		irootNodes = tIndentedRoot.render().childNodes,
-		cmtNodes = tComments.render().childNodes,
-		enlNodes = tEscapedNl.render().childNodes;
+	var elNodes = renderAndGetNodes(tEmptyLines),
+		childrenNodes = renderAndGetNodes(tChildren),
+		siblingsNodes = renderAndGetNodes(tSiblings),
+		irootNodes = renderAndGetNodes(tIndentedRoot),
+		cmtNodes = renderAndGetNodes(tComments),
+		enlNodes = renderAndGetNodes(tEscapedNl);
 	
 	describe('syntax', function() {
 		it('should ignore empty and whitespace-only lines', function() {

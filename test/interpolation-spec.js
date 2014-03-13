@@ -83,7 +83,7 @@ define([
 		});
 		
 		it('should execute arbitrary JS code inside expressions', function() {
-			expect( renderAndGetNode(tExpressions, obj, 3).textContent ).toBe( '' + (Math.PI + (function(arg) { return Array.isArray(arg); })([1, 2])) );
+			expect( renderAndGetNode(tExpressions, obj, 3).textContent ).toBe( '' + (function(arg) { return arg.reduce(function(a,b) { return a+b; }, 0); })([1, 2]) );
 		});
 
 		it('should report syntax error in expressions when compiling', function() {
