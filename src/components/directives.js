@@ -82,11 +82,11 @@ define(function() {
 	/* Built-in directive helpers (except @include and @else) */
 	registered = {
 		'if': function ifHelper(ctx, value, tmpl, iterate) {
-			conditionalHelper.call(null, ctx, value, tmpl, iterate);
+			conditionalHelper(ctx, value, tmpl, iterate);
 		},
 
 		'unless': function unlessHelper(ctx, value, tmpl, iterate) {
-			conditionalHelper.call(null, ctx, !value, tmpl, iterate);
+			conditionalHelper(ctx, !value, tmpl, iterate);
 		},
 
 		'with': function withHelper(ctx, value, tmpl, iterate) {

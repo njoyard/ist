@@ -1,4 +1,3 @@
-/*jshint evil:true */
 /*global define*/
 define(['util/misc'], function(misc) {
 	'use strict';
@@ -28,16 +27,16 @@ define(['util/misc'], function(misc) {
 
 
 	/* Variables used in generated code :
-		__e: error decorator
-		__x: rendering context
-		__d: directives module
-		__l: current nodelist
-		__n: current node
-		__i: current template line number
-		__s: context scope object
-		__t: property setter target
-		__c: property setter current pointer
-		__v: property setter values
+		ist$e: error decorator
+		ist$x: rendering context
+		ist$d: directives module
+		ist$l: current nodelist
+		ist$n: current node
+		ist$i: current template line number
+		ist$s: context scope object
+		ist$t: property setter target
+		ist$c: property setter current pointer
+		ist$v: property setter values
 	 */
 	var codegen = {
 		// Returns code to evaluate expr
@@ -47,20 +46,20 @@ define(['util/misc'], function(misc) {
 			if (!(cacheKey in interpolateCache)) {
 				var code = [
 					TAB + 'if(this!==null&&this!==undefined){',
-					TAB + TAB +'with(this){with(__s){return ' + expr + ';}}',
+					TAB + TAB +'with(this){with(ist$s){return ' + expr + ';}}',
 					TAB + '}else{',
-					TAB + TAB + 'with(__s){return ' + expr + ';}',
+					TAB + TAB + 'with(ist$s){return ' + expr + ';}',
 					TAB + '}',
 				].join(NL);
 
-				var args = 'document,__s';
+				var args = 'document,ist$s';
 
 				// Try to compile function right away
 				/*jshint evil:true*/
 				new Function(args, code);
 
 				interpolateCache[cacheKey] = [
-					'__x.call(function(' + args + '){',
+					'ist$x.call(function(' + args + '){',
 					code,
 					'})'
 				].join(NL);
@@ -104,14 +103,14 @@ define(['util/misc'], function(misc) {
 
 			if (!(cacheKey in propertyCache)) {
 				propertyCache[cacheKey] = [
-						'function(__t,__v) {',
-						TAB + 'var __c = __t;'
+						'function(ist$t,ist$v) {',
+						TAB + 'var ist$c = ist$t;'
 					]
 					.concat(indent(path.map(function(part, index) {
 						if (index === path.length -1) {
-							return '__c["' + part + '"] = __v;';
+							return 'ist$c["' + part + '"] = ist$v;';
 						} else {
-							return '__c = __c["' + part + '"] = __c["' + part + '"] || {};';
+							return 'ist$c = ist$c["' + part + '"] = ist$c["' + part + '"] || {};';
 						}
 					})))
 					.concat(['}'])
@@ -123,7 +122,7 @@ define(['util/misc'], function(misc) {
 
 		// Returns code to set current template line
 		line: function(node) {
-			return '__i = ' + node.line + ';';
+			return 'ist$i = ' + node.line + ';';
 		},
 
 		// Returns code to update element
@@ -135,18 +134,18 @@ define(['util/misc'], function(misc) {
 			return [codegen.line(node)]
 				.concat(Object.keys(attributes).map(function(attr) {
 					return [
-						'__n.setAttribute(',
+						'ist$n.setAttribute(',
 						TAB + '"' + attr + '",',
 						TAB + '"" + ' + codegen.interpolate(attributes[attr]),
 						');'
 					].join(NL);
 				}))
 				.concat(properties.map(function(prop) {
-					return '(' + codegen.property(prop.path) + ')(__n, ' + codegen.interpolate(prop.value) + ');';
+					return '(' + codegen.property(prop.path) + ')(ist$n, ' + codegen.interpolate(prop.value) + ');';
 				}))
 				.concat(Object.keys(events).map(function(evt) {
 					return [
-						'__n.addEventListener(',
+						'ist$n.addEventListener(',
 						TAB + '"' + evt + '",',
 						TAB + codegen.evaluate(events[evt]) + ',',
 						TAB + 'false',
@@ -160,7 +159,7 @@ define(['util/misc'], function(misc) {
 		text: function(node) {
 			return [
 				codegen.line(node),
-				'__n.textContent = "" + ' + codegen.interpolate(node.text) + ';'
+				'ist$n.textContent = "" + ' + codegen.interpolate(node.text) + ';'
 			].join(NL);
 		},
 
@@ -170,48 +169,53 @@ define(['util/misc'], function(misc) {
 
 			return [
 				codegen.line(node),
-				'if (!("keys" in __n)) {',
-				TAB + '__n.keys = [];',
-				TAB + '__n.fragments = [];',
+				'if (!("keys" in ist$n)) {',
+				TAB + 'ist$n.keys = [];',
+				TAB + 'ist$n.fragments = [];',
 				'}',
-				'if (!__d.has("' + node.directive + '")) {',
+				'if (!ist$d.has("' + node.directive + '")) {',
 				TAB + 'throw new Error("No directive helper for @' + node.directive + ' has been registered");',
 				'}',
-				'__d.get("' + node.directive + '")(__x, ' + evalExpr + ', __n.template, __n.iterator);',
-				'__n = __n.iterator.last() || __n;'
+				'ist$d.get("' + node.directive + '")(ist$x, ' + evalExpr + ', ist$n.template, ist$n.iterator);',
+				'ist$n = ist$n.iterator.last() || ist$n;'
 			].join(NL);
 		},
 
 		// Returns code to update child nodes
 		children: function(code) {
-			return ['(function(__l) {']
+			return ['(function(ist$l) {']
 				.concat(indent(code))
-				.concat(['})([].slice.call(__n.childNodes));'])
+				.concat(['})([].slice.call(ist$n.childNodes));'])
 				.join(NL);
 		},
 
 		// Return code to switch to next node in a nodelist
 		next: function() {
 			return [
-				'__n = __l.shift();'
+				'ist$n = ist$l.shift();'
 			].join(NL);
 		},
 
 		// Returns wrapping code to update a nodelist	
 		wrap: function(code) {
 			return [
-					'var __n;',
-					'var __i;',
+					'var ist$n;',
+					'var ist$i;',
 					'try {',
 				]
 				.concat(indent(code))
 				.concat([
-					TAB + 'return __n;',
+					TAB + 'return ist$n;',
 					'} catch(e) {',
-					TAB + 'throw __e(e, __i);',
+					TAB + 'throw ist$e(e, ist$i);',
 					'}'
 				])
 				.join(NL);
+		},
+
+		compile: function(code) {
+			/*jshint evil:true*/
+			return new Function('ist$e,ist$d,ist$x,ist$l', Array.isArray(code) ? code.join(NL) : code);
 		}
 	};
 

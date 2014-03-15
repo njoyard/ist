@@ -42,13 +42,7 @@ function(codegen, Context, directives, misc) {
 
 		if (typeof document !== 'undefined') {
 			this.pre = document.createDocumentFragment();
-
-			var updateCode = this._preRenderTree(nodes, this.pre);
-
-			/*jshint evil:true*/
-			this.update = new Function('__e,__d,__x,__l', updateCode);
-
-			this.update.code = updateCode;
+			this.update = codegen.compile(this._preRenderTree(nodes, this.pre));
 		}
 	}
 
@@ -177,7 +171,5 @@ function(codegen, Context, directives, misc) {
 		return fragment;
 	};
 
-	
-	
 	return Template;
-}); 
+});

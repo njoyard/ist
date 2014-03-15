@@ -14,8 +14,22 @@
 			outputFile = data.path;
 
 		fs.writeFileSync(outputFile, amdclean.clean({
-			'filePath': outputFile,
-			'ignoreModules': ['ist']
+			esprima: {
+				comment: true
+			},
+			escodegen: {
+				comment: true,
+				format: {
+					indent: {
+						style: ' ',
+						base: 0,
+						adjustMultilineComment: false
+					},
+				}
+			},
+			filePath: outputFile,
+			ignoreModules: ['ist'],
+			prefixMode: 'camelCase'
 		}));
 	},
 
