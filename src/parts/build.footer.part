@@ -1,9 +1,9 @@
-	
+
 	if (isAMD || isNode) {
 		define("ist", [], function() { return main; });
 	} else {
 		var previous = global.ist;
-		
+
 		global.ist = main;
 		global.ist.noConflict = function() {
 			var ist = global.ist;
@@ -11,4 +11,4 @@
 			return ist;
 		};
 	}
-}(this)); 
+}(this));

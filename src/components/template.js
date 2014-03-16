@@ -9,29 +9,28 @@ function(codegen, Context, directives, misc) {
 	'use strict';
 
 	var expressionRE = /{{((?:}(?!})|[^}])*)}}/;
-		
-	
+
 	function findPartialRec(name, nodes) {
 		var found, i, len,
 			results = nodes.filter(function(n) {
 				return n.partial === name;
 			});
-			
+
 		if (results.length) {
 			return results[0];
 		}
-		
+
 		for (i = 0, len = nodes.length; i < len; i++) {
 			if (typeof nodes[i].children !== 'undefined') {
 				found = findPartialRec(name, nodes[i].children);
-				
+
 				if (found) {
 					return found;
 				}
 			}
 		}
 	}
-	
+
 
 	/**
 	 * Template object; encapsulate template nodes and rendering helpers
@@ -46,7 +45,7 @@ function(codegen, Context, directives, misc) {
 		}
 	}
 
-	
+
 	Template.prototype._preRenderTree = function(templateNodes, parent) {
 		var code = [];
 		var self = this;
@@ -60,7 +59,7 @@ function(codegen, Context, directives, misc) {
 				if ('tagName' in templateNode) {
 					node = document.createElement(templateNode.tagName);
 
-					templateNode.classes.forEach(function(cls) {
+					(templateNode.classes || []).forEach(function(cls) {
 						node.classList.add(cls);
 					});
 
@@ -97,10 +96,9 @@ function(codegen, Context, directives, misc) {
 
 		return codegen.wrap(code);
 	};
-	
-	
-	
-	
+
+
+
 	/* Look for a node with the given partial name and return a new
 	   Template object if found */
 	Template.prototype.findPartial = function(name) {
@@ -109,18 +107,18 @@ function(codegen, Context, directives, misc) {
 	};
 	Template.prototype.partial = function(name) {
 		var result;
-		
+
 		if (typeof name === 'undefined') {
 			return;
 		}
-			
+
 		result = findPartialRec(name, this.nodes);
-		
+
 		if (result) {
 			return new Template(this.name, [result]);
 		}
 	};
-	
+
 	Template.prototype._completeError = function(err, line) {
 		var current = 'in \'' + this.name + '\' on line ' + (line || '<unknown>');
 
@@ -128,11 +126,11 @@ function(codegen, Context, directives, misc) {
 			err.message += ' ' + current;
 			err.istStack = [];
 		}
-		
+
 		err.istStack.push(current);
 		return err;
 	};
-	
+
 	/* Render template using 'context' in 'doc' */
 	Template.prototype.render = function(context, doc) {
 		var self = this;

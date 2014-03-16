@@ -127,9 +127,9 @@ define(['util/misc'], function(misc) {
 
 		// Returns code to update element
 		element: function(node) {
-			var attributes = node.attributes;
-			var properties = node.properties;
-			var events = node.events;
+			var attributes = node.attributes || {};
+			var properties = node.properties || [];
+			var events = node.events || {};
 
 			return [codegen.line(node)]
 				.concat(Object.keys(attributes).map(function(attr) {

@@ -15,9 +15,9 @@ define([
 	 */
 	function ist(template, name) {
 		var parsed;
-		
+
 		name = name || '<unknown>';
-		
+
 		try {
 			parsed = pegjsParser.parse(preprocess(template));
 		} catch(e) {
@@ -25,12 +25,11 @@ define([
 				(typeof e.column !== 'undefined' ?  ', character ' + e.column : '');
 			throw e;
 		}
-		
+
 		return new Template(name, parsed);
 	}
-	
-	ist.Template = Template;
 
+	ist.Template = Template;
 
 	/* Deprecated method names */
 	ist.fromScriptTag = function(id) {
@@ -46,7 +45,7 @@ define([
 		return ist.create(branchSpec, context, doc);
 	};
 
-	
+
 	/**
 	 * Node creation interface
 	 * Creates nodes with IST template syntax
@@ -64,12 +63,12 @@ define([
 			indent = '',
 			template = '',
 			rendered;
-	
+
 		nodes.forEach(function(nodeSpec) {
 			template += '\n' + indent + nodeSpec;
 			indent += ' ';
 		});
-	
+
 		rendered = ist(template).render(context, doc);
 		return rendered.childNodes.length === 1 ? rendered.firstChild : rendered;
 	};
@@ -79,7 +78,7 @@ define([
 	 */
 	ist.script = function(id) {
 		var template = misc.findScript(id);
-		
+
 		if (template) {
 			return ist(template);
 		}
@@ -93,7 +92,7 @@ define([
 	ist.helper = function(name, helper) {
 		directives.register(name, helper);
 	};
-	
+
 	/* Built-in @include helper */
 	ist.helper('include', function(ctx, value, tmpl, iterate) {
 		iterate(function(key, rendered) {
@@ -154,6 +153,6 @@ define([
 	if (isNode || (isBrowser && isAMD)) {
 		pluginify(ist);
 	}
-	
+
 	return ist;
 });

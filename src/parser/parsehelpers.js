@@ -5,41 +5,61 @@ define(function() {
 	var UNCHANGED = "U", INDENT = "I", DEDENT = "D",
 		textToJSON, elemToJSON, directiveToJSON,
 		helpers = {};
-		
-	
+
+
 	textToJSON = function() {
 		return { text: this.text, line: this.line };
 	};
-	
+
 	elemToJSON =  function() {
 		var o = {
 				tagName: this.tagName,
-				line: this.line,
-				classes: this.classes,
-				attributes: this.attributes,
-				properties: this.properties,
-				events: this.events,
-				children: this.children
+				line: this.line
 			};
-		
+
 		if (typeof this.id !== "undefined") {
 			o.id = this.id;
 		}
-	
+
+		if (typeof this.classes !== "undefined" && this.classes.length > 0) {
+			o.classes = this.classes;
+		}
+
+		if (typeof this.attributes !== "undefined" && Object.keys(this.attributes).length > 0) {
+			o.attributes = this.attributes;
+		}
+
+		if (typeof this.properties !== "undefined" && this.properties.length > 0) {
+			o.properties = this.properties;
+		}
+
+		if (typeof this.events !== "undefined" && Object.keys(this.events).length > 0) {
+			o.events = this.events;
+		}
+
+		if (typeof this.children !== "undefined" && this.children.length > 0) {
+			o.children = this.children;
+		}
+
 		if (typeof this.partial !== "undefined") {
 			o.partial = this.partial;
 		}
-	
+
 		return o;
 	};
-	
+
 	directiveToJSON = function() {
-		return {
+		var o = {
 			directive: this.directive,
 			expr: this.expr,
-			line: this.line,
-			children: this.children
+			line: this.line
 		};
+
+		if (typeof this.children !== "undefined" && this.children.length > 0) {
+			o.children = this.children;
+		}
+
+		return o;
 	};
 
 	// Generate node tree
@@ -48,13 +68,13 @@ define(function() {
 			stack = [root],
 			nodeCount = 0,
 			lines, peekNode, pushNode, popNode;
-		
+
 		if (!first) {
 			return root.children;
 		}
-		
+
 		/* Node stack helpers */
-	
+
 		peekNode = function() {
 			return stack[stack.length - 1];
 		};
@@ -70,7 +90,7 @@ define(function() {
 			if (stack.length < 2) {
 				throw new Error("Could not pop node from stack");
 			}
-	
+
 			node = stack.pop();
 			parent = peekNode();
 
@@ -98,10 +118,10 @@ define(function() {
 			}
 
 			parent.children.push(node);
-		
+
 			return node;
 		};
-	
+
 		// Remove newlines
 		lines = tail.map(function(item) { return item.pop(); });
 		lines.unshift(first);
@@ -109,11 +129,11 @@ define(function() {
 		lines.forEach(function(line) {
 			var indent = line.indent,
 				item = line.item;
-			
+
 			if (indent[0] instanceof Error) {
 				throw indent[0];
 			}
-		
+
 			if (nodeCount > 0) {
 				if (indent[0] === UNCHANGED) {
 					// Same indent: previous node won"t have any children
@@ -121,22 +141,22 @@ define(function() {
 				} else if (indent[0] === DEDENT) {
 					// Pop nodes in their parent
 					popNode();
-			
+
 					while (indent.length > 0) {
 						indent.pop();
 						popNode();
 					}
 				}
 			}
-		
+
 			pushNode(item);
 		});
-	
+
 		// Collapse remaining stack
 		while (stack.length > 1) {
 			popNode();
 		}
-	
+
 		return root.children;
 	};
 
@@ -161,7 +181,7 @@ define(function() {
 			depths.unshift(depth);
 			return [INDENT];
 		}
-	
+
 		while (depth < depths[0]) {
 			// Narrower indent, try to find it in previous indents
 			depths.shift();
@@ -214,16 +234,16 @@ define(function() {
 				if (typeof elem.events[q.event] === "undefined") {
 					elem.events[q.event] = [];
 				}
-			
+
 				elem.events[q.event].push(q.value);
 			}
 		});
-	
+
 		if (typeof additions !== "undefined") {
 			if (additions.partial) {
 				elem.partial = additions.partial;
 			}
-		
+
 			if (additions.textnode &&
 				typeof additions.textnode.text !== "undefined") {
 				elem.children.push(additions.textnode);
@@ -252,6 +272,6 @@ define(function() {
 			return { "f": "\f", "b": "\b", "t": "\t", "n": "\n", "r": "\r" }[char] || char;
 		}
 	};
-	
+
 	return helpers;
 });

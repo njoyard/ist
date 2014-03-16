@@ -132,9 +132,9 @@
       return 'ist$i = ' + node.line + ';';
      },
      element: function (node) {
-      var attributes = node.attributes;
-      var properties = node.properties;
-      var events = node.events;
+      var attributes = node.attributes || {};
+      var properties = node.properties || [];
+      var events = node.events || {};
       return [codegen.line(node)].concat(Object.keys(attributes).map(function (attr) {
        return [
         'ist$n.setAttribute(',
@@ -545,7 +545,7 @@
      try {
       if ('tagName' in templateNode) {
        node = document.createElement(templateNode.tagName);
-       templateNode.classes.forEach(function (cls) {
+       (templateNode.classes || []).forEach(function (cls) {
         node.classList.add(cls);
        });
        if (typeof templateNode.id !== 'undefined') {
@@ -640,15 +640,25 @@
    elemToJSON = function () {
     var o = {
       tagName: this.tagName,
-      line: this.line,
-      classes: this.classes,
-      attributes: this.attributes,
-      properties: this.properties,
-      events: this.events,
-      children: this.children
+      line: this.line
      };
     if (typeof this.id !== 'undefined') {
      o.id = this.id;
+    }
+    if (typeof this.classes !== 'undefined' && this.classes.length > 0) {
+     o.classes = this.classes;
+    }
+    if (typeof this.attributes !== 'undefined' && Object.keys(this.attributes).length > 0) {
+     o.attributes = this.attributes;
+    }
+    if (typeof this.properties !== 'undefined' && this.properties.length > 0) {
+     o.properties = this.properties;
+    }
+    if (typeof this.events !== 'undefined' && Object.keys(this.events).length > 0) {
+     o.events = this.events;
+    }
+    if (typeof this.children !== 'undefined' && this.children.length > 0) {
+     o.children = this.children;
     }
     if (typeof this.partial !== 'undefined') {
      o.partial = this.partial;
@@ -656,12 +666,15 @@
     return o;
    };
    directiveToJSON = function () {
-    return {
-     directive: this.directive,
-     expr: this.expr,
-     line: this.line,
-     children: this.children
-    };
+    var o = {
+      directive: this.directive,
+      expr: this.expr,
+      line: this.line
+     };
+    if (typeof this.children !== 'undefined' && this.children.length > 0) {
+     o.children = this.children;
+    }
+    return o;
    };
    helpers.generateNodeTree = function (first, tail) {
     var root = { children: [] }, stack = [root], nodeCount = 0, lines, peekNode, pushNode, popNode;

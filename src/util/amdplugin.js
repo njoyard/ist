@@ -23,7 +23,6 @@ define(['util/misc'], function(misc) {
 						if (xhr.status !== 200) {
 							throw new Error('HTTP status '  + xhr.status + ' when loading ' + url);
 						}
-	
 						callback(xhr.responseText);
 					}
 				};
@@ -55,20 +54,19 @@ define(['util/misc'], function(misc) {
 
 		ist.load = function (name, parentRequire, load, config) {
 			var path, dirname;
-			
+
 			path = parentRequire.toUrl(name + '.ist');
 
 			dirname = name.indexOf('/') === -1 ? '.' : name.replace(/\/[^\/]*$/, '');
 
 			fetchText(path, function (text) {
 				var code, deps = ['ist'];
-	
+
 				/* Find @include calls and replace them with 'absolute' paths
 				   (ie @include 'inc/include' in 'path/to/template'
 					 becomes @include 'path/to/inc/include')
 				   while recording all distinct include paths
 				 */
-					 
 				text = text.replace(
 					/^(\s*)@include\s+(?:text=)?(['"])((?:(?=(\\?))\4.)*?)\2/gm,
 					function(m, p1, p2, p3) {
@@ -76,9 +74,9 @@ define(['util/misc'], function(misc) {
 							// Script tag found, do not change directive
 							return m;
 						}
-						
+
 						var dpath = dirname + '/' + p3.replace(/\.ist$/, '');
-		
+
 						if (deps.indexOf('ist!' + dpath) === -1) {
 							deps.push('ist!' + dpath);
 						}
@@ -86,13 +84,13 @@ define(['util/misc'], function(misc) {
 						return p1 + '@include "' + dpath + '"';
 					}
 				);
-				
+
 				/* Get parsed code */
 				code = getTemplateCode(ist(text, name));
 				text = 'define(\'ist!' + name + '\',' + JSON.stringify(deps) + ', function(ist) {\n' +
 					   '  return ' + code + ';\n' +
 					   '});\n';
-				   
+
 				//Hold on to the transformed text if a build.
 				if (config.isBuild) {
 					buildMap['ist!' + name] = text;
@@ -105,7 +103,7 @@ define(['util/misc'], function(misc) {
 					text += '\r\n//@ sourceURL=' + path;
 				}
 				/*@end@*/
-	
+
 				load.fromText('ist!' + name, text);
 
 				// Finish loading and give result to load()
@@ -115,6 +113,6 @@ define(['util/misc'], function(misc) {
 			});
 		};
 	}
-	
+
 	return pluginify;
 });

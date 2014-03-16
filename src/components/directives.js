@@ -4,7 +4,7 @@ define(function() {
 
 	var directives, registered,
 		defined = {};
-	
+
 	/**
 	 * Conditional helper for @if, @unless
 	 *
@@ -29,7 +29,7 @@ define(function() {
 		});
 	}
 
-	
+
 	/**
 	 * Iteration helper for @each, @eachkey
 	 *
@@ -109,7 +109,7 @@ define(function() {
 			if (!Array.isArray(value)) {
 				throw new Error(value + ' is not an array');
 			}
-			
+
 			iterationHelper(ctx, value, value, null, tmpl, iterate);
 		},
 

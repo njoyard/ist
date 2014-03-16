@@ -48,11 +48,11 @@ define(['components/iterator'], function(iterator) {
 				return this.doc.importNode(node, deep);
 			}
 		},
-		
+
 		createDocumentFragment: function() {
 			return this.doc.createDocumentFragment();
 		},
-	
+
 		createElement: function(tagName, namespace) {
 			if (typeof namespace !== 'undefined') {
 				return this.doc.createElementNS(namespace, tagName);
@@ -60,7 +60,7 @@ define(['components/iterator'], function(iterator) {
 				return this.doc.createElement(tagName);
 			}
 		},
-	
+
 		createTextNode: function(text) {
 			return this.doc.createTextNode(text);
 		},
@@ -68,7 +68,7 @@ define(['components/iterator'], function(iterator) {
 		createComment: function(comment) {
 			return this.doc.createComment(comment);
 		},
-		
+
 		/* Push an object on the scope stack. All its properties will be
 		   usable inside expressions and hide any previously available
 		   property with the same name */

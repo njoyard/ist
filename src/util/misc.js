@@ -1,7 +1,7 @@
 /*global define */
 define(function() {
 	'use strict';
-	
+
 	return {
 		jsEscape: function (content) {
 			return content.replace(/(['\\])/g, '\\$1')
@@ -21,7 +21,7 @@ define(function() {
 				// DOM exception when selector is invalid - no <script> tag with this id
 				return;
 			}
-				
+
 			if (scripts) {
 				for (i = 0, len = scripts.length; i < len; i++) {
 					s = scripts[i];
@@ -30,10 +30,10 @@ define(function() {
 					}
 				}
 			}
-			
+
 			return found;
 		},
-		
+
 		iterateNodelist: function(firstChild, lastChild, callback) {
 			var node = firstChild,
 				end = lastChild ? lastChild.nextSibling : null,

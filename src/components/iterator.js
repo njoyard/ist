@@ -91,7 +91,7 @@ define(['util/misc'], function(misc) {
 					keyIndex.splice(idx, 1);
 					fragIndex.splice(idx, 1);
 				}
-				
+
 				keyIndex.splice(i, 0, key);
 				fragIndex.splice(i, 0, frag);
 			}
@@ -102,7 +102,7 @@ define(['util/misc'], function(misc) {
 						// Callback returned a new node, clear current nodes
 						rendered.clear();
 					}
-					
+
 					isNew = true;
 					rendered = ret;
 				} else {
