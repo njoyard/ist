@@ -106,6 +106,7 @@ define(['util/misc'], function(misc) {
 						'function(ist$t,ist$v) {',
 						TAB + 'var ist$c = ist$t;'
 					]
+					// Set intermediate properties to empty objects if not present
 					.concat(indent(path.map(function(part, index) {
 						if (index === path.length -1) {
 							return 'ist$c["' + part + '"] = ist$v;';
@@ -132,6 +133,7 @@ define(['util/misc'], function(misc) {
 			var events = node.events || {};
 
 			return [codegen.line(node)]
+				// Set element attributes
 				.concat(Object.keys(attributes).map(function(attr) {
 					return [
 						'ist$n.setAttribute(',
@@ -140,18 +142,28 @@ define(['util/misc'], function(misc) {
 						');'
 					].join(NL);
 				}))
+				// Set element properties
 				.concat(properties.map(function(prop) {
 					return '(' + codegen.property(prop.path) + ')(ist$n, ' + codegen.interpolate(prop.value) + ');';
 				}))
+				// Set element event handlers
+				.concat([
+					'ist$n.ist$handlers = ist$n.ist$handlers || {};',
+					'Object.keys(ist$n.ist$handlers).forEach(function(evt) {',
+					TAB + 'ist$n.removeEventListener(evt, ist$n.ist$handlers[evt], false);',
+					TAB + 'delete ist$n.ist$handlers[evt];',
+					'});'
+				])
 				.concat(Object.keys(events).map(function(evt) {
 					return [
-						'ist$n.addEventListener(',
-						TAB + '"' + evt + '",',
-						TAB + codegen.evaluate(events[evt]) + ',',
-						TAB + 'false',
-						');'
+						'ist$n.ist$handlers["' + evt + '"] = ' + codegen.evaluate(events[evt]) + ';',
 					].join(NL);
 				}))
+				.concat([
+					'Object.keys(ist$n.ist$handlers).forEach(function(evt) {',
+					TAB + 'ist$n.addEventListener(evt, ist$n.ist$handlers[evt], false);',
+					'});'
+				])
 				.join(NL);
 		},
 
