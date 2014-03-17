@@ -14,17 +14,11 @@ define(function() {
 	 * @param {Function} iterate directive iterator
 	 */
 	function conditionalHelper(ctx, render, tmpl, iterate) {
-		iterate(function(key, rendered) {
-			if (render) {
-				if (rendered) {
-					rendered.update(ctx);
-				} else {
-					return tmpl.render(ctx);
-				}
+		iterate(render ? ['conditional'] : [], function(key, rendered) {
+			if (rendered) {
+				rendered.update(ctx);
 			} else {
-				if (rendered) {
-					rendered.clear();
-				}
+				return tmpl.render(ctx);
 			}
 		});
 	}

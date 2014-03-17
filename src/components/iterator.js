@@ -69,6 +69,7 @@ define(['util/misc'], function(misc) {
 				if (rendered) {
 					rendered.clear = function() {
 						misc.removeNodelist(frag.firstChild, frag.lastChild);
+						frag.firstChild = frag.lastChild = null;
 					};
 
 					rendered.reclaim = function(parent) {
