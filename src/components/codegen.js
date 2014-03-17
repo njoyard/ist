@@ -146,7 +146,7 @@ define(['util/misc'], function(misc) {
 				.concat(properties.map(function(prop) {
 					return '(' + codegen.property(prop.path) + ')(ist$n, ' + codegen.interpolate(prop.value) + ');';
 				}))
-				// Set element event handlers
+				// Remove stored event handlers
 				.concat([
 					'ist$n.ist$handlers = ist$n.ist$handlers || {};',
 					'Object.keys(ist$n.ist$handlers).forEach(function(evt) {',
@@ -154,11 +154,13 @@ define(['util/misc'], function(misc) {
 					TAB + 'delete ist$n.ist$handlers[evt];',
 					'});'
 				])
+				// Store new event handlers
 				.concat(Object.keys(events).map(function(evt) {
 					return [
 						'ist$n.ist$handlers["' + evt + '"] = ' + codegen.evaluate(events[evt]) + ';',
 					].join(NL);
 				}))
+				// Apply stored event handlers
 				.concat([
 					'Object.keys(ist$n.ist$handlers).forEach(function(evt) {',
 					TAB + 'ist$n.addEventListener(evt, ist$n.ist$handlers[evt], false);',
@@ -182,14 +184,21 @@ define(['util/misc'], function(misc) {
 			return [
 				codegen.line(node),
 				'if (!("keys" in ist$n)) {',
+				// Setup fragment index on first render
 				TAB + 'ist$n.keys = [];',
 				TAB + 'ist$n.fragments = [];',
+				'} else {',
+				// Extract fragment index nodes from current nodelist
+				TAB + 'ist$n.remove(ist$l);',
 				'}',
+				// Check for directive helper
 				'if (!ist$d.has("' + node.directive + '")) {',
 				TAB + 'throw new Error("No directive helper for @' + node.directive + ' has been registered");',
 				'}',
+				// Call directive helper
 				'ist$d.get("' + node.directive + '")(ist$x, ' + evalExpr + ', ist$n.template, ist$n.iterator);',
-				'ist$n = ist$n.iterator.last() || ist$n;'
+				// Update current node
+				'ist$n = ist$n.last() || ist$n;'
 			].join(NL);
 		},
 

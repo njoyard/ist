@@ -144,15 +144,19 @@
        ].join(NL);
       })).concat(properties.map(function (prop) {
        return '(' + codegen.property(prop.path) + ')(ist$n, ' + codegen.interpolate(prop.value) + ');';
-      })).concat(Object.keys(events).map(function (evt) {
-       return [
-        'ist$n.addEventListener(',
-        TAB + '"' + evt + '",',
-        TAB + codegen.evaluate(events[evt]) + ',',
-        TAB + 'false',
-        ');'
-       ].join(NL);
-      })).join(NL);
+      })).concat([
+       'ist$n.ist$handlers = ist$n.ist$handlers || {};',
+       'Object.keys(ist$n.ist$handlers).forEach(function(evt) {',
+       TAB + 'ist$n.removeEventListener(evt, ist$n.ist$handlers[evt], false);',
+       TAB + 'delete ist$n.ist$handlers[evt];',
+       '});'
+      ]).concat(Object.keys(events).map(function (evt) {
+       return ['ist$n.ist$handlers["' + evt + '"] = ' + codegen.evaluate(events[evt]) + ';'].join(NL);
+      })).concat([
+       'Object.keys(ist$n.ist$handlers).forEach(function(evt) {',
+       TAB + 'ist$n.addEventListener(evt, ist$n.ist$handlers[evt], false);',
+       '});'
+      ]).join(NL);
      },
      text: function (node) {
       return [
@@ -167,12 +171,14 @@
        'if (!("keys" in ist$n)) {',
        TAB + 'ist$n.keys = [];',
        TAB + 'ist$n.fragments = [];',
+       '} else {',
+       TAB + 'ist$n.remove(ist$l);',
        '}',
        'if (!ist$d.has("' + node.directive + '")) {',
        TAB + 'throw new Error("No directive helper for @' + node.directive + ' has been registered");',
        '}',
        'ist$d.get("' + node.directive + '")(ist$x, ' + evalExpr + ', ist$n.template, ist$n.iterator);',
-       'ist$n = ist$n.iterator.last() || ist$n;'
+       'ist$n = ist$n.last() || ist$n;'
       ].join(NL);
      },
      children: function (code) {
@@ -238,6 +244,7 @@
       if (rendered) {
        rendered.clear = function () {
         misc.removeNodelist(frag.firstChild, frag.lastChild);
+        frag.firstChild = frag.lastChild = null;
        };
        rendered.reclaim = function (parent) {
         misc.iterateNodelist(frag.firstChild, frag.lastChild, function (node) {
@@ -289,6 +296,19 @@
      prev = frag.firstChild || prev;
     });
    }
+   iterator.remove = function (markerComment, list) {
+    var fragIndex = markerComment.fragments;
+    if (fragIndex) {
+     fragIndex.forEach(function (frag) {
+      misc.iterateNodelist(frag.firstChild, frag.lastChild, function (node) {
+       var idx = list.indexOf(node);
+       if (idx !== -1) {
+        list.splice(idx, 1);
+       }
+      });
+     });
+    }
+   };
    iterator.last = function (markerComment) {
     var fragIndex = markerComment.fragments;
     if (fragIndex && fragIndex.length) {
@@ -317,8 +337,11 @@
       clone.iterator = function (keys, callback) {
        return iterator(clone, keys, callback);
       };
-      clone.iterator.last = function () {
+      clone.last = function () {
        return iterator.last(clone);
+      };
+      clone.remove = function (list) {
+       return iterator.remove(clone, list);
       };
       clone.template = node.template;
      }
@@ -394,17 +417,11 @@
    
    var directives, registered, defined = {};
    function conditionalHelper(ctx, render, tmpl, iterate) {
-    iterate(function (key, rendered) {
-     if (render) {
-      if (rendered) {
-       rendered.update(ctx);
-      } else {
-       return tmpl.render(ctx);
-      }
+    iterate(render ? ['conditional'] : [], function (key, rendered) {
+     if (rendered) {
+      rendered.update(ctx);
      } else {
-      if (rendered) {
-       rendered.clear();
-      }
+      return tmpl.render(ctx);
      }
     });
    }
@@ -561,7 +578,7 @@
         code.push(codegen.text(templateNode));
        }
       } else if ('directive' in templateNode) {
-       node = document.createComment('ist.js directive');
+       node = document.createComment('@' + templateNode.directive + ' ' + templateNode.expr + ' (' + self.name + ':' + templateNode.line + ')');
        if (templateNode.children && templateNode.children.length) {
         node.template = new Template(self.name, templateNode.children);
        }

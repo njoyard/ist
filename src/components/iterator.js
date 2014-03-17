@@ -136,6 +136,21 @@ define(['util/misc'], function(misc) {
 		});
 	}
 
+	iterator.remove = function(markerComment, list) {
+		var fragIndex = markerComment.fragments;
+
+		if (fragIndex) {
+			fragIndex.forEach(function(frag) {
+				misc.iterateNodelist(frag.firstChild, frag.lastChild, function(node) {
+					var idx = list.indexOf(node);
+					if (idx !== -1) {
+						list.splice(idx, 1);
+					}
+				});
+			});
+		}
+	};
+
 	iterator.last = function(markerComment) {
 		var fragIndex = markerComment.fragments;
 

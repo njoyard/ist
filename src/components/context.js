@@ -26,7 +26,8 @@ define(['components/iterator'], function(iterator) {
 			var clone = this.importNode(node, false);
 			if (node.nodeType === node.COMMENT_NODE) {
 				clone.iterator = function(keys, callback) { return iterator(clone, keys, callback); };
-				clone.iterator.last =  function() { return iterator.last(clone); };
+				clone.last =  function() { return iterator.last(clone); };
+				clone.remove = function(list) { return iterator.remove(clone, list); };
 				clone.template = node.template;
 			}
 
