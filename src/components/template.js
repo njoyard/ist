@@ -79,7 +79,7 @@ function(codegen, Context, directives, misc) {
 						code.push(codegen.text(templateNode));
 					}
 				} else if ('directive' in templateNode) {
-					node = document.createComment('ist.js directive');
+					node = document.createComment('@' + templateNode.directive + ' ' +  templateNode.expr + ' (' + self.name + ':' + templateNode.line + ')');
 
 					if (templateNode.children && templateNode.children.length) {
 						node.template = new Template(self.name, templateNode.children);
@@ -151,6 +151,7 @@ function(codegen, Context, directives, misc) {
 
 		fragment.update = function(ctx) {
 			ctx = getContext(ctx || context);
+
 			lastNode = self.update(function(err, line) {
 				return self._completeError(err, line);
 			}, directives, ctx, misc.buildNodelist(firstNode, lastNode));
