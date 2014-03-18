@@ -132,7 +132,7 @@ define(['util/misc'], function(misc) {
 				frag.firstChild = frag.lastChild = null;
 			}
 
-			prev = frag.firstChild || prev;
+			prev = frag.lastChild || prev;
 		});
 	}
 

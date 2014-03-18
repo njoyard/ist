@@ -14,149 +14,149 @@ define([
 	describe('directive helpers', function() {
 		it('should allow parsing templates with unknown @directives', function() {
 			var thrown = false;
-			
+
 			ist.helper('testDirective', undefined);
-			
+
 			try {
 				ist(textDirectivehelper);
 			} catch(e) {
 				thrown = true;
 			}
-			
+
 			expect( thrown ).toBe( false );
 		});
-		
+
 		it('should fail to render templates with unknown @directives', function() {
 			var context = { context: { value: 'context' } };
-			
+
 			ist.helper('testDirective', undefined);
-			
+
 			expect( function() { ist(textDirectivehelper).render(context); } ).toThrow('No directive helper for @testDirective has been registered in \'<unknown>\' on line 2');
 		});
-	
+
 		it('should call helpers when the corresponding @directive is rendered', function() {
 			var called = false,
 				context = { context: { value: 'context' } };
-				
-				
+
+
 			ist.helper('testDirective', function() {
 				called = true;
 			});
 			ist(textDirectivehelper).render(context);
-			
+
 			expect( called ).toBe( true );
 		});
-		
+
 		it('should pass the current context to helpers as 1st argument', function() {
 			var param,
 				context = { context: { value: 'context' } };
-				
-				
+
+
 			ist.helper('testDirective', function(ctx) {
 				param = ctx;
 			});
 			ist(textDirectivehelper).render(context);
-			
+
 			expect( param.value ).toBe( context );
 		});
-		
+
 		it('should pass the narrowed down context value to helpers as 2nd argument', function() {
 			var param,
 				context = { context: { value: 'context' } };
-				
-				
+
+
 			ist.helper('testDirective', function(ctx, value) {
 				param = value;
 			});
 			ist(textDirectivehelper).render(context);
-			
+
 			expect( param ).toBe( context.context );
 		});
-		
+
 		it('should allow helpers to create document fragments in the rendering document with ctx.createDocumentFragment', function() {
 			var frag, context = { context: { value: 'context' } };
-			
+
 			ist.helper('testDirective', function(ctx, value, subtemplate) {
 				frag = ctx.createDocumentFragment();
 			});
 			ist(textDirectivehelper).render(context);
-			
+
 			expect( frag.nodeType ).toBe( document.DOCUMENT_FRAGMENT_NODE );
 			expect( frag.ownerDocument ).toBe( document );
 		});
-		
+
 		it('should allow helpers to create elements in the rendering document with ctx.createElement', function() {
 			var elem, context = { context: { value: 'context' } };
-			
+
 			ist.helper('testDirective', function(ctx, value, subtemplate) {
 				elem = ctx.createElement('div');
 			});
 			ist(textDirectivehelper).render(context);
-			
+
 			expect( elem.nodeType ).toBe( document.ELEMENT_NODE );
 			expect( elem.ownerDocument ).toBe( document );
 			expect( elem.nodeName.toLowerCase() ).toBe( 'div' );
 		});
-		
+
 		it('should allow helpers to create text nodes in the rendering document with ctx.createTextNode', function() {
 			var text, context = { context: { value: 'context' } };
-			
+
 			ist.helper('testDirective', function(ctx, value, subtemplate) {
 				text = ctx.createTextNode('text value');
 			});
 			ist(textDirectivehelper).render(context);
-			
+
 			expect( text.nodeType ).toBe( document.TEXT_NODE );
 			expect( text.ownerDocument ).toBe( document );
 			expect( text.textContent ).toBe( 'text value' );
 		});
-		
+
 		it('should enable helpers rendering the subtemplate with a custom context', function() {
 			var result,
 				context = { context: { value: 'context' } };
-				
+
 			ist.helper('testDirective', function(ctx, value, subtemplate) {
 				result = subtemplate.render({ value: 'my value' });
 			});
 			ist(textDirectivehelper).render(context);
-			
+
 			expect( result.querySelector('.child') ).toNotBe( null );
 			expect( result.querySelector('.child').firstChild ).toNotBe( null );
 			expect( result.querySelector('.child').firstChild.textContent ).toBe( 'interpolated my value' );
 		});
-		
+
 		it('should allow passing a quoted string instead of a context path', function() {
 			var val;
-			
+
 			ist.helper('otherDirective', function(ctx, value, subtemplate) {
 				val = value;
 			});
-			
+
 			ist(textString).render({});
 			expect( val ).toBe( 'direct string value' );
 		});
-		
+
 		it('should pass undefined when no narrowed down context is present', function() {
 			var arg = 'defined', arg2 = 'defined', options,
 				context = { context: { value: 'context' } };
-				
+
 			ist.helper('noParamDirective', function(ctx, value) {
 				arg = value;
 			});
 			ist(textNone).render(context);
-			
+
 			expect( typeof arg ).toBe( 'undefined' );
 		});
-		
+
 		it('should pass a directive iterator to helpers as 4th argument', function() {
 			var iter,
 				context = { context: { value: 'context' } };
-			
+
 			ist.helper('testDirective', function(ctx, value, tmpl, iterate) {
 				iter = iterate;
 			});
 			ist(textDirectivehelper).render(context);
-			
+
 			expect( typeof iter ).toBe( 'function' );
 		});
 
@@ -170,7 +170,7 @@ define([
 				});
 			});
 			ist(textDirectivehelper).render(context);
-			
+
 			expect( keys.join(',') ).toBe( 'foo,bar,baz' );
 		});
 
@@ -185,7 +185,7 @@ define([
 				});
 			});
 			frag = ist(textDirectivehelper).render({ context: undefined });
-			
+
 			expect( frag.querySelector('div.parent div.generated') ).toNotBe( null );
 			expect( frag.querySelector('div.parent div.generated') ).toBe( node );
 		});
@@ -205,7 +205,7 @@ define([
 				nthNonCommentChild(ist('@pushDirective\n \'{{ variable }}\'').render({}), 0)
 			).toHaveTextContent( 'value' );
 		});
-		
+
 		it('should allow overwriting existing rendering context properties when pushing variables', function() {
 			ist.helper('pushDirective', function(ctx, value, subtemplate, iterate) {
 				iterate(['test'], function() {
@@ -221,7 +221,7 @@ define([
 				nthNonCommentChild(ist('@pushDirective\n \'{{ variable }}\'').render({ variable: 'value' }), 0)
 			).toHaveTextContent( 'new value' );
 		});
-		
+
 		it('should allow stacking pushed variables in rendering contexts', function() {
 			var frag;
 
@@ -244,14 +244,14 @@ define([
 					return rendered;
 				});
 			});
-			
+
 			frag = ist('@pushDirective1\n \'0 {{ variable }}\'\n @pushDirective2\n  \'1 {{ variable }}\'\n \'2 {{ variable }}\'').render({});
-			
+
 			expect( nthNonCommentChild(frag, 0) ).toHaveTextContent( '0 value 1' );
 			expect( nthNonCommentChild(frag, 1) ).toHaveTextContent( '1 value 2' );
 			expect( nthNonCommentChild(frag, 2) ).toHaveTextContent( '2 value 1' );
 		});
-		
+
 		it('should allow popping pushed variables from rendering contexts', function() {
 			ist.helper('pushDirective', function(ctx, value, subtemplate, iterate) {
 				iterate(['test'], function() {
@@ -265,11 +265,11 @@ define([
 				nthNonCommentChild(ist('@pushDirective\n \'{{ variable }}\'').render({ variable: 'value' }), 0)
 			).toHaveTextContent( 'value' );
 		});
-		
+
 		it('should report errors thrown by expressions when rendering', function() {
 			expect( function() { tErrors.render({ test: 'type' }); } )
 				.toThrowUndefined('a', 'test/directivehelper/errors', 2);
-				
+
 			expect( function() { tErrors.render({ test: 'throw' }); } )
 				.toThrow('custom error in \'test/directivehelper/errors\' on line 6');
 		});
@@ -503,6 +503,42 @@ define([
 			var reclaimed = nthNonCommentChild(reclaimContainer, 0);
 			expect( reclaimed.textContent ).toBe( 'test' );
 			expect( reclaimed ).toBe( original );
+		});
+
+		it('should render nested directives in the right order', function() {
+			var container = document.createElement('div');
+			var rendered = ist([
+					'@each keys',
+					'  @each [this + ".1", this + ".2"]',
+					'    "{{ this }}"'
+				].join('\n')).render({ keys: ['a', 'b']});
+
+			container.appendChild(rendered);
+
+			expect(nonCommentChildren(container).length).toBe(4);
+			expect(nthNonCommentChild(container, 0).textContent).toBe('a.1');
+			expect(nthNonCommentChild(container, 1).textContent).toBe('a.2');
+			expect(nthNonCommentChild(container, 2).textContent).toBe('b.1');
+			expect(nthNonCommentChild(container, 3).textContent).toBe('b.2');
+		});
+
+		it('should update nested directives in the right order', function() {
+			var container = document.createElement('div');
+			var rendered = ist([
+					'@each keys',
+					'  @each [this + ".1", this + ".2"]',
+					'    "{{ this }}"'
+				].join('\n')).render({ keys: ['a', 'b']});
+
+			container.appendChild(rendered);
+
+			rendered.update({ keys: ['A', 'B'] });
+
+			expect(nonCommentChildren(container).length).toBe(4);
+			expect(nthNonCommentChild(container, 0).textContent).toBe('A.1');
+			expect(nthNonCommentChild(container, 1).textContent).toBe('A.2');
+			expect(nthNonCommentChild(container, 2).textContent).toBe('B.1');
+			expect(nthNonCommentChild(container, 3).textContent).toBe('B.2');
 		});
 	});
 });
