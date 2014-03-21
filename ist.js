@@ -293,7 +293,7 @@
       delete frag.rendered;
       frag.firstChild = frag.lastChild = null;
      }
-     prev = frag.firstChild || prev;
+     prev = frag.lastChild || prev;
     });
    }
    iterator.remove = function (markerComment, list) {
