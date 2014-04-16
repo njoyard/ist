@@ -42,22 +42,27 @@ module.exports = function(config) {
     },
 
     customLaunchers: {
-      sl_safari_osx:      { base: 'SauceLabs', browserName: 'safari',  platform: 'OS X 10.8' },
+      sl_safari_ios7:     { base: 'SauceLabs', browserName: 'ipad',               platform: 'OS X 10.9',    version: '7.1' },
+      sl_safari_ios6:     { base: 'SauceLabs', browserName: 'ipad',               platform: 'OS X 10.8',    version: '6.1' },
+      sl_safari_osx:      { base: 'SauceLabs', browserName: 'safari',             platform: 'OS X 10.8' },
       sl_ie10:            { base: 'SauceLabs', browserName: 'internet explorer',  platform: 'Windows 2012', version: '10' },
-      sl_ie11:            { base: 'SauceLabs', browserName: 'internet explorer',  platform: 'Windows 8.1', version: '11' },
-      sl_chrome_linux:    { base: 'SauceLabs', browserName: 'chrome',  platform: 'linux' },
-      sl_chrome_windows:  { base: 'SauceLabs', browserName: 'chrome',  platform: 'windows' },
-      sl_chrome_osx:      { base: 'SauceLabs', browserName: 'chrome',  platform: 'OSX 10.9' },
-      sl_firefox_linux:   { base: 'SauceLabs', browserName: 'firefox', platform: 'linux' },
-      sl_firefox_windows: { base: 'SauceLabs', browserName: 'firefox', platform: 'windows' },
-      sl_firefox_osx:     { base: 'SauceLabs', browserName: 'firefox', platform: 'OSX 10.9' },
-      sl_opera_linux:     { base: 'SauceLabs', browserName: 'opera',   platform: 'linux' },
-      sl_opera_windows:   { base: 'SauceLabs', browserName: 'opera',   platform: 'windows' }
+      sl_ie11:            { base: 'SauceLabs', browserName: 'internet explorer',  platform: 'Windows 8.1',  version: '11' },
+      sl_chrome_linux:    { base: 'SauceLabs', browserName: 'chrome',             platform: 'linux' },
+      sl_chrome_windows:  { base: 'SauceLabs', browserName: 'chrome',             platform: 'windows' },
+      sl_chrome_osx:      { base: 'SauceLabs', browserName: 'chrome',             platform: 'OSX 10.9' },
+      sl_firefox_linux:   { base: 'SauceLabs', browserName: 'firefox',            platform: 'linux' },
+      sl_firefox_windows: { base: 'SauceLabs', browserName: 'firefox',            platform: 'windows' },
+      sl_firefox_osx:     { base: 'SauceLabs', browserName: 'firefox',            platform: 'OSX 10.9' },
+      sl_opera_linux:     { base: 'SauceLabs', browserName: 'opera',              platform: 'linux' },
+      sl_opera_windows:   { base: 'SauceLabs', browserName: 'opera',              platform: 'windows' },
+      sl_android43:       { base: 'SauceLabs', browserName: 'android',            platform: 'linux',        version: '4.3' }
     },
 
     browsers: [
       'sl_ie10',
       'sl_ie11',
+      'sl_safari_ios7',
+      'sl_safari_ios6',
       'sl_safari_osx',
       'sl_chrome_linux',
       'sl_chrome_windows',
@@ -66,7 +71,8 @@ module.exports = function(config) {
       'sl_firefox_windows',
       'sl_firefox_osx',
       'sl_opera_linux',
-      'sl_opera_windows'
+      'sl_opera_windows',
+      'sl_android43'
     ],
 
     transports: ['xhr-polling']
