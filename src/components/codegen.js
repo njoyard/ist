@@ -26,6 +26,34 @@ define(['util/misc'], function(misc) {
 	}
 
 
+	// Fix browser inconsistencies in String#split
+	// Only works well when re has one capturing group
+	function regSplit(str, re) {
+		var split = [];
+
+		while(1) {
+			var match = str.match(re);
+
+			if (!match) {
+				// No match, push remaining string
+				split.push(str);
+				break;
+			} else {
+				// Push string before match
+				split.push(str.substr(0, match.index));
+
+				// Push matching string
+				split.push(match[1]);
+
+				// Remove start of string up to match
+				str = str.substr(match.index + match[0].length);
+			}
+		}
+
+		return split;
+	}
+
+
 	/* Variables used in generated code :
 		ist$e: error decorator
 		ist$x: rendering context
@@ -74,7 +102,7 @@ define(['util/misc'], function(misc) {
 			if (!(text in interpolateCache)) {
 				if (expressionRE.test(text)) {
 					interpolateCache[text] = codegen.evaluate(
-						text.split(expressionRE)
+						regSplit(text, expressionRE)
 						.map(function(part, index) {
 							if (index % 2) {
 								// expression
@@ -98,7 +126,7 @@ define(['util/misc'], function(misc) {
 		},
 
 		// Returns code to set a property path
-		property: function prout(path) {
+		property: function(path) {
 			var cacheKey = path.join('.');
 
 			if (!(cacheKey in propertyCache)) {
@@ -217,7 +245,7 @@ define(['util/misc'], function(misc) {
 			].join(NL);
 		},
 
-		// Returns wrapping code to update a nodelist	
+		// Returns wrapping code to update a nodelist
 		wrap: function(code) {
 			return [
 					'var ist$n;',
