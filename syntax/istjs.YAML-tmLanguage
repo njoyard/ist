@@ -1,0 +1,48 @@
+# [PackageDev] target_format: plist, ext: tmLanguage
+---
+name: ist.js template
+scopeName: source.istjs
+fileTypes: ['ist']
+uuid: d8d69e4a-a6a5-4916-9066-b91b35b447a3
+
+patterns:
+
+- name: 'comment.block.istjs'
+  begin: '/\*'
+  end: '\*/'
+  patterns:
+  - name: 'constant.character.escape.istjs'
+    match: '\.'
+
+- begin: '\{\{'
+  end: '}}'
+  patterns:
+    - include: 'source.js'
+
+- name: 'string.quoted.double.istjs'
+  begin: '"'
+  end: '"'
+  patterns:
+  - name: 'constant.character.escape.istjs'
+    match: '\.'
+
+- name: 'string.quoted.single.istjs'
+  begin: "'"
+  end: "'"
+  patterns:
+  - name: 'constant.character.escape.istjs'
+    match: '\.'
+
+- match: '\[[a-zA-Z_]=[^\]]+\]'
+  name: ''
+
+- match: '#[a-zA-Z_][a-zA-Z0-9_-]*\b'
+  name: 'support.type.istjs'
+
+- match: '\.[a-zA-Z_][a-zA-Z0-9_-]*\b'
+  name: 'support.class.istjs'
+
+- match: '@[a-zA-Z_][a-zA-Z0-9_-]*\b'
+  name: 'keyword.control.istjs'
+
+...
