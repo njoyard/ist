@@ -59,20 +59,21 @@ define(function() {
 
 			ctx.pushScope({ loop: loop });
 
+			var newRender;
 			if (rendered) {
 				rendered.update(ctx);
 			} else {
-				rendered = tmpl.render(ctx);
+				newRender = tmpl.render(ctx);
 			}
 
 			ctx.popScope();
 			ctx.popValue();
 
-			return rendered;
+			return newRender;
 		});
 	}
-	
-	
+
+
 	/* Built-in directive helpers (except @include and @else) */
 	registered = {
 		'if': function ifHelper(ctx, value, tmpl, iterate) {
@@ -85,17 +86,19 @@ define(function() {
 
 		'with': function withHelper(ctx, value, tmpl, iterate) {
 			iterate(function(key, rendered) {
+				var newRender;
+
 				ctx.pushValue(value);
 
 				if (rendered) {
 					rendered.update(ctx);
 				} else {
-					rendered = tmpl.render(ctx);
+					newRender = tmpl.render(ctx);
 				}
 
 				ctx.popValue();
 
-				return rendered;
+				return newRender;
 			});
 		},
 
@@ -144,7 +147,7 @@ define(function() {
 			});
 		}
 	};
-	
+
 	/* Directive manager object */
 	directives = {
 		register: function registerDirective(name, helper) {
@@ -159,6 +162,6 @@ define(function() {
 			return registered[name];
 		}
 	};
-	
+
 	return directives;
 });

@@ -1,0 +1,9 @@
+/*@define 'test'
+  div.content '{{ content }}'
+
+@with { content: 'foo' }
+  @use 'test'*/
+
+@with { arr: [1, 2, 3] }
+  @each arr
+    .content '{{ this }}'
