@@ -1,6 +1,6 @@
 /**
  * IST: Indented Selector Templating
- * version 0.6.6
+ * version 0.7.0
  *
  * Copyright (c) 2012-2014 Nicolas Joyard
  * Released under the MIT license.
@@ -11,6 +11,30 @@
 (function (global) {
  var isAMD = typeof global.define === 'function' && global.define.amd, isNode = typeof process !== 'undefined' && process.versions && !!process.versions.node, isBrowser = typeof window !== 'undefined' && window.navigator && window.document;
  var utilMisc = {
+   hasSlice: function () {
+    try {
+     [].slice.call({});
+    } catch (e) {
+     return false;
+    }
+    return true;
+   },
+   slice: function () {
+    try {
+     [].slice.call({});
+    } catch (e) {
+     return function (parr) {
+      var arr = [];
+      for (var i = 0; i < parr.length; i++) {
+       arr.push(parr[i]);
+      }
+      return arr;
+     };
+    }
+    return function (parr) {
+     return [].slice.call(parr);
+    };
+   }(),
    jsEscape: function (content) {
     return content.replace(/(['\\])/g, '\\$1').replace(/[\f]/g, '\\f').replace(/[\b]/g, '\\b').replace(/[\t]/g, '\\t').replace(/[\n]/g, '\\n').replace(/[\r]/g, '\\r');
    },
@@ -54,9 +78,10 @@
   };
  var componentsCodegen = function (misc) {
    
+   var hasSlice = misc.hasSlice();
    var expressionRE = /{{\s*((?:}(?!})|[^}])*?)\s*}}/;
-   var NL = '';
-   var TAB = '';
+   var NL = '\n';
+   var TAB = '\t';
    var indent;
    var interpolateCache = {};
    var propertyCache = {};
@@ -72,6 +97,21 @@
     indent = function (c) {
      return c;
     };
+   }
+   function regSplit(str, re) {
+    var split = [];
+    while (1) {
+     var match = str.match(re);
+     if (!match) {
+      split.push(str);
+      break;
+     } else {
+      split.push(str.substr(0, match.index));
+      split.push(match[1]);
+      str = str.substr(match.index + match[0].length);
+     }
+    }
+    return split;
    }
    var codegen = {
      evaluate: function (expr) {
@@ -97,7 +137,7 @@
      interpolate: function (text) {
       if (!(text in interpolateCache)) {
        if (expressionRE.test(text)) {
-        interpolateCache[text] = codegen.evaluate(text.split(expressionRE).map(function (part, index) {
+        interpolateCache[text] = codegen.evaluate(regSplit(text, expressionRE).map(function (part, index) {
          if (index % 2) {
           return '(' + part + ')';
          } else {
@@ -112,7 +152,7 @@
       }
       return interpolateCache[text];
      },
-     property: function prout(path) {
+     property: function (path) {
       var cacheKey = path.join('.');
       if (!(cacheKey in propertyCache)) {
        propertyCache[cacheKey] = [
@@ -182,7 +222,7 @@
       ].join(NL);
      },
      children: function (code) {
-      return ['(function(ist$l) {'].concat(indent(code)).concat(['})([].slice.call(ist$n.childNodes));']).join(NL);
+      return ['(function(ist$l) {'].concat(indent(code)).concat(hasSlice ? ['})([].slice.call(ist$n.childNodes));'] : ['})((function(list){var a=[];for(var i=0;i<list.length;i++){a.push(list[i]);}return a;})(ist$n.childNodes));']).join(NL);
      },
      next: function () {
       return ['ist$n = ist$l.shift();'].join(NL);
@@ -321,7 +361,7 @@
    };
    return iterator;
   }(utilMisc);
- var componentsContext = function (iterator) {
+ var componentsContext = function (iterator, misc) {
    
    function Context(object, doc) {
     this.value = object;
@@ -347,7 +387,7 @@
      }
      var self = this;
      if (node.childNodes) {
-      [].slice.call(node.childNodes).forEach(function (child) {
+      misc.slice(node.childNodes).forEach(function (child) {
        clone.appendChild(self.clonePrerendered(child));
       });
      }
@@ -412,7 +452,7 @@
     }
    };
    return Context;
-  }(componentsIterator);
+  }(componentsIterator, utilMisc);
  var componentsDirectives = function () {
    
    var directives, registered, defined = {};
@@ -444,14 +484,15 @@
       });
      }
      ctx.pushScope({ loop: loop });
+     var newRender;
      if (rendered) {
       rendered.update(ctx);
      } else {
-      rendered = tmpl.render(ctx);
+      newRender = tmpl.render(ctx);
      }
      ctx.popScope();
      ctx.popValue();
-     return rendered;
+     return newRender;
     });
    }
    registered = {
@@ -463,14 +504,15 @@
     },
     'with': function withHelper(ctx, value, tmpl, iterate) {
      iterate(function (key, rendered) {
+      var newRender;
       ctx.pushValue(value);
       if (rendered) {
        rendered.update(ctx);
       } else {
-       rendered = tmpl.render(ctx);
+       newRender = tmpl.render(ctx);
       }
       ctx.popValue();
-      return rendered;
+      return newRender;
      });
     },
     'each': function eachHelper(ctx, value, tmpl, iterate) {

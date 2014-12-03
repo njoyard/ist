@@ -1,5 +1,7 @@
-NEXT
+v0.7.0
 - Rewrote rendering to group nodes together and simplify directive handling
+- Initial support for IE8 (does not fully work yet)
+- Initial syntax files for editors (does not fully work yet, as well)
 
 v0.6.6 - 2014-03-09
 - Added support for escaped newlines in templates
@@ -58,7 +60,7 @@ v0.5.5 - 2012-12-06
 - Optimized rendering by reading context properties when the Context object is
   created, instead of doing it once for each "{{  }}" evaluation
 - Template nodes now have a _getCode() method that outputs JS code to regenerate
-  themselves 
+  themselves
 - Templates loaded with the 'ist!' requirejs plugin are now pre-parsed.  This
   can be disabled by using the '!bare' suffix (eg. 'ist!templates/x!bare')
 - Added a built-in '@eachkey' helper to loop over object own properties
