@@ -5,11 +5,11 @@ all: ist ist-min
 @PHONY: ist
 ist:
 	make -C src ist
-	
+
 @PHONY: ist-min
 ist-min:
 	make -C src ist-min
-	
+
 @PHONY: clean
 clean:
 	make -C src clean
@@ -50,10 +50,10 @@ functests: ist
 
 @PHONY: functests-dev
 functests-dev: ist
-	$(KARMA) start $(KARMACONF) --single-run=false --auto-watch=true --browsers= 
+	$(KARMA) start $(KARMACONF) --single-run=false --auto-watch=true --browsers=
 
 # Test browsers separately
-SAUCEBROWSERS=ie11 safari_osx chrome_linux chrome_windows chrome_osx firefox_linux firefox_windows firefox_osx opera_linux opera_windows
+SAUCEBROWSERS=ie10 ie11 safari_osx chrome_linux chrome_windows chrome_osx firefox_linux firefox_windows firefox_osx opera_linux opera_windows
 
 @PHONY: $(SAUCEBROWSERS)
 $(SAUCEBROWSERS):
