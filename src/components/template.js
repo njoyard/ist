@@ -102,7 +102,7 @@ function(codegen, Context, directives, misc) {
 	/* Look for a node with the given partial name and return a new
 	   Template object if found */
 	Template.prototype.findPartial = function(name) {
-		if (console) (console.warn || console.log)('Warning: Template#findPartial is deprecated, use Template#partial instead');
+		misc.warn('Warning: Template#findPartial is deprecated, use Template#partial instead');
 		return this.partial(name);
 	};
 	Template.prototype.partial = function(name) {

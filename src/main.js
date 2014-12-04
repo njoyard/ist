@@ -33,15 +33,15 @@ define([
 
 	/* Deprecated method names */
 	ist.fromScriptTag = function(id) {
-		if (console) (console.warn || console.log)('Warning: ist.fromScriptTag is deprecated, use ist.script instead');
+		misc.warn('Warning: ist.fromScriptTag is deprecated, use ist.script instead');
 		return ist.script(id);
 	};
 	ist.registerHelper = function(name, helper) {
-		if (console) (console.warn || console.log)('Warning: ist.registerHelper is deprecated, use ist.helper instead');
+		misc.warn('Warning: ist.registerHelper is deprecated, use ist.helper instead');
 		ist.helper(name, helper);
 	};
 	ist.createNode = function(branchSpec, context, doc) {
-		if (console) (console.warn || console.log)('Warning: ist.createNode is deprecated, use ist.create instead');
+		misc.warn('Warning: ist.createNode is deprecated, use ist.create instead');
 		return ist.create(branchSpec, context, doc);
 	};
 
@@ -55,7 +55,7 @@ define([
 	 *
 	 * Supports context variables and an optional alternative document.
 	 * Does not support angle brackets anywhere else than between nodes.
-	 * 
+	 *
 	 * Directives are supported ('div.parent > @each ctxVar > div.child')
 	 */
 	ist.create = function(branchSpec, context, doc) {

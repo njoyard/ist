@@ -11,28 +11,20 @@
 (function (global) {
  var isAMD = typeof global.define === 'function' && global.define.amd, isNode = typeof process !== 'undefined' && process.versions && !!process.versions.node, isBrowser = typeof window !== 'undefined' && window.navigator && window.document;
  var utilMisc = {
-   hasSlice: function () {
-    try {
-     [].slice.call({});
-    } catch (e) {
-     return false;
+   warn: function () {
+    if (console) {
+     if (console.warn) {
+      return function (msg) {
+       console.warn(msg);
+      };
+     }
+     if (console.log) {
+      return function (msg) {
+       console.log(msg);
+      };
+     }
     }
-    return true;
-   },
-   slice: function () {
-    try {
-     [].slice.call({});
-    } catch (e) {
-     return function (parr) {
-      var arr = [];
-      for (var i = 0; i < parr.length; i++) {
-       arr.push(parr[i]);
-      }
-      return arr;
-     };
-    }
-    return function (parr) {
-     return [].slice.call(parr);
+    return function () {
     };
    }(),
    jsEscape: function (content) {
@@ -78,10 +70,9 @@
   };
  var componentsCodegen = function (misc) {
    
-   var hasSlice = misc.hasSlice();
    var expressionRE = /{{\s*((?:}(?!})|[^}])*?)\s*}}/;
-   var NL = '\n';
-   var TAB = '\t';
+   var NL = '';
+   var TAB = '';
    var indent;
    var interpolateCache = {};
    var propertyCache = {};
@@ -222,7 +213,7 @@
       ].join(NL);
      },
      children: function (code) {
-      return ['(function(ist$l) {'].concat(indent(code)).concat(hasSlice ? ['})([].slice.call(ist$n.childNodes));'] : ['})((function(list){var a=[];for(var i=0;i<list.length;i++){a.push(list[i]);}return a;})(ist$n.childNodes));']).join(NL);
+      return ['(function(ist$l) {'].concat(indent(code)).concat(['})([].slice.call(ist$n.childNodes));']).join(NL);
      },
      next: function () {
       return ['ist$n = ist$l.shift();'].join(NL);
@@ -361,7 +352,7 @@
    };
    return iterator;
   }(utilMisc);
- var componentsContext = function (iterator, misc) {
+ var componentsContext = function (iterator) {
    
    function Context(object, doc) {
     this.value = object;
@@ -387,7 +378,7 @@
      }
      var self = this;
      if (node.childNodes) {
-      misc.slice(node.childNodes).forEach(function (child) {
+      [].slice.call(node.childNodes).forEach(function (child) {
        clone.appendChild(self.clonePrerendered(child));
       });
      }
@@ -452,7 +443,7 @@
     }
    };
    return Context;
-  }(componentsIterator, utilMisc);
+  }(componentsIterator);
  var componentsDirectives = function () {
    
    var directives, registered, defined = {};
@@ -634,8 +625,7 @@
     return codegen.wrap(code);
    };
    Template.prototype.findPartial = function (name) {
-    if (console)
-     (console.warn || console.log)('Warning: Template#findPartial is deprecated, use Template#partial instead');
+    misc.warn('Warning: Template#findPartial is deprecated, use Template#partial instead');
     return this.partial(name);
    };
    Template.prototype.partial = function (name) {
@@ -2672,18 +2662,15 @@
    }
    ist.Template = Template;
    ist.fromScriptTag = function (id) {
-    if (console)
-     (console.warn || console.log)('Warning: ist.fromScriptTag is deprecated, use ist.script instead');
+    misc.warn('Warning: ist.fromScriptTag is deprecated, use ist.script instead');
     return ist.script(id);
    };
    ist.registerHelper = function (name, helper) {
-    if (console)
-     (console.warn || console.log)('Warning: ist.registerHelper is deprecated, use ist.helper instead');
+    misc.warn('Warning: ist.registerHelper is deprecated, use ist.helper instead');
     ist.helper(name, helper);
    };
    ist.createNode = function (branchSpec, context, doc) {
-    if (console)
-     (console.warn || console.log)('Warning: ist.createNode is deprecated, use ist.create instead');
+    misc.warn('Warning: ist.createNode is deprecated, use ist.create instead');
     return ist.create(branchSpec, context, doc);
    };
    ist.create = function (branchSpec, context, doc) {

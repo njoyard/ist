@@ -1,8 +1,22 @@
-/*global define */
+/*global define, console */
 define(function() {
 	'use strict';
 
 	return {
+		warn: (function() {
+			if (console) {
+				if (console.warn) {
+					return function(msg) { console.warn(msg); };
+				}
+
+				if (console.log) {
+					return function(msg) { console.log(msg); };
+				}
+			}
+
+			return function() {};
+		}()),
+
 		jsEscape: function (content) {
 			return content.replace(/(['\\])/g, '\\$1')
 				.replace(/[\f]/g, '\\f')
