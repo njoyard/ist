@@ -1,7 +1,11 @@
 v0.7.0
-- Rewrote rendering to group nodes together and simplify directive handling
-- Initial support for IE8 (does not fully work yet)
-- Initial syntax files for editors (does not fully work yet, as well)
+- Rewrote rendering to group nodes together and simplify directive handling,
+  directive helpers written for previous versions are not compatible
+- Added directive preprocessors to enable looking for sibling directives,
+  which enables @if..@elsif..@else-like structures
+- Rewrote @else and added @elsif and @elsunless
+- Added @switch..@case..@default
+- Initial syntax files for editors (does not fully work yet)
 
 v0.6.6 - 2014-03-09
 - Added support for escaped newlines in templates

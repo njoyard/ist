@@ -1,0 +1,7 @@
+@directiveA 1
+@directiveB 2
+@directiveC 3
+"separator"
+@directiveA 4
+@directiveB 5
+@directiveC 6

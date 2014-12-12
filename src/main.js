@@ -89,8 +89,8 @@ define([
 	 * IST helper block registration; allows custom iterators/helpers that will
 	 * be called with a new context.
 	 */
-	ist.helper = function(name, helper) {
-		directives.register(name, helper);
+	ist.helper = function(name, helper, pre) {
+		directives.register(name, helper, pre);
 	};
 
 	/* Built-in @include helper */

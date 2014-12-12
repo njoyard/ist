@@ -33,6 +33,21 @@ function(codegen, Context, directives, misc) {
 
 
 	/**
+	 * Returns an array of contiguous directive node siblings
+	 * from templateNodes before index (incl. index)
+	 */
+	function getPrevDirectives(templateNodes, index) {
+		var directives = [];
+
+		for (var i = index; i >= 0 && 'directive' in templateNodes[i]; i--) {
+			directives.unshift(templateNodes[i]);
+		}
+
+		return directives;
+	}
+
+
+	/**
 	 * Template object; encapsulate template nodes and rendering helpers
 	 */
 	function Template(name, nodes) {
@@ -50,7 +65,7 @@ function(codegen, Context, directives, misc) {
 		var code = [];
 		var self = this;
 
-		templateNodes.forEach(function(templateNode) {
+		templateNodes.forEach(function(templateNode, index) {
 			var node;
 
 			code.push(codegen.next());
@@ -80,6 +95,7 @@ function(codegen, Context, directives, misc) {
 					}
 				} else if ('directive' in templateNode) {
 					node = document.createComment('@' + templateNode.directive + ' ' +  templateNode.expr + ' (' + self.name + ':' + templateNode.line + ')');
+					templateNode.prev = getPrevDirectives(templateNodes, index);
 
 					if (templateNode.children && templateNode.children.length) {
 						node.template = new Template(self.name, templateNode.children);

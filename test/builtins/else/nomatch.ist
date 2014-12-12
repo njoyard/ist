@@ -1,4 +1,0 @@
-@with value
-	"foo"
-@else
-	"error"

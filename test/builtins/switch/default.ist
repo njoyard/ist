@@ -1,0 +1,7 @@
+@switch value
+@case 1
+  'value is 1'
+@case 2
+  'value is 2'
+@default
+  'value is other'

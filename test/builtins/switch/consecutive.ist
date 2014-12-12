@@ -1,0 +1,14 @@
+@switch value1
+@case 1
+  'value1 is 1'
+@case 2
+  'value1 is 2'
+@default
+  'value1 is other'
+@switch value2
+@case 1
+  'value2 is 1'
+@case 2
+  'value2 is 2'
+@default
+  'value2 is other'

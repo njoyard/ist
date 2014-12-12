@@ -100,23 +100,6 @@ define(function() {
 				throw err;
 			}
 
-			if (node.directive === "else") {
-				var prev = parent.children[parent.children.length - 1];
-
-				if (prev && !prev.wasElse && prev.directive === "if") {
-					node.directive = "unless";
-				} else if (prev && !prev.wasElse && prev.directive === "unless") {
-					node.directive = "if";
-				} else {
-					err = new Error("@else directive has no matching @if or @unless directive");
-					err.line = node.line;
-					throw err;
-				}
-
-				node.expr = prev.expr;
-				node.wasElse = true;
-			}
-
 			parent.children.push(node);
 
 			return node;

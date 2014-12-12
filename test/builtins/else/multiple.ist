@@ -1,6 +1,0 @@
-@if value
-	"value is true"
-@else
-	"value is false"
-@else
-	"error"

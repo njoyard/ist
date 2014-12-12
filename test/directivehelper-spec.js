@@ -7,8 +7,10 @@ define([
 	'text!test/directivehelper/string.ist',
 	'text!test/directivehelper/none.ist',
 	'ist!test/directivehelper/errors',
-	'ist!test/directivehelper/update'
-], function(ist, textDirectivehelper, textString, textNone, tErrors, tUpdate) {
+	'ist!test/directivehelper/update',
+	'ist!test/directivehelper/preprocessor',
+	'ist!test/directivehelper/preprocessor-value'
+], function(ist, textDirectivehelper, textString, textNone, tErrors, tUpdate, tPreprocessor, tPreprocessorValue) {
 	'use strict';
 
 	describe('directive helpers', function() {
@@ -539,6 +541,121 @@ define([
 			expect(nthNonCommentChild(container, 1).textContent).toBe('A.2');
 			expect(nthNonCommentChild(container, 2).textContent).toBe('B.1');
 			expect(nthNonCommentChild(container, 3).textContent).toBe('B.2');
+		});
+
+		it('should pass previous directives and values to directive preprocessors', function() {
+			var Alists = [];
+			var Avalues = [];
+			var Blists = [];
+			var Bvalues = [];
+			var Clists = [];
+			var Cvalues = [];
+
+			ist.helper('directiveA', function() {}, function(ctx, directives, values) {
+				Alists.push(directives);
+				Avalues.push(values);
+			});
+
+			ist.helper('directiveB', function() {}, function(ctx, directives, values) {
+				Blists.push(directives);
+				Bvalues.push(values);
+			});
+
+			ist.helper('directiveC', function() {}, function(ctx, directives, values) {
+				Clists.push(directives);
+				Cvalues.push(values);
+			});
+
+			tPreprocessor.render();
+
+			expect(Alists.length).toBe(2);
+
+			expect(Alists[0].length).toBe(1);
+			expect(Alists[0][0]).toBe('directiveA');
+
+			expect(Alists[1].length).toBe(1);
+			expect(Alists[1][0]).toBe('directiveA');
+
+			expect(Blists.length).toBe(2);
+
+			expect(Blists[0].length).toBe(2);
+			expect(Blists[0][0]).toBe('directiveA');
+			expect(Blists[0][1]).toBe('directiveB');
+
+			expect(Blists[1].length).toBe(2);
+			expect(Blists[1][0]).toBe('directiveA');
+			expect(Blists[1][1]).toBe('directiveB');
+
+			expect(Clists.length).toBe(2);
+
+			expect(Clists[0].length).toBe(3);
+			expect(Clists[0][0]).toBe('directiveA');
+			expect(Clists[0][1]).toBe('directiveB');
+			expect(Clists[0][2]).toBe('directiveC');
+
+			expect(Clists[1].length).toBe(3);
+			expect(Clists[1][0]).toBe('directiveA');
+			expect(Clists[1][1]).toBe('directiveB');
+			expect(Clists[1][2]).toBe('directiveC');
+
+			expect(Avalues.length).toBe(2);
+
+			expect(Avalues[0].length).toBe(1);
+			expect(Avalues[0][0]).toBe(1);
+
+			expect(Avalues[1].length).toBe(1);
+			expect(Avalues[1][0]).toBe(4);
+
+			expect(Bvalues.length).toBe(2);
+
+			expect(Bvalues[0].length).toBe(2);
+			expect(Bvalues[0][0]).toBe(1);
+			expect(Bvalues[0][1]).toBe(2);
+
+			expect(Bvalues[1].length).toBe(2);
+			expect(Bvalues[1][0]).toBe(4);
+			expect(Bvalues[1][1]).toBe(5);
+
+			expect(Cvalues.length).toBe(2);
+
+			expect(Cvalues[0].length).toBe(3);
+			expect(Cvalues[0][0]).toBe(1);
+			expect(Cvalues[0][1]).toBe(2);
+			expect(Cvalues[0][2]).toBe(3);
+
+			expect(Cvalues[1].length).toBe(3);
+			expect(Cvalues[1][0]).toBe(4);
+			expect(Cvalues[1][1]).toBe(5);
+			expect(Cvalues[1][2]).toBe(6);
+		});
+
+		it('should use the value returned by directive preprocessor', function() {
+			ist.helper('sum', function(ctx, value, tmpl, iterate) {
+				iterate(function(key, rendered) {
+					var newRender;
+
+					ctx.pushValue(value);
+
+					if (rendered) {
+						rendered.update(ctx);
+					} else {
+						newRender = tmpl.render(ctx);
+					}
+
+					ctx.popValue();
+
+					return newRender;
+				});
+			}, function(ctx, directives, values) {
+				return values.reduce(function(sum, value) { return sum + value; }, 0);
+			});
+
+			var rendered = tPreprocessorValue.render();
+
+			expect( nthNonCommentChild(rendered, 0).textContent ).toBe('sum = 1');
+			expect( nthNonCommentChild(rendered, 1).textContent ).toBe('sum = 3');
+			expect( nthNonCommentChild(rendered, 2).textContent ).toBe('sum = 6');
+			expect( nthNonCommentChild(rendered, 3).textContent ).toBe('sum = 10');
 		});
 	});
 });

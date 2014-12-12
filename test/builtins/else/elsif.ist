@@ -1,0 +1,8 @@
+@if value === 1
+  .value-1
+@elsif value === 2
+  .value-2
+@elsif value === 3
+  .value-3
+@else
+  .value-else

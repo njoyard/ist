@@ -1,0 +1,4 @@
+@if true
+  'okay'
+@case 1
+  'invalid'

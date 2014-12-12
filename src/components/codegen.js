@@ -5,8 +5,8 @@ define(['util/misc'], function(misc) {
 	var expressionRE = /{{\s*((?:}(?!})|[^}])*?)\s*}}/;
 
 	// Set those to either empty string or '\n' and '\t' to toggle pretty code generation
-	var NL = '';
-	var TAB = '';
+	var NL = '\n';
+	var TAB = '\t';
 
 	var indent;
 
@@ -57,7 +57,6 @@ define(['util/misc'], function(misc) {
 	/* Variables used in generated code :
 		ist$e: error decorator
 		ist$x: rendering context
-		ist$d: directives module
 		ist$l: current nodelist
 		ist$n: current node
 		ist$i: current template line number
@@ -65,6 +64,9 @@ define(['util/misc'], function(misc) {
 		ist$t: property setter target
 		ist$c: property setter current pointer
 		ist$v: property setter values
+		ist$d: directives module
+		ist$p: directive preprocessor
+		ist$a: directive value
 	 */
 	var codegen = {
 		// Returns code to evaluate expr
@@ -209,25 +211,43 @@ define(['util/misc'], function(misc) {
 		directive: function(node) {
 			var evalExpr = node.expr ? codegen.evaluate(node.expr) : 'undefined';
 
+			var prevNames = node.prev.map(function(d) {
+				return '"' + d.directive + '"';
+			}).join(',');
+
+			var prevValues = node.prev.map(function(d) {
+				return d.expr ? codegen.evaluate(d.expr) : 'undefined';
+			}).join(',');
+
 			return [
-				codegen.line(node),
-				'if (!("keys" in ist$n)) {',
-				// Setup fragment index on first render
-				TAB + 'ist$n.keys = [];',
-				TAB + 'ist$n.fragments = [];',
-				'} else {',
-				// Extract fragment index nodes from current nodelist
-				TAB + 'ist$n.remove(ist$l);',
-				'}',
-				// Check for directive helper
-				'if (!ist$d.has("' + node.directive + '")) {',
-				TAB + 'throw new Error("No directive helper for @' + node.directive + ' has been registered");',
-				'}',
-				// Call directive helper
-				'ist$d.get("' + node.directive + '")(ist$x, ' + evalExpr + ', ist$n.template, ist$n.iterator);',
-				// Update current node
-				'ist$n = ist$n.last() || ist$n;'
-			].join(NL);
+					codegen.line(node),
+					'if (!("keys" in ist$n)) {',
+					// Setup fragment index on first render
+					TAB + 'ist$n.keys = [];',
+					TAB + 'ist$n.fragments = [];',
+					'} else {',
+					// Extract fragment index nodes from current nodelist
+					TAB + 'ist$n.remove(ist$l);',
+					'}',
+					// Check for directive helper
+					'if (!ist$d.has("' + node.directive + '")) {',
+					TAB + 'throw new Error("No directive helper for @' + node.directive + ' has been registered");',
+					'}',
+					// Check for directive preprocessor
+					'var ist$a;',
+					'var ist$p = ist$d.pre("' + node.directive + '");',
+					'if (ist$p) {',
+					// Call directive preprocessor
+					TAB + 'ist$a = ist$p(ist$x, [' + prevNames + '], [' + prevValues + ']);',
+					'} else {',
+					// Evaluate expression
+					TAB + 'ist$a = ' + evalExpr + ';',
+					'}',
+					// Call directive helper
+					'ist$d.get("' + node.directive + '")(ist$x, ist$a, ist$n.template, ist$n.iterator);',
+					// Update current node
+					'ist$n = ist$n.last() || ist$n;'
+				].join(NL);
 		},
 
 		// Returns code to update child nodes

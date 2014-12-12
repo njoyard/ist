@@ -3,7 +3,7 @@ define(function() {
 	'use strict';
 
 	var directives, registered,
-		defined = {};
+		defined = {}, preprocessors = {};
 
 	/**
 	 * Conditional helper for @if, @unless
@@ -150,8 +150,9 @@ define(function() {
 
 	/* Directive manager object */
 	directives = {
-		register: function registerDirective(name, helper) {
+		register: function registerDirective(name, helper, preprocessor) {
 			registered[name] = helper;
+			preprocessors[name] = preprocessor;
 		},
 
 		has: function hasDirective(name) {
@@ -160,8 +161,110 @@ define(function() {
 
 		get: function getDirective(name) {
 			return registered[name];
+		},
+
+		pre: function getPreprocessor(name) {
+			return preprocessors[name];
 		}
 	};
+
+	/* @else @elsif @elsunless */
+
+	/**
+	 * Conditional preprocessor for @else, @elsif, @elsunless
+	 *
+	 * @param {Context} ctx rendering context
+	 * @param {Array} prevDirective previous directive names (incl. this one)
+	 * @param {Array} prevValues previous directive values (incl. this one)
+	 * @return value passed to directive helper
+	 */
+	function conditionalPre(ctx, prevDirectives, prevValues) {
+		var value = prevValues.pop();
+		var thisDirective = prevDirectives.pop();
+
+		if (thisDirective === 'else') value = true;
+		if (thisDirective === 'elsunless') value = !value;
+
+		var prevValue;
+		var prevDirective = thisDirective;
+
+		for(;;) {
+			prevValue = prevValues.pop();
+			prevDirective = prevDirectives.pop();
+
+			if (!prevDirective) {
+				throw new Error('Unexpected @' + thisDirective);
+			}
+
+			switch (prevDirective) {
+				case 'if':
+				case 'elsif':
+					value = value && !prevValue;
+					break;
+
+				case 'unless':
+				case 'elsunless':
+					value = value && prevValue;
+					break;
+
+				default:
+					throw new Error('Unexpected @' + thisDirective + ' after @' + prevDirective);
+			}
+
+			if (prevDirective === 'if' || prevDirective === 'unless') {
+				return value;
+			}
+		}
+	}
+
+	directives.register('else', conditionalHelper, conditionalPre);
+	directives.register('elsif', conditionalHelper, conditionalPre);
+	directives.register('elsunless', conditionalHelper, conditionalPre);
+
+	/* @switch @case @default */
+
+	function switchPre(ctx, prevDirectives, prevValues) {
+		var otherValues = [];
+
+		var thisDirective = prevDirectives.pop();
+		var thisValue = prevValues.pop();
+
+		var switchValue;
+		var prevValue;
+		var prevDirective = thisDirective;
+
+		for(;;) {
+			prevDirective = prevDirectives.pop();
+			prevValue = prevValues.pop();
+
+			if (!prevDirective) {
+				throw new Error('Unexpected @' + thisDirective);
+			}
+
+			if (prevDirective === 'switch') {
+				switchValue = prevValue;
+				break;
+			}
+
+			if (prevDirective === 'case') {
+				otherValues.push(prevValue);
+			} else {
+				throw new Error('Unexpected @' + thisDirective + ' after @' + prevDirective);
+			}
+		}
+
+		var ret = otherValues.indexOf(switchValue) === -1;
+
+		if (thisDirective === 'case') {
+			ret = ret && switchValue === thisValue;
+		}
+
+		return ret;
+	}
+
+	directives.register('switch', function() {});
+	directives.register('case', conditionalHelper, switchPre);
+	directives.register('default', conditionalHelper, switchPre);
 
 	return directives;
 });

@@ -1,0 +1,5 @@
+@switch value
+@case 1
+  'value is 1'
+@case 1
+  'value is also 1'
